@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Profil - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/profile.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navbar">
+        <a href="/index.html" class="nav-link">← Hjem</a>
+        <h2 id="navEventName">Min Profil</h2>
+        <div style="width: 60px;"></div> <!-- Spacer for center alignment -->
+    </div>
+
+    <!-- Event info banner (optional) -->
+    <div id="eventBanner" class="event-banner hidden">
+        <p id="bannerEventInfo"></p>
+    </div>
+
+    <!-- Scanner View (Initial state) -->
+    <div id="scannerView" class="view">
+        <div class="scanner-container">
+            <div class="instruction-text">
+                <h1>Skann din QR-kode</h1>
+                <p>Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
+            </div>
+
+            <!-- Hidden input for barcode scanner (keyboard emulation) -->
+            <input type="text" id="barcodeInput" class="barcode-input" autocomplete="off" autofocus>
+
+            <div class="scanner-mode-indicator">
+                <span class="keyboard-icon">⌨️</span>
+                <span>Strekkodeskanner klar</span>
+            </div>
+
+            <div class="divider">
+                <span>eller</span>
+            </div>
+
+            <div id="qr-reader" class="qr-reader"></div>
+
+            <button id="startScanBtn" class="button primary large-button">
+                📷 Start Kamera-Skanning
+            </button>
+
+            <div id="scanStatus" class="scan-status hidden"></div>
+        </div>
+    </div>
+
+    <!-- Profile View (After successful scan) -->
+    <div id="profileView" class="view hidden">
+        <div class="profile-container">
+            <!-- Profile Photo -->
+            <div class="profile-photo-container">
+                <img id="profilePhoto"
+                     src=""
+                     alt="Profilbilde"
+                     class="profile-photo">
+                <div id="photoPlaceholder" class="photo-placeholder">
+                    <span class="placeholder-icon">👤</span>
+                    <p>Ingen selfie ennå</p>
+                </div>
+            </div>
+
+            <!-- Profile Info -->
+            <div class="profile-info">
+                <h1 id="profileName" class="profile-name">-</h1>
+                <div class="profile-details">
+                    <p><strong>Alder:</strong> <span id="profileAge">-</span> år</p>
+                    <p><strong>Hjemsted:</strong> <span id="profileLocation">-</span></p>
+                    <p id="profileClubRow" class="hidden"><strong>Klubb:</strong> <span id="profileClub">-</span></p>
+                    <p id="profileRoleRow" class="hidden"><strong>Rolle:</strong> <span id="profileRole">-</span></p>
+                    <p id="profileTeamRow" class="hidden"><strong>Lag:</strong> <span id="profileTeam">-</span></p>
+                    <p><strong>Kode:</strong> <span id="profileCode">-</span></p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button id="takeSelfieBtn" class="button primary large-button">
+                    📸 Ta Selfie
+                </button>
+
+                <button id="scanAgainBtn" class="button secondary">
+                    🔄 Skann Ny Kode
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ta Selfie</h2>
+                <button id="closeCameraBtn" class="close-btn">✕</button>
+            </div>
+
+            <div class="camera-container">
+                <video id="cameraVideo" class="camera-video" autoplay playsinline></video>
+                <canvas id="cameraCanvas" class="camera-canvas hidden"></canvas>
+            </div>
+
+            <div class="camera-controls">
+                <button id="captureBtn" class="button primary large-button">
+                    📸 Ta Bilde
+                </button>
+                <button id="retakeBtn" class="button secondary hidden">
+                    🔄 Ta På Nytt
+                </button>
+                <button id="uploadBtn" class="button primary large-button hidden">
+                    ✅ Lagre Selfie
+                </button>
+            </div>
+
+            <div id="cameraStatus" class="camera-status"></div>
+        </div>
+    </div>
+
+    <!-- Include html5-qrcode library from CDN -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- Include our JavaScript modules -->
+    <script src="/js/scanner.js"></script>
+    <script src="/js/camera.js"></script>
+    <script src="/js/profile.js"></script>
+</body>
+</html>

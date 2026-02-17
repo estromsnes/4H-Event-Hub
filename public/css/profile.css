@@ -1,0 +1,351 @@
+/* Profile Page Styles */
+
+.event-banner {
+    background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.event-banner p {
+    margin: 0;
+    font-size: 14px;
+    color: white;
+}
+
+.view {
+    min-height: calc(100vh - 70px);
+    padding: 20px;
+}
+
+/* Scanner View */
+.scanner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 110px);
+    gap: 30px;
+}
+
+.instruction-text {
+    text-align: center;
+    padding: 0 20px;
+}
+
+.instruction-text h1 {
+    margin-bottom: 15px;
+}
+
+.instruction-text p {
+    font-size: 20px;
+    color: var(--text-light);
+}
+
+/* Barcode scanner input */
+.barcode-input {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.scanner-mode-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 25px;
+    background-color: #e8f5e9;
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+
+.keyboard-icon {
+    font-size: 24px;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    margin: 10px 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px solid #ddd;
+}
+
+.divider span {
+    padding: 0 15px;
+    color: var(--text-light);
+    font-size: 16px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.qr-reader {
+    width: 100%;
+    max-width: 500px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.qr-reader video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.large-button {
+    width: 100%;
+    max-width: 400px;
+    padding: 25px 40px;
+    font-size: 24px;
+}
+
+.scan-status {
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+}
+
+.scan-status.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.scan-status.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Profile View */
+.profile-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.profile-photo-container {
+    position: relative;
+    width: 250px;
+    height: 250px;
+}
+
+.profile-photo,
+.photo-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid var(--primary-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.photo-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0f0;
+    color: var(--text-light);
+}
+
+.placeholder-icon {
+    font-size: 80px;
+    margin-bottom: 10px;
+}
+
+.photo-placeholder p {
+    font-size: 16px;
+}
+
+.profile-info {
+    text-align: center;
+    width: 100%;
+}
+
+.profile-name {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: var(--primary-dark);
+}
+
+.profile-details {
+    background-color: var(--white);
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+}
+
+.profile-details p {
+    font-size: 20px;
+    margin: 10px 0;
+    color: var(--text-dark);
+}
+
+.profile-details strong {
+    color: var(--primary-dark);
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+}
+
+/* Camera Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+}
+
+.close-btn {
+    width: 50px;
+    height: 50px;
+    border: none;
+    background-color: transparent;
+    font-size: 30px;
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.close-btn:active {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.camera-container {
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background-color: #000;
+}
+
+.camera-video,
+.camera-canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.camera-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.camera-status {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.camera-status.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.camera-status.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Portrait mode optimization */
+@media (orientation: portrait) {
+    .qr-reader {
+        max-width: 90vw;
+    }
+
+    .profile-photo-container {
+        width: 200px;
+        height: 200px;
+    }
+
+    .profile-name {
+        font-size: 32px;
+    }
+}
+
+/* Smaller screens */
+@media (max-width: 480px) {
+    .instruction-text h1 {
+        font-size: 28px;
+    }
+
+    .large-button {
+        font-size: 20px;
+        padding: 20px 30px;
+    }
+
+    .profile-photo-container {
+        width: 180px;
+        height: 180px;
+    }
+
+    .profile-name {
+        font-size: 28px;
+    }
+
+    .profile-details p {
+        font-size: 18px;
+    }
+}

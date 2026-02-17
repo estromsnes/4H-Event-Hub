@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 2px solid var(--primary-color);
+            margin-bottom: 25px;
+        }
+
+        .tab-button {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .tab-button:hover {
+            color: var(--primary-color);
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        .section h2 {
+            margin-bottom: 20px;
+            color: var(--primary-dark);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .participants-list {
+            margin-top: 20px;
+        }
+
+        .participant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .participant-info {
+            flex: 1;
+        }
+
+        .participant-info h3 {
+            margin: 0 0 5px 0;
+            font-size: 20px;
+        }
+
+        .participant-info p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .participant-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            min-height: 40px;
+            min-width: 40px;
+            padding: 8px 15px;
+            font-size: 16px;
+        }
+
+        .qr-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .qr-card {
+            text-align: center;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .qr-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .qr-card h4 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        .qr-card p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        @media print {
+            .navbar,
+            .section button,
+            .no-print {
+                display: none !important;
+            }
+
+            .qr-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Edit Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background-color: transparent;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .close-btn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .logo-preview {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+        /* Teams Management */
+        .teams-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .team-card {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            border: 2px solid var(--primary-color);
+            position: relative;
+        }
+
+        .team-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: var(--primary-dark);
+        }
+
+        .team-card p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .team-card-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Team Statistics */
+        .team-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .team-stat-card {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid var(--primary-color);
+        }
+
+        .team-stat-card.no-team {
+            border-color: #999;
+        }
+
+        .team-stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: var(--primary-dark);
+        }
+
+        .team-stat-card.no-team h3 {
+            color: #666;
+        }
+
+        .team-stat-card .count {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .team-stat-card.no-team .count {
+            color: #999;
+        }
+
+        .team-stat-card p {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .participant-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .participant-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .team-stats-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navbar">
+        <a href="/index.html" class="nav-link">← Hjem</a>
+        <h2>Admin Panel</h2>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <div class="admin-container">
+        <!-- Tabs Navigation -->
+        <div class="tabs no-print">
+            <button class="tab-button active" data-tab="event">📋 Arrangement</button>
+            <button class="tab-button" data-tab="teams">🏆 Lag</button>
+            <button class="tab-button" data-tab="participants">👥 Deltakere</button>
+            <button class="tab-button" data-tab="stats">📊 Statistikk</button>
+        </div>
+
+        <!-- Event Tab -->
+        <div id="eventTab" class="tab-content active">
+            <!-- Event Information Section -->
+            <div class="section no-print">
+            <h2>Arrangement-informasjon</h2>
+            <form id="eventInfoForm">
+                <div class="form-group">
+                    <label for="eventName">Arrangementsnavn *</label>
+                    <input type="text" id="eventName" required placeholder="4H Leir 2026">
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDescription">Beskrivelse</label>
+                    <textarea id="eventDescription" rows="3" placeholder="Kort beskrivelse av arrangementet..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventLogo">Logo/bilde (valgfritt)</label>
+                    <input type="file" id="eventLogo" accept="image/*">
+                    <div id="logoPreview" class="logo-preview hidden">
+                        <img id="logoPreviewImg" src="" alt="Logo preview">
+                        <button type="button" id="removeLogo" class="button secondary btn-small">Fjern</button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventLocation">Sted</label>
+                        <input type="text" id="eventLocation" placeholder="Folkvang Eina">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventStartDate">Startdato</label>
+                        <input type="date" id="eventStartDate">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventEndDate">Sluttdato</label>
+                        <input type="date" id="eventEndDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="organizerClub">Arrangør klubb</label>
+                        <input type="text" id="organizerClub" placeholder="Skautrollet 4H">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="organizerName">Kontaktperson</label>
+                        <input type="text" id="organizerName" placeholder="Navn på kontaktperson">
+                    </div>
+                    <div class="form-group">
+                        <label for="organizerContact">Kontaktinfo</label>
+                        <input type="text" id="organizerContact" placeholder="E-post eller telefon">
+                    </div>
+                </div>
+
+                <button type="submit" class="button primary">
+                    💾 Lagre Arrangement-info
+                </button>
+            </form>
+
+            <div id="eventStatus" class="hidden mt-2"></div>
+        </div>
+        </div>
+        <!-- End Event Tab -->
+
+        <!-- Teams Tab -->
+        <div id="teamsTab" class="tab-content">
+        <!-- Teams Management Section -->
+        <div class="section no-print">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Administrer Lag</h2>
+                <button id="addTeamBtn" class="button primary btn-small">
+                    ➕ Nytt Lag
+                </button>
+            </div>
+
+            <div id="teamsList" class="teams-list">
+                <p class="text-center" style="color: var(--text-light);">Laster lag...</p>
+            </div>
+
+            <div id="teamStatus" class="hidden mt-2"></div>
+        </div>
+        </div>
+        <!-- End Teams Tab -->
+
+        <!-- Participants Tab -->
+        <div id="participantsTab" class="tab-content">
+        <!-- Add Participant Section -->
+        <div class="section no-print">
+            <h2>Legg til Deltaker</h2>
+            <form id="addParticipantForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">Fornavn *</label>
+                        <input type="text" id="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Etternavn *</label>
+                        <input type="text" id="lastName" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="age">Alder</label>
+                        <input type="number" id="age" min="1" max="150">
+                    </div>
+                    <div class="form-group">
+                        <label for="homeLocation">Hjemsted</label>
+                        <input type="text" id="homeLocation" placeholder="Eina, Bøverbru, etc.">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="club">Klubb</label>
+                        <input type="text" id="club" placeholder="Skautrollet 4H">
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Rolle</label>
+                        <select id="role">
+                            <option value="">Velg rolle</option>
+                            <option value="Deltaker">Deltaker</option>
+                            <option value="Frivillig">Frivillig</option>
+                            <option value="Arrangør">Arrangør</option>
+                            <option value="Leder">Leder</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="team">Lag (tildeles senere)</label>
+                    <select id="team">
+                        <option value="">Ikke tildelt</option>
+                        <!-- Options populated dynamically from database -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notater (valgfritt)</label>
+                    <textarea id="notes" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="participantCode">Deltakerkode (genereres automatisk)</label>
+                    <input type="text" id="participantCode" readonly placeholder="SK-2026-001">
+                </div>
+
+                <button type="submit" class="button primary">
+                    ➕ Legg til Deltaker
+                </button>
+            </form>
+
+            <div id="formStatus" class="hidden mt-2"></div>
+        </div>
+
+        <!-- Participants List Section -->
+        <div class="section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Deltakere (<span id="participantCount">0</span>)</h2>
+                <div style="display: flex; gap: 10px;">
+                    <button id="generateAllQRBtn" class="button secondary btn-small no-print">
+                        🔄 Generer alle QR
+                    </button>
+                    <button id="printQRBtn" class="button secondary btn-small no-print">
+                        🖨️ Print QR-koder
+                    </button>
+                </div>
+            </div>
+
+            <div id="participantsList" class="participants-list">
+                <p class="text-center" style="color: var(--text-light);">Laster deltakere...</p>
+            </div>
+        </div>
+
+        <!-- QR Codes Grid (for printing) -->
+        <div class="section" id="qrSection" style="display: none;">
+            <h2>QR-koder for Print</h2>
+            <div id="qrGrid" class="qr-grid"></div>
+        </div>
+        </div>
+        <!-- End Participants Tab -->
+
+        <!-- Stats Tab -->
+        <div id="statsTab" class="tab-content">
+        <!-- Team Statistics Section -->
+        <div class="section no-print">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin: 0;">Lag-statistikk</h2>
+                <button id="autoAssignTeamsBtn" class="button secondary btn-small">
+                    🎲 Tildel lag automatisk
+                </button>
+            </div>
+            <div id="teamStats" class="team-stats-grid">
+                <p class="text-center" style="color: var(--text-light);">Laster statistikk...</p>
+            </div>
+            <div id="autoAssignStatus" class="hidden mt-2"></div>
+        </div>
+        </div>
+        <!-- End Stats Tab -->
+
+    </div>
+    <!-- End admin-container -->
+
+    <!-- Edit Participant Modal -->
+    <div id="editModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Rediger Deltaker</h2>
+                <button id="closeEditBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="editParticipantForm">
+                <input type="hidden" id="editParticipantCode">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editFirstName">Fornavn *</label>
+                        <input type="text" id="editFirstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLastName">Etternavn *</label>
+                        <input type="text" id="editLastName" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editAge">Alder</label>
+                        <input type="number" id="editAge" min="1" max="150">
+                    </div>
+                    <div class="form-group">
+                        <label for="editHomeLocation">Hjemsted</label>
+                        <input type="text" id="editHomeLocation">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editClub">Klubb</label>
+                        <input type="text" id="editClub">
+                    </div>
+                    <div class="form-group">
+                        <label for="editRole">Rolle</label>
+                        <select id="editRole">
+                            <option value="">Velg rolle</option>
+                            <option value="Deltaker">Deltaker</option>
+                            <option value="Frivillig">Frivillig</option>
+                            <option value="Arrangør">Arrangør</option>
+                            <option value="Leder">Leder</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editTeam">Lag</label>
+                    <select id="editTeam">
+                        <option value="">Ikke tildelt</option>
+                        <!-- Options populated dynamically from database -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editNotes">Notater</label>
+                    <textarea id="editNotes" rows="3"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Lagre Endringer
+                    </button>
+                    <button type="button" id="cancelEditBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="editStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Photo Viewer Modal -->
+    <div id="photoModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="photoModalTitle">Deltakerbilde</h2>
+                <button id="closePhotoBtn" class="close-btn">✕</button>
+            </div>
+
+            <div style="text-align: center;">
+                <img id="photoModalImg" src="" alt="Participant photo" style="max-width: 100%; max-height: 70vh; border-radius: 10px; margin-bottom: 20px;">
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button id="deletePhotoBtn" class="button secondary" style="flex: 1;">
+                    🗑️ Slett bilde
+                </button>
+                <button id="closePhotoModal2Btn" class="button primary" style="flex: 1;">
+                    ✅ Lukk
+                </button>
+            </div>
+
+            <div id="photoModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Team Modal (Add/Edit) -->
+    <div id="teamModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="teamModalTitle">Legg til Lag</h2>
+                <button id="closeTeamBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="teamForm">
+                <input type="hidden" id="teamId">
+
+                <div class="form-group">
+                    <label for="teamName">Lagnavn *</label>
+                    <input type="text" id="teamName" required placeholder="Glade Geiter">
+                </div>
+
+                <div class="form-group">
+                    <label for="teamDescription">Beskrivelse (valgfritt)</label>
+                    <textarea id="teamDescription" rows="2" placeholder="Kort beskrivelse av laget..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="teamMaxMembers">Maks antall medlemmer</label>
+                    <input type="number" id="teamMaxMembers" min="1" max="50" value="5">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Lagre
+                    </button>
+                    <button type="button" id="cancelTeamBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="teamModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>
