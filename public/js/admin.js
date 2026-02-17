@@ -60,6 +60,15 @@ const cancelTeamBtn = document.getElementById('cancelTeamBtn');
 const teamModalStatus = document.getElementById('teamModalStatus');
 const teamStatus = document.getElementById('teamStatus');
 
+// Photo Modal elements
+const photoModal = document.getElementById('photoModal');
+const photoModalTitle = document.getElementById('photoModalTitle');
+const photoModalImg = document.getElementById('photoModalImg');
+const closePhotoBtn = document.getElementById('closePhotoBtn');
+const closePhotoModal2Btn = document.getElementById('closePhotoModal2Btn');
+const deletePhotoBtn = document.getElementById('deletePhotoBtn');
+const photoModalStatus = document.getElementById('photoModalStatus');
+
 const participantsList = document.getElementById('participantsList');
 const participantCount = document.getElementById('participantCount');
 const teamStats = document.getElementById('teamStats');
@@ -76,6 +85,7 @@ let teams = [];
 let nextParticipantNumber = 1;
 let currentEvent = null;
 let currentTeam = null;
+let currentPhotoParticipantCode = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -128,6 +138,11 @@ async function initAdmin() {
     teamForm.addEventListener('submit', handleSaveTeam);
     closeTeamBtn.addEventListener('click', closeTeamModal);
     cancelTeamBtn.addEventListener('click', closeTeamModal);
+
+    // Photo modal event listeners
+    closePhotoBtn.addEventListener('click', closePhotoModal);
+    closePhotoModal2Btn.addEventListener('click', closePhotoModal);
+    deletePhotoBtn.addEventListener('click', handleDeletePhoto);
 
     addParticipantForm.addEventListener('submit', handleAddParticipant);
     editParticipantForm.addEventListener('submit', handleEditParticipant);
@@ -537,6 +552,92 @@ function showTeamStatus(message, type) {
 // END TEAMS MANAGEMENT
 // ============================================================================
 
+// ============================================================================
+// PHOTO MANAGEMENT
+// ============================================================================
+
+/**
+ * Open photo modal to view and manage participant photo
+ */
+function openPhotoModal(participantCode, photoPath) {
+    const participant = participants.find(p => p.participant_code === participantCode);
+    if (!participant) return;
+
+    currentPhotoParticipantCode = participantCode;
+    photoModalTitle.textContent = `${participant.first_name} ${participant.last_name}`;
+    photoModalImg.src = photoPath + '?t=' + Date.now(); // Cache bust
+    photoModalStatus.classList.add('hidden');
+    photoModal.classList.remove('hidden');
+}
+
+/**
+ * Close photo modal
+ */
+function closePhotoModal() {
+    photoModal.classList.add('hidden');
+    photoModalImg.src = '';
+    currentPhotoParticipantCode = null;
+    photoModalStatus.classList.add('hidden');
+}
+
+/**
+ * Handle delete photo
+ */
+async function handleDeletePhoto() {
+    if (!currentPhotoParticipantCode) return;
+
+    const participant = participants.find(p => p.participant_code === currentPhotoParticipantCode);
+    if (!participant) return;
+
+    const confirmed = confirm(
+        `Er du sikker på at du vil slette bildet til ${participant.first_name} ${participant.last_name}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        deletePhotoBtn.disabled = true;
+        deletePhotoBtn.textContent = '⏳ Sletter...';
+
+        const response = await fetch(`/api/participants/${currentPhotoParticipantCode}/photo`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete photo');
+        }
+
+        showPhotoModalStatus('Bildet ble slettet', 'success');
+
+        // Reload participants and close modal after short delay
+        setTimeout(async () => {
+            await loadParticipants();
+            closePhotoModal();
+        }, 1000);
+
+    } catch (err) {
+        console.error('Error deleting photo:', err);
+        showPhotoModalStatus('Kunne ikke slette bilde: ' + err.message, 'error');
+    } finally {
+        deletePhotoBtn.disabled = false;
+        deletePhotoBtn.textContent = '🗑️ Slett bilde';
+    }
+}
+
+/**
+ * Show photo modal status message
+ */
+function showPhotoModalStatus(message, type) {
+    photoModalStatus.textContent = message;
+    photoModalStatus.className = `alert ${type}`;
+    photoModalStatus.classList.remove('hidden');
+}
+
+// ============================================================================
+// END PHOTO MANAGEMENT
+// ============================================================================
+
 /**
  * Generate next participant code (SK-YYYY-NNN)
  */
@@ -818,6 +919,10 @@ function renderParticipants() {
                 ${p.qr_code_path
                     ? `<button class="button secondary btn-small" onclick="viewQR('${p.participant_code}')">👁️ QR</button>`
                     : `<button class="button primary btn-small" onclick="generateQR('${p.participant_code}')">📱 QR</button>`
+                }
+                ${p.profile_photo_path
+                    ? `<button class="button secondary btn-small" onclick="viewPhoto('${p.participant_code}', '${p.profile_photo_path}')">📷 Bilde</button>`
+                    : ''
                 }
                 <button class="button secondary btn-small" onclick="deleteParticipant('${p.participant_code}')">🗑️</button>
             </div>
@@ -1108,3 +1213,6 @@ async function handleEditParticipant(e) {
 
 // Make functions globally available
 window.editParticipant = editParticipant;
+window.viewPhoto = function(participantCode, photoPath) {
+    openPhotoModal(participantCode, photoPath);
+};
