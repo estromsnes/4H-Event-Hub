@@ -59,6 +59,8 @@ const closeTeamBtn = document.getElementById('closeTeamBtn');
 const cancelTeamBtn = document.getElementById('cancelTeamBtn');
 const teamModalStatus = document.getElementById('teamModalStatus');
 const teamStatus = document.getElementById('teamStatus');
+const teamMembersSection = document.getElementById('teamMembersSection');
+const teamMembersList = document.getElementById('teamMembersList');
 
 // Photo Modal elements
 const photoModal = document.getElementById('photoModal');
@@ -464,6 +466,10 @@ function openTeamModal(teamId = null) {
         teamDescriptionInput.value = team.description || '';
         teamMaxMembersInput.value = team.max_members;
         currentTeam = team;
+
+        // Show team members section and populate it
+        teamMembersSection.classList.remove('hidden');
+        populateTeamMembers(team.name);
     } else {
         // Add mode
         teamModalTitle.textContent = 'Legg til Lag';
@@ -471,6 +477,9 @@ function openTeamModal(teamId = null) {
         teamIdInput.value = '';
         teamMaxMembersInput.value = 5;
         currentTeam = null;
+
+        // Hide team members section for new teams
+        teamMembersSection.classList.add('hidden');
     }
 
     teamModalStatus.classList.add('hidden');
@@ -485,6 +494,81 @@ function closeTeamModal() {
     teamForm.reset();
     currentTeam = null;
 }
+
+/**
+ * Populate team members list in the edit modal
+ */
+function populateTeamMembers(teamName) {
+    // Filter participants who are on this team with role "Deltaker"
+    const teamMembers = participants.filter(p =>
+        p.team === teamName && p.role === 'Deltaker' && p.active
+    );
+
+    if (teamMembers.length === 0) {
+        teamMembersList.innerHTML = '<p style="color: var(--text-light); text-align: center; padding: 20px;">Ingen deltakere på dette laget ennå</p>';
+        return;
+    }
+
+    teamMembersList.innerHTML = teamMembers.map(member => `
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f9f9f9; border-radius: 8px; border-left: 3px solid var(--primary-color);">
+            ${member.profile_photo_path
+                ? `<img src="${member.profile_photo_path}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;" alt="${member.first_name}">`
+                : '<div style="width: 50px; height: 50px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 2px solid #ccc;">👤</div>'
+            }
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-weight: 600; font-size: 16px;">${member.first_name} ${member.last_name}</div>
+                <div style="font-size: 14px; color: var(--text-light);">${member.participant_code}</div>
+            </div>
+            <button class="button secondary btn-small" onclick="removeParticipantFromTeam('${member.participant_code}', '${teamName}')" style="flex-shrink: 0;">
+                🗑️ Fjern
+            </button>
+        </div>
+    `).join('');
+}
+
+/**
+ * Remove a participant from a team (global function for onclick)
+ */
+window.removeParticipantFromTeam = async function(participantCode, teamName) {
+    const participant = participants.find(p => p.participant_code === participantCode);
+    if (!participant) return;
+
+    const confirmed = confirm(
+        `Er du sikker på at du vil fjerne ${participant.first_name} ${participant.last_name} fra laget "${teamName}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/api/participants/${participantCode}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ...participant,
+                team: null
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to remove participant from team');
+        }
+
+        // Reload participants
+        await loadParticipants();
+
+        // Refresh the team members list
+        populateTeamMembers(teamName);
+
+        showTeamModalStatus(`${participant.first_name} fjernet fra laget`, 'success');
+
+        // Also refresh teams to update member count
+        await loadTeams();
+    } catch (err) {
+        console.error('Error removing participant from team:', err);
+        showTeamModalStatus('Kunne ikke fjerne deltaker: ' + err.message, 'error');
+    }
+};
 
 /**
  * Handle save team (create or update)

@@ -445,6 +445,20 @@
 
             <div id="teamStatus" class="hidden mt-2"></div>
         </div>
+
+        <!-- Team Statistics and Auto-Assign Section -->
+        <div class="section no-print" style="margin-top: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2 style="margin: 0;">Lag-statistikk</h2>
+                <button id="autoAssignTeamsBtn" class="button secondary btn-small">
+                    🎲 Tildel lag automatisk
+                </button>
+            </div>
+            <div id="teamStats" class="team-stats-grid">
+                <p class="text-center" style="color: var(--text-light);">Laster statistikk...</p>
+            </div>
+            <div id="autoAssignStatus" class="hidden mt-2"></div>
+        </div>
         </div>
         <!-- End Teams Tab -->
 
@@ -548,18 +562,12 @@
 
         <!-- Stats Tab -->
         <div id="statsTab" class="tab-content">
-        <!-- Team Statistics Section -->
+        <!-- Stats content can be added here in the future -->
         <div class="section no-print">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h2 style="margin: 0;">Lag-statistikk</h2>
-                <button id="autoAssignTeamsBtn" class="button secondary btn-small">
-                    🎲 Tildel lag automatisk
-                </button>
-            </div>
-            <div id="teamStats" class="team-stats-grid">
-                <p class="text-center" style="color: var(--text-light);">Laster statistikk...</p>
-            </div>
-            <div id="autoAssignStatus" class="hidden mt-2"></div>
+            <h2>Statistikk</h2>
+            <p style="color: var(--text-light); padding: 40px 20px; text-align: center;">
+                Statistikk-funksjoner kommer her i fremtiden
+            </p>
         </div>
         </div>
         <!-- End Stats Tab -->
@@ -737,6 +745,14 @@
                     </button>
                 </div>
             </form>
+
+            <!-- Team Members List (shown when editing) -->
+            <div id="teamMembersSection" class="hidden" style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee;">
+                <h3 style="margin-bottom: 15px; font-size: 18px;">Lagmedlemmer</h3>
+                <div id="teamMembersList" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
 
             <div id="teamModalStatus" class="hidden mt-2"></div>
         </div>
