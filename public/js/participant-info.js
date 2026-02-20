@@ -255,15 +255,78 @@ class ParticipantInfo {
             detailRoleRow.classList.add('hidden');
         }
 
-        if (participant.team_name) {
-            detailTeam.textContent = participant.team_name;
+        if (participant.team) {
+            detailTeam.textContent = participant.team;
             detailTeamRow.classList.remove('hidden');
         } else {
             detailTeamRow.classList.add('hidden');
         }
 
+        // Show team members
+        this.showTeamMembers(participant);
+
         // Show modal
         this.detailModal.classList.remove('hidden');
+    }
+
+    showTeamMembers(participant) {
+        const teamMembersSection = document.getElementById('detailTeamMembersSection');
+        const teamMembersList = document.getElementById('detailTeamMembersList');
+
+        // Check if participant has a team
+        if (!participant.team || participant.team.trim() === '') {
+            teamMembersSection.classList.add('hidden');
+            return;
+        }
+
+        // Find all team members (including current participant)
+        const teamMembers = this.participants.filter(p =>
+            p.team && p.team.trim() !== '' && p.team === participant.team
+        );
+
+        // If only one person on team (just the current participant), hide section
+        if (teamMembers.length <= 1) {
+            teamMembersSection.classList.add('hidden');
+            return;
+        }
+
+        // Sort team members by name
+        teamMembers.sort((a, b) => a.name.localeCompare(b.name, 'no'));
+
+        // Render team members
+        teamMembersList.innerHTML = teamMembers.map(member => {
+            const photoHtml = member.photo_path
+                ? `<img src="${member.photo_path}" alt="${member.name}" class="detail-team-member-photo">`
+                : `<div class="detail-team-member-photo-placeholder">👤</div>`;
+
+            const details = [];
+            if (member.age) details.push(`${member.age} år`);
+            if (member.club) details.push(member.club);
+
+            const isCurrentUser = member.id === participant.id;
+            const currentUserClass = isCurrentUser ? ' current-user' : '';
+
+            return `
+                <div class="detail-team-member-card${currentUserClass}" data-member-id="${member.id}">
+                    ${photoHtml}
+                    <div class="detail-team-member-info">
+                        <div class="detail-team-member-name">${member.name}${isCurrentUser ? ' (deg)' : ''}</div>
+                        <div class="detail-team-member-details">${details.join(' • ')}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Add click handlers to team member cards
+        teamMembersList.querySelectorAll('.detail-team-member-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const memberId = parseInt(card.dataset.memberId);
+                // Switch to viewing this team member
+                this.showParticipantDetail(memberId);
+            });
+        });
+
+        teamMembersSection.classList.remove('hidden');
     }
 
     closeModal() {
