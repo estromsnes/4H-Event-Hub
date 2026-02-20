@@ -48,6 +48,7 @@ const editStatus = document.getElementById('editStatus');
 // Teams elements
 const teamsList = document.getElementById('teamsList');
 const addTeamBtn = document.getElementById('addTeamBtn');
+const bulkCreateTeamsBtn = document.getElementById('bulkCreateTeamsBtn');
 const teamModal = document.getElementById('teamModal');
 const teamModalTitle = document.getElementById('teamModalTitle');
 const teamForm = document.getElementById('teamForm');
@@ -208,6 +209,7 @@ async function initAdmin() {
 
     // Team event listeners
     addTeamBtn.addEventListener('click', () => openTeamModal());
+    bulkCreateTeamsBtn.addEventListener('click', bulkCreateTeams);
     teamForm.addEventListener('submit', handleSaveTeam);
     closeTeamBtn.addEventListener('click', closeTeamModal);
     cancelTeamBtn.addEventListener('click', closeTeamModal);
@@ -245,6 +247,10 @@ async function initAdmin() {
     cancelQuestionBtn.addEventListener('click', closeQuestionModal);
     questionImageInput.addEventListener('change', handleQuestionImagePreview);
     removeQuestionImageBtn.addEventListener('click', handleRemoveQuestionImage);
+
+    // Database management event listeners
+    document.getElementById('loadDummyDataBtn').addEventListener('click', loadDummyData);
+    document.getElementById('resetDatabaseBtn').addEventListener('click', resetDatabase);
 
     // Auto-generate new code when name changes
     firstNameInput.addEventListener('input', generateNextCode);
@@ -517,6 +523,72 @@ function updateTeamDropdowns() {
             ${teamOptions}
         `;
         editTeamSelect.value = currentValue;
+    }
+}
+
+/**
+ * Bulk create teams with auto-generated names
+ */
+async function bulkCreateTeams() {
+    const count = prompt('Hvor mange lag vil du opprette? (1-50)');
+
+    if (!count) return; // User cancelled
+
+    const numTeams = parseInt(count);
+
+    if (isNaN(numTeams) || numTeams < 1 || numTeams > 50) {
+        alert('Vennligst skriv inn et tall mellom 1 og 50');
+        return;
+    }
+
+    const confirmation = confirm(
+        `Vil du opprette ${numTeams} nye lag med auto-genererte navn?\n\n` +
+        `Navnene vil følge mønsteret: Adjektiv + Substantiv som starter på samme bokstav.\n\n` +
+        `Eksempel: "Blide Bjørner", "Raske Rever", "Glade Geiter"`
+    );
+
+    if (!confirmation) return;
+
+    const teamStatus = document.getElementById('teamStatus');
+    teamStatus.textContent = `Oppretter ${numTeams} lag...`;
+    teamStatus.style.background = '#e3f2fd';
+    teamStatus.style.color = '#1565C0';
+    teamStatus.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/api/admin/bulk-create-teams', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ count: numTeams })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Kunne ikke opprette lag');
+        }
+
+        const result = await response.json();
+
+        teamStatus.textContent = `✅ ${result.message}! Lag opprettet: ${result.teams.join(', ')}`;
+        teamStatus.style.background = '#c8e6c9';
+        teamStatus.style.color = '#2e7d32';
+
+        // Reload teams list
+        await loadTeams();
+
+        setTimeout(() => {
+            teamStatus.classList.add('hidden');
+        }, 8000);
+
+    } catch (error) {
+        console.error('Error creating teams:', error);
+        teamStatus.textContent = `❌ ${error.message}`;
+        teamStatus.style.background = '#ffcdd2';
+        teamStatus.style.color = '#c62828';
+
+        setTimeout(() => {
+            teamStatus.classList.add('hidden');
+        }, 5000);
     }
 }
 
@@ -1087,17 +1159,31 @@ async function autoAssignTeams() {
         return;
     }
 
-    // Calculate average max members across all teams (default to 5 if no teams)
-    const avgMaxMembers = teams.length > 0
-        ? Math.round(teams.reduce((sum, t) => sum + t.max_members, 0) / teams.length)
-        : 5;
+    // Count available teams
+    const teamCounts = new Map();
+    teams.forEach(team => {
+        const count = participants.filter(p => p.role === 'Deltaker' && p.team === team.name).length;
+        teamCounts.set(team.name, count);
+    });
 
-    // Calculate number of teams needed
-    const teamsNeeded = Math.ceil(unassignedParticipants.length / avgMaxMembers);
+    const availableTeams = teams.filter(team =>
+        teamCounts.get(team.name) < team.max_members
+    );
+
+    if (availableTeams.length === 0) {
+        showAutoAssignStatus('Alle lag er fulle. Opprett flere lag først.', 'warning');
+        return;
+    }
+
+    const totalAvailableSlots = availableTeams.reduce((sum, team) =>
+        sum + (team.max_members - teamCounts.get(team.name)), 0
+    );
 
     // Confirm action
     const confirmed = confirm(
-        `Dette vil tildele ${unassignedParticipants.length} deltaker(e) til ${teamsNeeded} lag. Fortsette?`
+        `Dette vil tildele ${unassignedParticipants.length} deltaker(e) til tilgjengelige lag.\n` +
+        `Det er ${availableTeams.length} lag med ${totalAvailableSlots} ledige plasser.\n\n` +
+        `Fortsette?`
     );
 
     if (!confirmed) {
@@ -1109,37 +1195,10 @@ async function autoAssignTeams() {
     showAutoAssignStatus('Tildeler lag...', 'info');
 
     try {
-        // Count current team sizes for "Deltaker" role only
-        const teamCounts = new Map();
-        teams.forEach(team => {
-            const count = participants.filter(p => p.role === 'Deltaker' && p.team === team.name).length;
-            teamCounts.set(team.name, count);
-        });
+        // Use ALL teams that have available space (already calculated above)
+        const teamsToUse = availableTeams.slice(); // Make a copy
 
-        // Find teams that aren't full yet
-        const availableTeams = teams.filter(team =>
-            teamCounts.get(team.name) < team.max_members
-        );
-
-        // If we need more teams, add unused ones
-        const unusedTeams = teams.filter(team => teamCounts.get(team.name) === 0);
-        const teamsToUse = [];
-
-        // First, use teams that have space
-        for (const team of availableTeams) {
-            if (teamsToUse.length < teamsNeeded) {
-                teamsToUse.push(team);
-            }
-        }
-
-        // Then add new teams if needed
-        for (const team of unusedTeams) {
-            if (teamsToUse.length < teamsNeeded && !teamsToUse.includes(team)) {
-                teamsToUse.push(team);
-            }
-        }
-
-        // Sort teams by current size (smallest first)
+        // Sort teams by current size (smallest first) to fill evenly
         teamsToUse.sort((a, b) => teamCounts.get(a.name) - teamCounts.get(b.name));
 
         // Shuffle unassigned participants for random distribution
@@ -2491,6 +2550,169 @@ function showQuestionStatus(message, type) {
 
 // ==============================================
 // END QUIZ FUNCTIONS
+// ==============================================
+
+// ==============================================
+// DATABASE MANAGEMENT FUNCTIONS
+// ==============================================
+
+/**
+ * Load dummy data for testing
+ */
+async function loadDummyData() {
+    const confirmation = confirm(
+        '⚠️ Dette vil laste inn testdata i databasen.\n\n' +
+        'Inkluderer:\n' +
+        '• 1 arrangement (Høstleir 2024)\n' +
+        '• 100 deltakere\n' +
+        '• 20 klubber\n' +
+        '• 15 lag\n' +
+        '• 5 quiz-spørsmål\n' +
+        '• 5 skattejakt-poster\n\n' +
+        'Vil du fortsette?'
+    );
+
+    if (!confirmation) return;
+
+    const statusDiv = document.getElementById('databaseStatus');
+    statusDiv.textContent = 'Laster inn testdata...';
+    statusDiv.style.background = '#e3f2fd';
+    statusDiv.style.color = '#1565C0';
+    statusDiv.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/api/admin/load-dummy-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load dummy data');
+        }
+
+        const result = await response.json();
+
+        statusDiv.textContent = `✅ ${result.message}! ${result.stats.participants} deltakere, ${result.stats.quizQuestions} quiz-spørsmål og ${result.stats.checkpoints} skattejakt-poster lastet inn.`;
+        statusDiv.style.background = '#c8e6c9';
+        statusDiv.style.color = '#2e7d32';
+
+        // Reload participants table if on that tab
+        if (document.getElementById('participantsTab').classList.contains('active')) {
+            await loadParticipants();
+        }
+
+        // Reload event info if on that tab
+        if (document.getElementById('eventTab').classList.contains('active')) {
+            await loadEventInfo();
+        }
+
+        // Reload quiz questions if on that tab
+        if (document.getElementById('quizTab').classList.contains('active')) {
+            await loadQuizQuestions();
+        }
+
+        // Reload scavenger checkpoints if on that tab
+        if (document.getElementById('scavengerTab').classList.contains('active')) {
+            await loadCheckpoints();
+        }
+
+        setTimeout(() => {
+            statusDiv.classList.add('hidden');
+        }, 5000);
+
+    } catch (error) {
+        console.error('Error loading dummy data:', error);
+        statusDiv.textContent = '❌ Kunne ikke laste testdata';
+        statusDiv.style.background = '#ffcdd2';
+        statusDiv.style.color = '#c62828';
+
+        setTimeout(() => {
+            statusDiv.classList.add('hidden');
+        }, 5000);
+    }
+}
+
+/**
+ * Reset entire database
+ */
+async function resetDatabase() {
+    const confirmation = confirm(
+        '🚨 ADVARSEL! 🚨\n\n' +
+        'Dette vil PERMANENT SLETTE all data:\n\n' +
+        '• Alle deltakere og bilder\n' +
+        '• Alle quiz-svar og økter\n' +
+        '• Alle lagutfordring-svar\n' +
+        '• Alle skattejakt-økter\n' +
+        '• Alle spill (tic-tac-toe)\n' +
+        '• Arrangement-informasjon\n\n' +
+        'Denne handlingen kan IKKE angres!\n\n' +
+        'Er du HELT SIKKER på at du vil fortsette?'
+    );
+
+    if (!confirmation) return;
+
+    // Double confirmation for safety
+    const doubleCheck = confirm(
+        '⚠️ SISTE SJANSE!\n\n' +
+        'Skriv OK i prompt-vinduet som kommer for å bekrefte at du vil slette ALT.'
+    );
+
+    if (!doubleCheck) return;
+
+    const finalConfirm = prompt('Skriv "SLETT ALT" for å bekrefte:');
+    if (finalConfirm !== 'SLETT ALT') {
+        alert('Handlingen ble avbrutt.');
+        return;
+    }
+
+    const statusDiv = document.getElementById('databaseStatus');
+    statusDiv.textContent = 'Nullstiller database...';
+    statusDiv.style.background = '#ffebee';
+    statusDiv.style.color = '#c62828';
+    statusDiv.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/api/admin/reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to reset database');
+        }
+
+        const result = await response.json();
+
+        statusDiv.textContent = `✅ ${result.message}`;
+        statusDiv.style.background = '#c8e6c9';
+        statusDiv.style.color = '#2e7d32';
+
+        // Reload all relevant sections
+        await loadParticipants();
+        await loadEventInfo();
+        await loadCheckpoints();
+        await loadScavengerLeaderboard();
+        await loadQuizQuestions();
+        await loadQuizLeaderboard();
+
+        setTimeout(() => {
+            statusDiv.classList.add('hidden');
+        }, 5000);
+
+    } catch (error) {
+        console.error('Error resetting database:', error);
+        statusDiv.textContent = '❌ Kunne ikke nullstille database';
+        statusDiv.style.background = '#ffcdd2';
+        statusDiv.style.color = '#c62828';
+
+        setTimeout(() => {
+            statusDiv.classList.add('hidden');
+        }, 5000);
+    }
+}
+
+// ==============================================
+// END DATABASE MANAGEMENT FUNCTIONS
 // ==============================================
 
 // Make functions globally available

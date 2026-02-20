@@ -360,6 +360,7 @@
             <button class="tab-button" data-tab="tictactoe">🎮 Tripp-Trapp-Tresko</button>
             <button class="tab-button" data-tab="quiz">🧠 Quiz</button>
             <button class="tab-button" data-tab="stats">📊 Statistikk</button>
+            <button class="tab-button" data-tab="database">🗄️ Database</button>
         </div>
 
         <!-- Event Tab -->
@@ -437,9 +438,14 @@
         <div class="section no-print">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Administrer Lag</h2>
-                <button id="addTeamBtn" class="button primary btn-small">
-                    ➕ Nytt Lag
-                </button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="bulkCreateTeamsBtn" class="button secondary btn-small">
+                        ✨ Opprett Flere Lag
+                    </button>
+                    <button id="addTeamBtn" class="button primary btn-small">
+                        ➕ Nytt Lag
+                    </button>
+                </div>
             </div>
 
             <div id="teamsList" class="teams-list">
@@ -568,9 +574,9 @@
         <!-- Checkpoint Management Section -->
         <div class="section no-print">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0;">Administrer Checkpoints</h2>
+                <h2 style="margin: 0;">Administrer Sjekkpunkter</h2>
                 <button id="addCheckpointBtn" class="button primary btn-small">
-                    ➕ Nytt Checkpoint
+                    ➕ Nytt Sjekkpunkt
                 </button>
             </div>
 
@@ -646,6 +652,58 @@
         </div>
         </div>
         <!-- End Stats Tab -->
+
+        <!-- Database Tab -->
+        <div id="databaseTab" class="tab-content">
+            <div class="section no-print">
+                <h2>Database-administrasjon</h2>
+                <p style="color: var(--text-light); margin-bottom: 30px;">
+                    ⚠️ <strong>ADVARSEL:</strong> Disse funksjonene påvirker hele databasen. Bruk med forsiktighet!
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; max-width: 1000px;">
+                    <!-- Load Dummy Data -->
+                    <div style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); padding: 30px; border-radius: 15px; border: 2px solid #2196F3;">
+                        <h3 style="margin-top: 0; color: #1565C0;">📦 Last inn testdata</h3>
+                        <p style="color: #424242; margin-bottom: 20px;">
+                            Laster inn dummy-data for testing:
+                        </p>
+                        <ul style="color: #616161; margin-bottom: 25px; line-height: 1.8;">
+                            <li>1 arrangement (Høstleir 2024)</li>
+                            <li>100 deltakere med norske navn</li>
+                            <li>20 forskjellige 4H-klubber</li>
+                            <li>15 lag (70% av deltakere får lag)</li>
+                            <li>Varierende roller og aldre</li>
+                        </ul>
+                        <button id="loadDummyDataBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 15px;">
+                            📦 Last inn testdata
+                        </button>
+                    </div>
+
+                    <!-- Reset Database -->
+                    <div style="background: linear-gradient(135deg, #ffebee, #ffcdd2); padding: 30px; border-radius: 15px; border: 2px solid #f44336;">
+                        <h3 style="margin-top: 0; color: #c62828;">🗑️ Nullstill database</h3>
+                        <p style="color: #424242; margin-bottom: 20px;">
+                            <strong>FARE:</strong> Sletter all data permanent:
+                        </p>
+                        <ul style="color: #616161; margin-bottom: 25px; line-height: 1.8;">
+                            <li>Alle deltakere og bilder</li>
+                            <li>Alle quiz-svar og økter</li>
+                            <li>Alle lagutfordring-svar</li>
+                            <li>Alle skattejakt-økter</li>
+                            <li>Alle spill (tic-tac-toe)</li>
+                            <li>Arrangement-informasjon</li>
+                        </ul>
+                        <button id="resetDatabaseBtn" class="button" style="width: 100%; font-size: 18px; padding: 15px; background: linear-gradient(135deg, #f44336, #d32f2f); color: white;">
+                            🗑️ Nullstill database
+                        </button>
+                    </div>
+                </div>
+
+                <div id="databaseStatus" class="hidden" style="margin-top: 30px; padding: 20px; border-radius: 12px; text-align: center; font-size: 18px; font-weight: 600;"></div>
+            </div>
+        </div>
+        <!-- End Database Tab -->
 
     </div>
     <!-- End admin-container -->

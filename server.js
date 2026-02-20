@@ -39,6 +39,7 @@ const teamChallengeRouter = require('./routes/team-challenge');
 const scavengerHuntRouter = require('./routes/scavenger-hunt');
 const ticTacToeRouter = require('./routes/tic-tac-toe');
 const quizRouter = require('./routes/quiz');
+const adminRouter = require('./routes/admin');
 
 app.use('/api/participants', participantsRouter);
 app.use('/api/qr', qrRouter);
@@ -48,6 +49,7 @@ app.use('/api/team-challenge', teamChallengeRouter);
 app.use('/api/scavenger', scavengerHuntRouter);
 app.use('/api/tic-tac-toe', ticTacToeRouter);
 app.use('/api/quiz', quizRouter);
+app.use('/api/admin', adminRouter);
 
 // Root redirect to profile page (main interface)
 app.get('/', (req, res) => {
