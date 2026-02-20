@@ -16,6 +16,7 @@ router.post('/reset', async (req, res) => {
             'quiz_sessions',
             'quiz_questions',
             'tic_tac_toe_games',
+            'program',
             'teams',
             'participants'
         ];

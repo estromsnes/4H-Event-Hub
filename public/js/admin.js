@@ -134,6 +134,24 @@ const questionModalStatus = document.getElementById('questionModalStatus');
 const questionStatus = document.getElementById('questionStatus');
 const quizLeaderboard = document.getElementById('quizLeaderboard');
 
+// Program elements
+const programList = document.getElementById('programList');
+const addProgramBtn = document.getElementById('addProgramBtn');
+const programModal = document.getElementById('programModal');
+const programModalTitle = document.getElementById('programModalTitle');
+const programForm = document.getElementById('programForm');
+const programIdInput = document.getElementById('programId');
+const programTitleInput = document.getElementById('programTitle');
+const programDescriptionInput = document.getElementById('programDescription');
+const programStartTimeInput = document.getElementById('programStartTime');
+const programEndTimeInput = document.getElementById('programEndTime');
+const programLocationInput = document.getElementById('programLocation');
+const programDayInput = document.getElementById('programDay');
+const closeProgramBtn = document.getElementById('closeProgramBtn');
+const cancelProgramBtn = document.getElementById('cancelProgramBtn');
+const programModalStatus = document.getElementById('programModalStatus');
+const programStatus = document.getElementById('programStatus');
+
 // State
 let participants = [];
 let teams = [];
@@ -144,6 +162,8 @@ let currentPhotoParticipantCode = null;
 let currentPhotoTeamName = null;
 let checkpoints = [];
 let currentCheckpoint = null;
+let programItems = [];
+let currentProgramItem = null;
 let questions = [];
 let currentQuestion = null;
 
@@ -202,6 +222,9 @@ async function initAdmin() {
     await loadQuizQuestions();
     await loadQuizLeaderboard();
 
+    // Load program data
+    await loadProgram();
+
     // Setup event listeners
     eventInfoForm.addEventListener('submit', handleSaveEventInfo);
     eventLogoInput.addEventListener('change', handleLogoPreview);
@@ -247,6 +270,12 @@ async function initAdmin() {
     cancelQuestionBtn.addEventListener('click', closeQuestionModal);
     questionImageInput.addEventListener('change', handleQuestionImagePreview);
     removeQuestionImageBtn.addEventListener('click', handleRemoveQuestionImage);
+
+    // Program event listeners
+    addProgramBtn.addEventListener('click', () => openProgramModal());
+    programForm.addEventListener('submit', handleSaveProgram);
+    closeProgramBtn.addEventListener('click', closeProgramModal);
+    cancelProgramBtn.addEventListener('click', closeProgramModal);
 
     // Database management event listeners
     document.getElementById('loadDummyDataBtn').addEventListener('click', loadDummyData);
@@ -2551,6 +2580,193 @@ function showQuestionStatus(message, type) {
 // ==============================================
 // END QUIZ FUNCTIONS
 // ==============================================
+
+// ==============================================
+// PROGRAM FUNCTIONS
+// ==============================================
+
+/**
+ * Load program items
+ */
+async function loadProgram() {
+    try {
+        const response = await fetch('/api/program');
+        if (!response.ok) throw new Error('Failed to load program');
+
+        programItems = await response.json();
+        renderProgram();
+    } catch (error) {
+        console.error('Error loading program:', error);
+        programList.innerHTML = '<p class="text-center text-error">Kunne ikke laste program</p>';
+    }
+}
+
+/**
+ * Render program items
+ */
+function renderProgram() {
+    if (programItems.length === 0) {
+        programList.innerHTML = '<p class="text-center" style="color: var(--text-light);">Ingen programpunkter lagt til ennå</p>';
+        return;
+    }
+
+    // Group by day
+    const days = {};
+    programItems.forEach(item => {
+        if (!days[item.day_number]) days[item.day_number] = [];
+        days[item.day_number].push(item);
+    });
+
+    let html = '';
+    Object.keys(days).sort((a, b) => a - b).forEach(dayNum => {
+        html += `<div style="margin-bottom: 20px;">
+            <h3 style="margin-bottom: 10px;">Dag ${dayNum}</h3>`;
+
+        days[dayNum].forEach(item => {
+            html += `
+            <div class="card" style="padding: 15px; margin-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 5px;">
+                            <span style="font-weight: 600; color: var(--primary);">${item.start_time} - ${item.end_time}</span>
+                            ${item.location ? `<span style="color: var(--text-light);">📍 ${item.location}</span>` : ''}
+                        </div>
+                        <h4 style="margin: 5px 0;">${item.title}</h4>
+                        ${item.description ? `<p style="margin: 5px 0 0 0; color: var(--text-light);">${item.description}</p>` : ''}
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="openProgramModal(${item.id})" class="button secondary btn-small">✏️ Rediger</button>
+                        <button onclick="deleteProgram(${item.id})" class="button danger btn-small">🗑️</button>
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        html += '</div>';
+    });
+
+    programList.innerHTML = html;
+}
+
+/**
+ * Open program modal
+ */
+function openProgramModal(itemId = null) {
+    if (itemId) {
+        // Edit mode
+        const item = programItems.find(p => p.id === itemId);
+        if (!item) return;
+
+        programModalTitle.textContent = 'Rediger Programpunkt';
+        programIdInput.value = item.id;
+        programTitleInput.value = item.title;
+        programDescriptionInput.value = item.description || '';
+        programStartTimeInput.value = item.start_time;
+        programEndTimeInput.value = item.end_time;
+        programLocationInput.value = item.location || '';
+        programDayInput.value = item.day_number || 1;
+        currentProgramItem = item;
+    } else {
+        // Add mode
+        programModalTitle.textContent = 'Legg til Programpunkt';
+        programForm.reset();
+        programIdInput.value = '';
+        programDayInput.value = 1;
+        currentProgramItem = null;
+    }
+
+    programModalStatus.classList.add('hidden');
+    programModal.classList.remove('hidden');
+}
+
+/**
+ * Close program modal
+ */
+function closeProgramModal() {
+    programModal.classList.add('hidden');
+    programForm.reset();
+    currentProgramItem = null;
+}
+
+/**
+ * Handle save program
+ */
+async function handleSaveProgram(e) {
+    e.preventDefault();
+
+    const programData = {
+        title: programTitleInput.value.trim(),
+        description: programDescriptionInput.value.trim(),
+        start_time: programStartTimeInput.value,
+        end_time: programEndTimeInput.value,
+        location: programLocationInput.value.trim(),
+        day_number: parseInt(programDayInput.value) || 1
+    };
+
+    const itemId = programIdInput.value;
+    const url = itemId ? `/api/program/${itemId}` : '/api/program';
+    const method = itemId ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(programData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Kunne ikke lagre programpunkt');
+        }
+
+        await loadProgram();
+        closeProgramModal();
+
+        programStatus.textContent = itemId ? '✅ Programpunkt oppdatert' : '✅ Programpunkt opprettet';
+        programStatus.className = 'alert success';
+        programStatus.classList.remove('hidden');
+        setTimeout(() => programStatus.classList.add('hidden'), 3000);
+
+    } catch (error) {
+        console.error('Error saving program:', error);
+        programModalStatus.textContent = '❌ ' + error.message;
+        programModalStatus.className = 'alert error';
+        programModalStatus.classList.remove('hidden');
+    }
+}
+
+/**
+ * Delete program item
+ */
+async function deleteProgram(itemId) {
+    const item = programItems.find(p => p.id === itemId);
+    if (!item) return;
+
+    if (!confirm(`Vil du slette programpunkt "${item.title}"?`)) return;
+
+    try {
+        const response = await fetch(`/api/program/${itemId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Kunne ikke slette programpunkt');
+        }
+
+        await loadProgram();
+
+        programStatus.textContent = '✅ Programpunkt slettet';
+        programStatus.className = 'alert success';
+        programStatus.classList.remove('hidden');
+        setTimeout(() => programStatus.classList.add('hidden'), 3000);
+
+    } catch (error) {
+        console.error('Error deleting program:', error);
+        programStatus.textContent = '❌ Kunne ikke slette programpunkt';
+        programStatus.className = 'alert error';
+        programStatus.classList.remove('hidden');
+    }
+}
 
 // ==============================================
 // DATABASE MANAGEMENT FUNCTIONS

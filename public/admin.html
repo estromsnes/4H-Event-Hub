@@ -359,6 +359,7 @@
             <button class="tab-button" data-tab="scavenger">🎯 QR Skattejakt</button>
             <button class="tab-button" data-tab="tictactoe">🎮 Tripp-Trapp-Tresko</button>
             <button class="tab-button" data-tab="quiz">🧠 Quiz</button>
+            <button class="tab-button" data-tab="program">📅 Program</button>
             <button class="tab-button" data-tab="stats">📊 Statistikk</button>
             <button class="tab-button" data-tab="database">🗄️ Database</button>
         </div>
@@ -640,6 +641,25 @@
             </div>
         </div>
         <!-- End Quiz Tab -->
+
+        <!-- Program Tab -->
+        <div id="programTab" class="tab-content">
+            <div class="section no-print">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Administrer Program</h2>
+                    <button id="addProgramBtn" class="button primary btn-small">
+                        ➕ Nytt Programpunkt
+                    </button>
+                </div>
+
+                <div id="programList" style="display: flex; flex-direction: column; gap: 15px;">
+                    <p class="text-center" style="color: var(--text-light);">Laster program...</p>
+                </div>
+
+                <div id="programStatus" class="hidden mt-2"></div>
+            </div>
+        </div>
+        <!-- End Program Tab -->
 
         <!-- Stats Tab -->
         <div id="statsTab" class="tab-content">
@@ -1021,6 +1041,61 @@
             </form>
 
             <div id="questionModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Program Modal (Add/Edit) -->
+    <div id="programModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="programModalTitle">Legg til Programpunkt</h2>
+                <button id="closeProgramBtn" class="close-btn">&times;</button>
+            </div>
+
+            <form id="programForm">
+                <input type="hidden" id="programId">
+
+                <div class="form-group">
+                    <label for="programTitle">Tittel *</label>
+                    <input type="text" id="programTitle" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="programDescription">Beskrivelse</label>
+                    <textarea id="programDescription" rows="3"></textarea>
+                </div>
+
+                <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="programStartTime">Starttid *</label>
+                        <input type="time" id="programStartTime" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="programEndTime">Sluttid *</label>
+                        <input type="time" id="programEndTime" required>
+                    </div>
+                </div>
+
+                <div class="form-row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="programLocation">Sted</label>
+                        <input type="text" id="programLocation">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="programDay">Dag</label>
+                        <input type="number" id="programDay" min="1" value="1">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" id="cancelProgramBtn" class="button secondary">Avbryt</button>
+                    <button type="submit" class="button primary">💾 Lagre</button>
+                </div>
+            </form>
+
+            <div id="programModalStatus" class="hidden mt-2"></div>
         </div>
     </div>
 
