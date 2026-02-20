@@ -17,11 +17,6 @@
         <div style="width: 60px;"></div> <!-- Spacer for center alignment -->
     </div>
 
-    <!-- Event info banner (optional) -->
-    <div id="eventBanner" class="event-banner hidden">
-        <p id="bannerEventInfo"></p>
-    </div>
-
     <!-- Scanner View (Initial state) -->
     <div id="scannerView" class="view">
         <div class="scanner-container">
@@ -91,14 +86,14 @@
                     📸 Ta Selfie
                 </button>
 
-                <button id="scanAgainBtn" class="button secondary">
+                <button id="scanAgainBtn" class="button secondary large-button">
                     🔄 Skann Ny Kode
                 </button>
             </div>
 
             <!-- Team Members Section -->
             <div id="teamMembersSection" class="team-members-section hidden">
-                <h2 class="team-section-title">🏆 Ditt Lag</h2>
+                <h2 class="team-section-title" id="teamSectionTitle">🏆 Ditt Lag</h2>
                 <div id="teamMembersList" class="team-members-list">
                     <!-- Dynamically populated -->
                 </div>

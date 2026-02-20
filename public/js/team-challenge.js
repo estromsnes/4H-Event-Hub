@@ -117,18 +117,53 @@ class TeamChallengeManager {
         document.getElementById('barcodeInput').focus();
     }
 
+    /**
+     * Decode barcode scanner keyboard layout issues
+     * Some barcode scanners send JSON with wrong keyboard mapping
+     */
+    decodeBarcodeInput(input) {
+        // Map Norwegian keyboard chars back to JSON chars
+        const charMap = {
+            'Å': '{',
+            'Æ': '"',
+            'Ø': ':',
+            '^': '}',
+            '¨': '[',
+            '\'': ']',
+            '§': ','
+        };
+
+        // Try to detect if this is garbled JSON
+        if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
+            let decoded = input;
+            for (const [garbled, correct] of Object.entries(charMap)) {
+                decoded = decoded.split(garbled).join(correct);
+            }
+            return decoded;
+        }
+
+        // Also replace + with - for participant codes (SK+2026+004 → SK-2026-004)
+        return input.replace(/\+/g, '-');
+    }
+
     async handleScan(participantCode) {
         if (!this.isScanning) return;
 
         try {
+            // Decode potential keyboard layout issues
+            const decodedInput = this.decodeBarcodeInput(participantCode);
+
             // Parse QR code if JSON format
-            let code = participantCode;
+            let code = decodedInput;
             try {
-                const data = JSON.parse(participantCode);
+                const data = JSON.parse(decodedInput);
                 if (data.type === 'participant' && data.code) {
                     code = data.code;
                 }
-            } catch {}
+            } catch (parseErr) {
+                // If JSON parsing fails, try using the raw input as code
+                console.log('Could not parse as JSON, using raw code:', decodedInput);
+            }
 
             // Debounce: Prevent scanning same code multiple times in quick succession
             const now = Date.now();

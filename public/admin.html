@@ -358,6 +358,7 @@
             <button class="tab-button" data-tab="participants">👥 Deltakere</button>
             <button class="tab-button" data-tab="scavenger">🎯 QR Skattejakt</button>
             <button class="tab-button" data-tab="tictactoe">🎮 Tripp-Trapp-Tresko</button>
+            <button class="tab-button" data-tab="quiz">🧠 Quiz</button>
             <button class="tab-button" data-tab="stats">📊 Statistikk</button>
         </div>
 
@@ -606,6 +607,34 @@
         </div>
         <!-- End Tic-Tac-Toe Tab -->
 
+        <!-- Quiz Tab -->
+        <div id="quizTab" class="tab-content">
+            <!-- Quiz Questions Management Section -->
+            <div class="section no-print">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Administrer Quiz-spørsmål</h2>
+                    <button id="addQuestionBtn" class="button primary btn-small">
+                        ➕ Nytt Spørsmål
+                    </button>
+                </div>
+
+                <div id="questionsList" style="display: flex; flex-direction: column; gap: 15px;">
+                    <p class="text-center" style="color: var(--text-light);">Laster spørsmål...</p>
+                </div>
+
+                <div id="questionStatus" class="hidden mt-2"></div>
+            </div>
+
+            <!-- Quiz Leaderboard Section -->
+            <div class="section no-print" style="margin-top: 30px;">
+                <h2>Resultattavle - Quiz</h2>
+                <div id="quizLeaderboard">
+                    <p class="text-center" style="color: var(--text-light);">Laster resultater...</p>
+                </div>
+            </div>
+        </div>
+        <!-- End Quiz Tab -->
+
         <!-- Stats Tab -->
         <div id="statsTab" class="tab-content">
         <!-- Stats content can be added here in the future -->
@@ -841,6 +870,99 @@
             </form>
 
             <div id="checkpointModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Quiz Question Modal (Add/Edit) -->
+    <div id="questionModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="questionModalTitle">Legg til Spørsmål</h2>
+                <button id="closeQuestionBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="questionForm">
+                <input type="hidden" id="questionId">
+
+                <div class="form-group">
+                    <label for="questionText">Spørsmål *</label>
+                    <textarea id="questionText" rows="3" required placeholder="Skriv spørsmålet her..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="questionImage">Bilde (valgfritt)</label>
+                    <input type="file" id="questionImage" accept="image/*">
+                    <div id="questionImagePreview" class="logo-preview hidden">
+                        <img id="questionImagePreviewImg" src="" alt="Question image preview">
+                        <button type="button" id="removeQuestionImage" class="button secondary btn-small">Fjern bilde</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="optionA">Alternativ A *</label>
+                    <input type="text" id="optionA" required placeholder="Første svaralternativ">
+                </div>
+
+                <div class="form-group">
+                    <label for="optionB">Alternativ B *</label>
+                    <input type="text" id="optionB" required placeholder="Andre svaralternativ">
+                </div>
+
+                <div class="form-group">
+                    <label for="optionC">Alternativ C *</label>
+                    <input type="text" id="optionC" required placeholder="Tredje svaralternativ">
+                </div>
+
+                <div class="form-group">
+                    <label for="optionD">Alternativ D *</label>
+                    <input type="text" id="optionD" required placeholder="Fjerde svaralternativ">
+                </div>
+
+                <div class="form-group">
+                    <label>Riktige svar * (velg ett eller flere)</label>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="correctOption" value="A" class="correct-option-checkbox">
+                            <span>A</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="correctOption" value="B" class="correct-option-checkbox">
+                            <span>B</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="correctOption" value="C" class="correct-option-checkbox">
+                            <span>C</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" name="correctOption" value="D" class="correct-option-checkbox">
+                            <span>D</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="questionTimeLimit">Tidsbegrensning (sekunder)</label>
+                        <input type="number" id="questionTimeLimit" min="5" max="300" value="30" placeholder="30">
+                        <small style="color: var(--text-light); font-size: 14px;">Standard: 30 sekunder</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="questionOrder">Rekkefølge</label>
+                        <input type="number" id="questionOrder" min="1" value="999" placeholder="999">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Lagre
+                    </button>
+                    <button type="button" id="cancelQuestionBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="questionModalStatus" class="hidden mt-2"></div>
         </div>
     </div>
 

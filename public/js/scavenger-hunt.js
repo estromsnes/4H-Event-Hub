@@ -192,20 +192,51 @@ class ScavengerHunt {
         this.checkpoints = await response.json();
     }
 
+    /**
+     * Decode barcode scanner keyboard layout issues
+     * Some barcode scanners send JSON with wrong keyboard mapping
+     */
+    decodeBarcodeInput(input) {
+        // Map Norwegian keyboard chars back to JSON chars
+        const charMap = {
+            'Å': '{',
+            'Æ': '"',
+            'Ø': ':',
+            '^': '}',
+            '¨': '[',
+            '\'': ']',
+            '§': ','
+        };
+
+        // Try to detect if this is garbled JSON
+        if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
+            let decoded = input;
+            for (const [garbled, correct] of Object.entries(charMap)) {
+                decoded = decoded.split(garbled).join(correct);
+            }
+            return decoded;
+        }
+
+        // Also replace + with - for participant codes (SK+2026+004 → SK-2026-004)
+        return input.replace(/\+/g, '-');
+    }
+
     async handleParticipantScan(qrData) {
+        // Decode potential keyboard layout issues
+        const decodedData = this.decodeBarcodeInput(qrData);
         let participantCode;
 
         try {
             // Try to parse as JSON first
-            const parsed = JSON.parse(qrData);
+            const parsed = JSON.parse(decodedData);
             if (parsed.type === 'participant' && parsed.code) {
                 participantCode = parsed.code;
             } else {
-                participantCode = qrData;
+                participantCode = decodedData;
             }
         } catch (e) {
             // Not JSON, use as-is
-            participantCode = qrData;
+            participantCode = decodedData;
         }
 
         // Validate participant code format (should be like SK-2026-001)
@@ -346,17 +377,19 @@ class ScavengerHunt {
     }
 
     async handleScan(qrData) {
+        // Decode potential keyboard layout issues
+        const decodedData = this.decodeBarcodeInput(qrData);
         let qrCode;
 
         try {
             // Try to parse as JSON first (from scanner.js format)
-            const parsed = JSON.parse(qrData);
+            const parsed = JSON.parse(decodedData);
             if (parsed.type === 'checkpoint' || parsed.code) {
                 qrCode = parsed.code;
             }
         } catch (e) {
             // Not JSON, use as-is
-            qrCode = qrData;
+            qrCode = decodedData;
         }
 
         // Check if this is a checkpoint QR code

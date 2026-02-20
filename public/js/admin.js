@@ -109,6 +109,30 @@ const checkpointModalStatus = document.getElementById('checkpointModalStatus');
 const checkpointStatus = document.getElementById('checkpointStatus');
 const scavengerLeaderboard = document.getElementById('scavengerLeaderboard');
 
+// Quiz elements
+const questionsList = document.getElementById('questionsList');
+const addQuestionBtn = document.getElementById('addQuestionBtn');
+const questionModal = document.getElementById('questionModal');
+const questionModalTitle = document.getElementById('questionModalTitle');
+const questionForm = document.getElementById('questionForm');
+const questionIdInput = document.getElementById('questionId');
+const questionTextInput = document.getElementById('questionText');
+const questionImageInput = document.getElementById('questionImage');
+const questionImagePreview = document.getElementById('questionImagePreview');
+const questionImagePreviewImg = document.getElementById('questionImagePreviewImg');
+const removeQuestionImageBtn = document.getElementById('removeQuestionImage');
+const optionAInput = document.getElementById('optionA');
+const optionBInput = document.getElementById('optionB');
+const optionCInput = document.getElementById('optionC');
+const optionDInput = document.getElementById('optionD');
+const questionTimeLimitInput = document.getElementById('questionTimeLimit');
+const questionOrderInput = document.getElementById('questionOrder');
+const closeQuestionBtn = document.getElementById('closeQuestionBtn');
+const cancelQuestionBtn = document.getElementById('cancelQuestionBtn');
+const questionModalStatus = document.getElementById('questionModalStatus');
+const questionStatus = document.getElementById('questionStatus');
+const quizLeaderboard = document.getElementById('quizLeaderboard');
+
 // State
 let participants = [];
 let teams = [];
@@ -119,6 +143,8 @@ let currentPhotoParticipantCode = null;
 let currentPhotoTeamName = null;
 let checkpoints = [];
 let currentCheckpoint = null;
+let questions = [];
+let currentQuestion = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -171,6 +197,10 @@ async function initAdmin() {
     // Load tic-tac-toe data
     await loadTicTacToeGames();
 
+    // Load quiz data
+    await loadQuizQuestions();
+    await loadQuizLeaderboard();
+
     // Setup event listeners
     eventInfoForm.addEventListener('submit', handleSaveEventInfo);
     eventLogoInput.addEventListener('change', handleLogoPreview);
@@ -207,6 +237,14 @@ async function initAdmin() {
     checkpointForm.addEventListener('submit', handleSaveCheckpoint);
     closeCheckpointBtn.addEventListener('click', closeCheckpointModal);
     cancelCheckpointBtn.addEventListener('click', closeCheckpointModal);
+
+    // Quiz event listeners
+    addQuestionBtn.addEventListener('click', () => openQuestionModal());
+    questionForm.addEventListener('submit', handleSaveQuestion);
+    closeQuestionBtn.addEventListener('click', closeQuestionModal);
+    cancelQuestionBtn.addEventListener('click', closeQuestionModal);
+    questionImageInput.addEventListener('change', handleQuestionImagePreview);
+    removeQuestionImageBtn.addEventListener('click', handleRemoveQuestionImage);
 
     // Auto-generate new code when name changes
     firstNameInput.addEventListener('input', generateNextCode);
@@ -2053,6 +2091,406 @@ window.deleteTicTacToeGame = async function(gameId, player1, player2) {
 
 // ==============================================
 // END TIC-TAC-TOE FUNCTIONS
+// ==============================================
+
+// ==============================================
+// QUIZ FUNCTIONS
+// ==============================================
+
+/**
+ * Load quiz questions from API
+ */
+async function loadQuizQuestions() {
+    try {
+        const response = await fetch('/api/quiz/questions');
+        if (!response.ok) {
+            throw new Error('Failed to load questions');
+        }
+
+        questions = await response.json();
+        renderQuestions();
+    } catch (err) {
+        console.error('Error loading questions:', err);
+        questionsList.innerHTML = '<p class="text-center" style="color: var(--error);">Kunne ikke laste spørsmål</p>';
+    }
+}
+
+/**
+ * Render questions list
+ */
+function renderQuestions() {
+    if (questions.length === 0) {
+        questionsList.innerHTML = '<p class="text-center" style="color: var(--text-light);">Ingen spørsmål opprettet ennå. Klikk "+ Nytt Spørsmål" for å legge til.</p>';
+        return;
+    }
+
+    questionsList.innerHTML = questions.map((question, index) => {
+        const correctAnswers = question.correct_option ? question.correct_option.split(',') : [];
+
+        return `
+        <div class="card" style="position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px;">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <span style="font-size: 24px; font-weight: bold; color: var(--primary-color);">#${question.order_number}</span>
+                        <h3 style="margin: 0;">Spørsmål ${index + 1}</h3>
+                        <span style="background: #2196F3; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">⏱️ ${question.time_limit_seconds || 30}s</span>
+                        ${question.active ? '' : '<span style="background: #999; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Inaktiv</span>'}
+                    </div>
+                    <p style="margin: 10px 0; color: var(--text-dark);">${question.question_text}</p>
+                    ${question.image_path ? `<div style="margin: 10px 0;"><img src="${question.image_path}" style="max-width: 200px; border-radius: 8px; border: 2px solid #ddd;" alt="Question image"></div>` : ''}
+                    <div style="margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 8px;">
+                        <div style="font-size: 14px; margin-bottom: 8px;">
+                            <strong>A:</strong> ${question.option_a}
+                            ${correctAnswers.includes('A') ? '<span style="color: #4CAF50; margin-left: 8px;">✓</span>' : ''}
+                        </div>
+                        <div style="font-size: 14px; margin-bottom: 8px;">
+                            <strong>B:</strong> ${question.option_b}
+                            ${correctAnswers.includes('B') ? '<span style="color: #4CAF50; margin-left: 8px;">✓</span>' : ''}
+                        </div>
+                        <div style="font-size: 14px; margin-bottom: 8px;">
+                            <strong>C:</strong> ${question.option_c}
+                            ${correctAnswers.includes('C') ? '<span style="color: #4CAF50; margin-left: 8px;">✓</span>' : ''}
+                        </div>
+                        <div style="font-size: 14px;">
+                            <strong>D:</strong> ${question.option_d}
+                            ${correctAnswers.includes('D') ? '<span style="color: #4CAF50; margin-left: 8px;">✓</span>' : ''}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="button secondary btn-small" onclick="editQuestion(${question.id})">
+                        ✏️ Rediger
+                    </button>
+                    <button class="button secondary btn-small" onclick="deleteQuestion(${question.id})">
+                        🗑️ Slett
+                    </button>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Open question modal for adding or editing
+ */
+function openQuestionModal(questionId = null) {
+    if (questionId) {
+        // Edit mode
+        const question = questions.find(q => q.id === questionId);
+        if (!question) return;
+
+        questionModalTitle.textContent = 'Rediger Spørsmål';
+        questionIdInput.value = question.id;
+        questionTextInput.value = question.question_text;
+        optionAInput.value = question.option_a;
+        optionBInput.value = question.option_b;
+        optionCInput.value = question.option_c;
+        optionDInput.value = question.option_d;
+        questionTimeLimitInput.value = question.time_limit_seconds || 30;
+        questionOrderInput.value = question.order_number;
+
+        // Clear all checkboxes first
+        document.querySelectorAll('.correct-option-checkbox').forEach(cb => cb.checked = false);
+
+        // Set correct option checkboxes (support comma-separated values)
+        const correctAnswers = question.correct_option ? question.correct_option.split(',') : [];
+        correctAnswers.forEach(answer => {
+            const checkbox = document.querySelector(`.correct-option-checkbox[value="${answer.trim()}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+
+        // Show image preview if exists
+        if (question.image_path) {
+            questionImagePreviewImg.src = question.image_path + '?t=' + Date.now();
+            questionImagePreview.classList.remove('hidden');
+        }
+
+        currentQuestion = question;
+    } else {
+        // Add mode
+        questionModalTitle.textContent = 'Legg til Spørsmål';
+        questionForm.reset();
+        questionIdInput.value = '';
+        questionTimeLimitInput.value = 30;
+        questionOrderInput.value = questions.length + 1;
+        questionImagePreview.classList.add('hidden');
+
+        // Clear all checkboxes
+        document.querySelectorAll('.correct-option-checkbox').forEach(cb => cb.checked = false);
+
+        currentQuestion = null;
+    }
+
+    questionModalStatus.classList.add('hidden');
+    questionModal.classList.remove('hidden');
+}
+
+/**
+ * Close question modal
+ */
+function closeQuestionModal() {
+    questionModal.classList.add('hidden');
+    questionForm.reset();
+    questionImagePreview.classList.add('hidden');
+    currentQuestion = null;
+}
+
+/**
+ * Handle question image preview
+ */
+function handleQuestionImagePreview(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            questionImagePreviewImg.src = e.target.result;
+            questionImagePreview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+/**
+ * Handle remove question image
+ */
+function handleRemoveQuestionImage() {
+    questionImageInput.value = '';
+    questionImagePreview.classList.add('hidden');
+    questionImagePreviewImg.src = '';
+
+    // If editing and image exists, mark for deletion
+    if (currentQuestion && currentQuestion.image_path) {
+        deleteQuestionImageOnServer(currentQuestion.id);
+    }
+}
+
+/**
+ * Delete question image on server
+ */
+async function deleteQuestionImageOnServer(questionId) {
+    try {
+        const response = await fetch(`/api/quiz/questions/${questionId}/image`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete image');
+        }
+
+        // Reload questions to get updated data
+        await loadQuizQuestions();
+    } catch (err) {
+        console.error('Error deleting question image:', err);
+    }
+}
+
+/**
+ * Handle save question (create or update)
+ */
+async function handleSaveQuestion(e) {
+    e.preventDefault();
+
+    // Get correct options from checkboxes (can be multiple)
+    const checkedBoxes = document.querySelectorAll('.correct-option-checkbox:checked');
+    if (checkedBoxes.length === 0) {
+        showQuestionModalStatus('Du må velge minst ett riktig svar', 'error');
+        return;
+    }
+
+    const correctOptions = Array.from(checkedBoxes).map(cb => cb.value).sort().join(',');
+
+    const data = {
+        question_text: questionTextInput.value.trim(),
+        option_a: optionAInput.value.trim(),
+        option_b: optionBInput.value.trim(),
+        option_c: optionCInput.value.trim(),
+        option_d: optionDInput.value.trim(),
+        correct_option: correctOptions,
+        time_limit_seconds: parseInt(questionTimeLimitInput.value) || 30,
+        order_number: parseInt(questionOrderInput.value) || 999,
+        active: 1
+    };
+
+    if (!data.question_text || !data.option_a || !data.option_b || !data.option_c || !data.option_d) {
+        showQuestionModalStatus('Alle felter er påkrevd', 'error');
+        return;
+    }
+
+    try {
+        let response;
+        let questionId = questionIdInput.value;
+
+        if (questionId) {
+            // Update existing question
+            response = await fetch(`/api/quiz/questions/${questionId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } else {
+            // Create new question
+            response = await fetch('/api/quiz/questions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        }
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save question');
+        }
+
+        const savedQuestion = await response.json();
+        questionId = savedQuestion.id;
+
+        // Upload image if file is selected
+        if (questionImageInput.files.length > 0) {
+            const formData = new FormData();
+            formData.append('image', questionImageInput.files[0]);
+
+            const imageResponse = await fetch(`/api/quiz/questions/${questionId}/image`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!imageResponse.ok) {
+                console.error('Failed to upload image');
+            }
+        }
+
+        await loadQuizQuestions();
+        closeQuestionModal();
+        showQuestionStatus(
+            questionIdInput.value ? 'Spørsmål oppdatert!' : 'Nytt spørsmål opprettet!',
+            'success'
+        );
+    } catch (err) {
+        console.error('Error saving question:', err);
+        showQuestionModalStatus(err.message, 'error');
+    }
+}
+
+/**
+ * Edit question (global function for onclick)
+ */
+window.editQuestion = function(questionId) {
+    openQuestionModal(questionId);
+};
+
+/**
+ * Delete question (global function for onclick)
+ */
+window.deleteQuestion = async function(questionId) {
+    const confirmed = confirm('Er du sikker på at du vil slette dette spørsmålet?');
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/api/quiz/questions/${questionId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete question');
+        }
+
+        await loadQuizQuestions();
+        showQuestionStatus('Spørsmål slettet', 'success');
+    } catch (err) {
+        console.error('Error deleting question:', err);
+        showQuestionStatus(err.message, 'error');
+    }
+};
+
+/**
+ * Load quiz leaderboard
+ */
+async function loadQuizLeaderboard() {
+    try {
+        const response = await fetch('/api/quiz/leaderboard');
+        if (!response.ok) {
+            throw new Error('Failed to load leaderboard');
+        }
+
+        const data = await response.json();
+        renderQuizLeaderboard(data);
+    } catch (err) {
+        console.error('Error loading quiz leaderboard:', err);
+        quizLeaderboard.innerHTML = '<p class="text-center" style="color: var(--error);">Kunne ikke laste resultattavle</p>';
+    }
+}
+
+/**
+ * Render quiz leaderboard
+ */
+function renderQuizLeaderboard(data) {
+    if (!data.leaderboard || data.leaderboard.length === 0) {
+        quizLeaderboard.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 40px 20px;">Ingen lag har fullført quizen ennå</p>';
+        return;
+    }
+
+    quizLeaderboard.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            ${data.leaderboard.map((entry, index) => {
+                const rank = entry.rank;
+                const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+
+                // Format time as MM:SS
+                const totalSeconds = entry.total_time || 0;
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                return `
+                    <div class="card" style="padding: 20px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="font-size: 32px; min-width: 50px; text-align: center;">
+                                ${rankEmoji}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-size: 20px; font-weight: bold; margin-bottom: 5px;">
+                                    ${entry.team_name}
+                                </div>
+                                <div style="font-size: 16px; color: var(--text-light);">
+                                    🏆 ${entry.score} poeng •
+                                    ✅ ${entry.correct_answers}/${entry.total_questions} riktige •
+                                    ⏱️ ${timeStr}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+/**
+ * Show question modal status message
+ */
+function showQuestionModalStatus(message, type) {
+    questionModalStatus.textContent = message;
+    questionModalStatus.className = `alert ${type}`;
+    questionModalStatus.classList.remove('hidden');
+}
+
+/**
+ * Show question status message
+ */
+function showQuestionStatus(message, type) {
+    questionStatus.textContent = message;
+    questionStatus.className = `alert ${type}`;
+    questionStatus.classList.remove('hidden');
+    setTimeout(() => {
+        questionStatus.classList.add('hidden');
+    }, 3000);
+}
+
+// ==============================================
+// END QUIZ FUNCTIONS
 // ==============================================
 
 // Make functions globally available

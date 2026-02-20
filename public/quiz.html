@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/qr-scanner.css">
+    <link rel="stylesheet" href="/css/quiz.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navbar">
+        <a href="/index.html" class="nav-link">← Hjem</a>
+        <h2>🧠 Quiz</h2>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <!-- Participant Scan View -->
+    <div id="participantScanView" class="view">
+        <div class="container">
+            <div class="team-selector">
+                <h1>🧠</h1>
+                <h2>Skann din deltaker-QR</h2>
+                <p style="color: var(--text-light); margin-bottom: 30px;">Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
+
+                <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <input type="text" id="participantBarcodeInput" class="barcode-input"
+                           autocomplete="off" autofocus placeholder="Skann QR-kode..."
+                           style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px;">
+
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
+                        <span style="font-size: 24px;">⌨️</span>
+                        <span style="color: var(--text-light);">Strekkodeskanner klar</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
+                    eller
+                </div>
+
+                <div id="participantQrReader" style="margin-bottom: 20px;"></div>
+
+                <button id="startParticipantScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
+                    📷 Start Kamera-Skanning
+                </button>
+
+                <label for="participantQrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 15px;">
+                    🖼️ Last opp bilde av QR
+                </label>
+                <input type="file" id="participantQrFileInput" accept="image/*" style="display: none;">
+
+                <div id="participantScanFeedback" class="scan-status hidden"></div>
+
+                <button id="viewLeaderboardBtn1" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px;">
+                    🏆 Se Resultattavle
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question View -->
+    <div id="questionView" class="view hidden">
+        <div class="container">
+            <div class="quiz-header">
+                <h2 id="teamName">-</h2>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div class="progress-indicator">
+                        <span id="progressText">Spørsmål 1 av 10</span>
+                    </div>
+                    <div id="timerDisplay" class="timer-display">
+                        <span id="timerIcon">⏱️</span>
+                        <span id="timerValue">30</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="question-card">
+                <div id="questionImage" class="question-image hidden">
+                    <img id="questionImg" src="" alt="Spørsmålsbilde">
+                </div>
+
+                <h3 id="questionText" class="question-text">-</h3>
+
+                <div id="selectionInstruction" class="selection-instruction">
+                    <span class="icon">👆</span>
+                    <span id="instructionText">Velg ett alternativ</span>
+                </div>
+
+                <div class="options-container">
+                    <button class="option-button" data-option="A">
+                        <span class="option-letter">A</span>
+                        <span class="option-text" id="optionA">-</span>
+                    </button>
+                    <button class="option-button" data-option="B">
+                        <span class="option-letter">B</span>
+                        <span class="option-text" id="optionB">-</span>
+                    </button>
+                    <button class="option-button" data-option="C">
+                        <span class="option-letter">C</span>
+                        <span class="option-text" id="optionC">-</span>
+                    </button>
+                    <button class="option-button" data-option="D">
+                        <span class="option-letter">D</span>
+                        <span class="option-text" id="optionD">-</span>
+                    </button>
+                </div>
+
+                <button id="submitAnswerBtn" class="button primary large-button" style="margin-top: 20px;">
+                    ✅ Send svar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback View -->
+    <div id="feedbackView" class="view hidden">
+        <div class="container">
+            <div id="feedbackIcon" class="feedback-icon">✓</div>
+            <h2 id="feedbackTitle" class="feedback-title">Riktig!</h2>
+            <p id="feedbackMessage" class="feedback-message">Bra jobbet!</p>
+
+            <button id="nextQuestionBtn" class="button primary large-button">
+                Neste Spørsmål →
+            </button>
+        </div>
+    </div>
+
+    <!-- Results View -->
+    <div id="resultsView" class="view hidden">
+        <div class="container">
+            <div class="success-icon">🎉</div>
+            <h1>Quiz Fullført!</h1>
+            <p class="success-message">
+                <strong id="resultsTeamName">Laget</strong> fullførte quizen!
+            </p>
+
+            <div class="score-display">
+                <div class="score-circle">
+                    <div class="score-value" id="scoreValue">0</div>
+                    <div class="score-label">poeng</div>
+                </div>
+                <div class="score-details">
+                    <div style="margin-bottom: 8px;">
+                        <span id="correctCount">0</span> av <span id="totalCount">0</span> riktige
+                    </div>
+                    <div style="color: var(--primary-color); font-weight: 600;">
+                        ⏱️ Tid brukt: <span id="totalTime">0:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-list">
+                <h3>Dine svar:</h3>
+                <div id="resultsContainer">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <button id="retakeQuizBtn" class="button primary large-button" style="margin-bottom: 15px;">
+                🔄 Ta Quiz På Nytt
+            </button>
+
+            <button id="viewLeaderboardBtn2" class="button secondary large-button">
+                🏆 Se Resultattavle
+            </button>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal" class="modal hidden">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>🏆 Resultattavle</h2>
+                <button id="closeLeaderboardBtn" class="close-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="leaderboardContent" class="leaderboard-content">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Load event info and update title
+        async function loadEventInfo() {
+            try {
+                const response = await fetch('/api/event');
+                if (response.ok) {
+                    const event = await response.json();
+                    if (event.event_name) {
+                        document.title = `${event.event_name} - Quiz`;
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading event info:', err);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadEventInfo);
+    </script>
+    <script src="/js/scanner.js"></script>
+    <script src="/js/quiz.js"></script>
+</body>
+</html>

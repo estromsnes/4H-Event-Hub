@@ -13,12 +13,14 @@ database/*.db-shm
 uploads/event-logos/*
 uploads/profile-photos/*
 uploads/qr-codes/*
+uploads/quiz-images/*
 uploads/team-photos/*
 
 # Keep directory structure
 !uploads/event-logos/.gitkeep
 !uploads/profile-photos/.gitkeep
 !uploads/qr-codes/.gitkeep
+!uploads/quiz-images/.gitkeep
 !uploads/team-photos/.gitkeep
 
 # Logs
