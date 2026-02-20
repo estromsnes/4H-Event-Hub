@@ -168,6 +168,9 @@ async function initAdmin() {
     await loadCheckpoints();
     await loadScavengerLeaderboard();
 
+    // Load tic-tac-toe data
+    await loadTicTacToeGames();
+
     // Setup event listeners
     eventInfoForm.addEventListener('submit', handleSaveEventInfo);
     eventLogoInput.addEventListener('change', handleLogoPreview);
@@ -1951,6 +1954,105 @@ function showCheckpointStatus(message, type) {
 
 // ==============================================
 // END SCAVENGER HUNT FUNCTIONS
+// ==============================================
+
+// ==============================================
+// TIC-TAC-TOE ADMIN FUNCTIONS
+// ==============================================
+
+/**
+ * Load and display tic-tac-toe games
+ */
+async function loadTicTacToeGames() {
+    const gamesList = document.getElementById('ticTacToeGamesList');
+
+    try {
+        const response = await fetch('/api/tic-tac-toe/games');
+        if (!response.ok) {
+            throw new Error('Failed to load games');
+        }
+
+        const data = await response.json();
+
+        if (!data.games || data.games.length === 0) {
+            gamesList.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 40px;">Ingen fullførte spill ennå</p>';
+            return;
+        }
+
+        // Render games list
+        gamesList.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                ${data.games.map(game => {
+                    const resultText = game.result === 'draw'
+                        ? '🤝 Uavgjort'
+                        : `🏆 ${game.winner_name} vant`;
+
+                    const date = new Date(game.completed_at);
+                    const dateStr = date.toLocaleString('nb-NO', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    return `
+                        <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 20px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">
+                                    ${game.player1_name} (X) vs ${game.player2_name} (O)
+                                </div>
+                                <div style="color: var(--text-light); font-size: 14px; margin-bottom: 5px;">
+                                    ${resultText}
+                                </div>
+                                <div style="color: var(--text-light); font-size: 14px;">
+                                    Fullført: ${dateStr}
+                                </div>
+                            </div>
+                            <button
+                                onclick="deleteTicTacToeGame(${game.id}, '${game.player1_name}', '${game.player2_name}')"
+                                class="button secondary btn-small"
+                                style="white-space: nowrap;">
+                                🗑️ Slett spill
+                            </button>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    } catch (err) {
+        console.error('Error loading tic-tac-toe games:', err);
+        gamesList.innerHTML = '<p class="text-center" style="color: var(--error);">Kunne ikke laste spill</p>';
+    }
+}
+
+/**
+ * Delete a tic-tac-toe game
+ */
+window.deleteTicTacToeGame = async function(gameId, player1, player2) {
+    if (!confirm(`Vil du slette spillet mellom ${player1} og ${player2}?\n\nDette vil fjerne resultatet fra statistikken.\n\nDette kan ikke angres.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/tic-tac-toe/game/${gameId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete game');
+        }
+
+        alert('Spillet ble slettet og statistikken er oppdatert');
+        await loadTicTacToeGames();
+    } catch (err) {
+        console.error('Error deleting game:', err);
+        alert('Kunne ikke slette spill: ' + err.message);
+    }
+};
+
+// ==============================================
+// END TIC-TAC-TOE FUNCTIONS
 // ==============================================
 
 // Make functions globally available

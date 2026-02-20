@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tripp-Trapp-Tresko - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/qr-scanner.css">
+    <style>
+        .ttt-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .player-scan-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .player-scan-section h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .player-info {
+            background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .player-info.player2 {
+            background: linear-gradient(135deg, #2196F3, #1565C0);
+        }
+
+        .player-symbol {
+            font-size: 48px;
+            font-weight: bold;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .player-details {
+            flex: 1;
+        }
+
+        .player-details h3 {
+            margin: 0 0 5px 0;
+            color: white;
+        }
+
+        .player-details p {
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        .waiting-message {
+            text-align: center;
+            padding: 40px;
+            background: #e3f2fd;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .waiting-message .spinner {
+            border: 4px solid rgba(33, 150, 243, 0.3);
+            border-top: 4px solid #2196F3;
+            margin: 20px auto;
+        }
+
+        .game-board-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .turn-indicator {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+        }
+
+        .turn-indicator.my-turn {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .game-cell {
+            aspect-ratio: 1;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 12px;
+            font-size: 48px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-cell:hover:not(:disabled) {
+            background: #e0e0e0;
+            transform: scale(1.05);
+        }
+
+        .game-cell:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .game-cell:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .game-cell:not(:disabled) {
+            cursor: pointer;
+        }
+
+        .game-cell.x {
+            color: #4CAF50;
+        }
+
+        .game-cell.o {
+            color: #2196F3;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: white;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .result-card.draw {
+            background: linear-gradient(135deg, #9E9E9E, #616161);
+        }
+
+        .result-card h1 {
+            font-size: 64px;
+            margin: 0 0 10px 0;
+        }
+
+        .result-card h2 {
+            color: white;
+            margin: 10px 0;
+        }
+
+        .leaderboard-modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaderboard-entry.top3 {
+            background: linear-gradient(135deg, #fff9e6, #fff3cd);
+            border: 2px solid #FFD700;
+        }
+
+        .leaderboard-rank {
+            font-size: 32px;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .leaderboard-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .leaderboard-photo-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .leaderboard-stats {
+            flex: 1;
+        }
+
+        .leaderboard-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .leaderboard-record {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .win-rate {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4CAF50;
+            min-width: 80px;
+            text-align: right;
+        }
+    </style>
+    <!-- QR Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <div class="navbar">
+        <a href="/index.html" class="nav-link">← Hjem</a>
+        <h2>🎮 Tripp-Trapp-Tresko</h2>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <div class="ttt-container" id="app">
+        <!-- Player 1 Scan View -->
+        <div id="player1ScanView">
+            <div class="player-scan-section">
+                <h1 style="text-align: center; font-size: 64px; margin-bottom: 10px;">⭕❌</h1>
+                <h2>Spiller 1: Skann din QR-kode</h2>
+                <p style="text-align: center; color: var(--text-light); margin-bottom: 30px;">
+                    Start et nytt spill ved å skanne din deltaker-QR
+                </p>
+
+                <input type="text" id="player1BarcodeInput" class="barcode-input"
+                       autocomplete="off" autofocus placeholder="Skann QR-kode..."
+                       style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px;">
+
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
+                    <span style="font-size: 24px;">⌨️</span>
+                    <span style="color: var(--text-light);">Strekkodeskanner klar</span>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
+                    eller
+                </div>
+
+                <div id="player1QrReader" style="margin-bottom: 15px;"></div>
+
+                <button id="startPlayer1ScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
+                    📷 Start Kamera-Skanning
+                </button>
+
+                <div id="player1ScanFeedback" class="scan-status hidden"></div>
+            </div>
+
+            <button id="viewLeaderboardBtn1" class="button secondary" style="width: 100%;">
+                🏆 Se Resultattavle
+            </button>
+        </div>
+
+        <!-- Player 2 Scan View -->
+        <div id="player2ScanView" class="hidden">
+            <div id="player1Info" class="player-info">
+                <div class="player-symbol">X</div>
+                <div class="player-details">
+                    <h3 id="player1Name">-</h3>
+                    <p id="player1Team">-</p>
+                </div>
+            </div>
+
+            <div class="player-scan-section">
+                <h2>Spiller 2: Skann din QR-kode</h2>
+                <p style="text-align: center; color: var(--text-light); margin-bottom: 30px;">
+                    Bli med i spillet og utfordr spiller 1!
+                </p>
+
+                <input type="text" id="player2BarcodeInput" class="barcode-input"
+                       autocomplete="off" autofocus placeholder="Skann QR-kode..."
+                       style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px;">
+
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
+                    <span style="font-size: 24px;">⌨️</span>
+                    <span style="color: var(--text-light);">Strekkodeskanner klar</span>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
+                    eller
+                </div>
+
+                <div id="player2QrReader" style="margin-bottom: 15px;"></div>
+
+                <button id="startPlayer2ScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
+                    📷 Start Kamera-Skanning
+                </button>
+
+                <div id="player2ScanFeedback" class="scan-status hidden"></div>
+            </div>
+
+            <button id="cancelWaitBtn" class="button secondary" style="width: 100%;">
+                ← Avbryt
+            </button>
+        </div>
+
+        <!-- Game View -->
+        <div id="gameView" class="hidden">
+            <div id="player1InfoGame" class="player-info">
+                <div class="player-symbol">X</div>
+                <div class="player-details">
+                    <h3 id="player1NameGame">-</h3>
+                    <p id="player1TeamGame">-</p>
+                </div>
+            </div>
+
+            <div id="player2InfoGame" class="player-info player2">
+                <div class="player-symbol">O</div>
+                <div class="player-details">
+                    <h3 id="player2NameGame">-</h3>
+                    <p id="player2TeamGame">-</p>
+                </div>
+            </div>
+
+            <div class="game-board-container">
+                <div id="turnIndicator" class="turn-indicator">
+                    Din tur!
+                </div>
+
+                <div class="game-board">
+                    <button class="game-cell" data-index="0"></button>
+                    <button class="game-cell" data-index="1"></button>
+                    <button class="game-cell" data-index="2"></button>
+                    <button class="game-cell" data-index="3"></button>
+                    <button class="game-cell" data-index="4"></button>
+                    <button class="game-cell" data-index="5"></button>
+                    <button class="game-cell" data-index="6"></button>
+                    <button class="game-cell" data-index="7"></button>
+                    <button class="game-cell" data-index="8"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result View -->
+        <div id="resultView" class="hidden">
+            <div id="resultCard" class="result-card">
+                <h1 id="resultEmoji">🏆</h1>
+                <h2 id="resultMessage">Gratulerer!</h2>
+                <p id="resultDetails" style="font-size: 20px; margin-top: 15px;"></p>
+            </div>
+
+            <button id="viewLeaderboardBtn2" class="button primary" style="width: 100%; margin-bottom: 15px; font-size: 20px;">
+                🏆 Se Resultattavle
+            </button>
+
+            <button id="playAgainBtn" class="button secondary" style="width: 100%;">
+                🔄 Nytt spill
+            </button>
+        </div>
+
+        <!-- Leaderboard Modal -->
+        <div id="leaderboardModal" class="modal hidden">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2>🏆 Resultattavle</h2>
+                    <button id="closeLeaderboardBtn" class="close-btn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div id="leaderboardContent" class="leaderboard-modal">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/scanner.js"></script>
+    <script src="/js/tic-tac-toe.js"></script>
+</body>
+</html>
