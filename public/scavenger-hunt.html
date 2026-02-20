@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Skattejakt - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/qr-scanner.css">
+    <style>
+        .scavenger-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .team-selector {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .team-selector h2 {
+            margin-bottom: 20px;
+        }
+
+        .team-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .team-button {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .team-button:active {
+            transform: scale(0.98);
+        }
+
+        .hunt-header {
+            background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+            color: white;
+            padding: 25px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .hunt-header h2 {
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.3);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .clue-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .clue-text {
+            font-size: 24px;
+            font-style: italic;
+            color: var(--primary-dark);
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .scanner-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+
+        .scan-status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .scan-status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .scan-status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .scan-status.info {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .found-checkpoints {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .checkpoint-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .checkpoint-check {
+            font-size: 24px;
+        }
+
+        .completion-card {
+            background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 40px 30px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .completion-card h2 {
+            color: white;
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        .completion-time {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+    <!-- Confetti library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- QR Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <div class="navbar">
+        <a href="/index.html" class="nav-link">← Hjem</a>
+        <h2>🎯 QR Skattejakt</h2>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <div class="scavenger-container" id="app">
+        <!-- Loading State -->
+        <div id="loadingView">
+            <div class="spinner"></div>
+            <p style="text-align: center; color: var(--text-light);">Laster...</p>
+        </div>
+
+        <!-- Participant Scan View -->
+        <div id="participantScanView" class="hidden">
+            <div class="team-selector">
+                <h1>🎯</h1>
+                <h2>Skann din deltaker-QR</h2>
+                <p style="color: var(--text-light); margin-bottom: 30px;">Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
+
+                <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <input type="text" id="participantBarcodeInput" class="barcode-input"
+                           autocomplete="off" autofocus placeholder="Skann QR-kode..."
+                           style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px;">
+
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
+                        <span style="font-size: 24px;">⌨️</span>
+                        <span style="color: var(--text-light);">Strekkodeskanner klar</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
+                    eller
+                </div>
+
+                <div id="participantQrReader" style="margin-bottom: 20px;"></div>
+
+                <button id="startParticipantScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
+                    📷 Start Kamera-Skanning
+                </button>
+
+                <label for="participantQrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin: 0;">
+                    🖼️ Last opp bilde av QR
+                </label>
+                <input type="file" id="participantQrFileInput" accept="image/*" style="display: none;">
+
+                <div id="participantScanFeedback" class="scan-status hidden"></div>
+            </div>
+        </div>
+
+        <!-- Hunt Active View -->
+        <div id="huntView" class="hidden">
+            <div class="hunt-header">
+                <h2 id="huntTeamName">-</h2>
+                <p id="huntProgress">0 / 0 sjekkpunkter funnet</p>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="clue-card">
+                <h3>🔍 Finn dette stedet:</h3>
+                <div id="currentClue" class="clue-text">-</div>
+            </div>
+
+            <div class="scanner-section">
+                <h3 style="text-align: center; margin-bottom: 15px;">Skann sjekkpunkt QR-kode</h3>
+
+                <input type="text" id="barcodeInput" class="barcode-input"
+                       autocomplete="off" placeholder="Skann QR-kode..."
+                       style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px;">
+
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
+                    <span style="font-size: 24px;">⌨️</span>
+                    <span style="color: var(--text-light);">Strekkodeskanner klar</span>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
+                    eller
+                </div>
+
+                <div id="checkpointQrReader" style="margin-bottom: 15px;"></div>
+
+                <button id="startCheckpointScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 15px; margin-bottom: 15px;">
+                    📷 Start Kamera-Skanning
+                </button>
+
+                <label for="checkpointQrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin: 0;">
+                    🖼️ Last opp bilde av QR
+                </label>
+                <input type="file" id="checkpointQrFileInput" accept="image/*" style="display: none;">
+
+                <div id="scanFeedback" class="scan-status hidden"></div>
+            </div>
+
+            <div id="foundCheckpoints" class="found-checkpoints hidden">
+                <h3>✅ Funnet sjekkpunkter:</h3>
+                <div id="foundList"></div>
+            </div>
+
+            <button id="quitBtn" class="button secondary" style="width: 100%; margin-top: 20px;">
+                ← Avbryt jakt
+            </button>
+        </div>
+
+        <!-- Completion View -->
+        <div id="completionView" class="hidden">
+            <div class="completion-card">
+                <h1 style="font-size: 64px; margin-bottom: 10px;">🏆</h1>
+                <h2>Gratulerer!</h2>
+                <p style="font-size: 20px; margin: 15px 0;">
+                    <strong id="completionTeamName">Laget</strong> fant alle sjekkpunkter!
+                </p>
+                <div class="completion-time" id="completionTime">--:--</div>
+                <p style="opacity: 0.9;">Total tid</p>
+            </div>
+
+            <button id="viewLeaderboardBtn" class="button primary" style="width: 100%; margin-top: 20px; font-size: 20px;">
+                🏆 Se Resultattavle
+            </button>
+
+            <button id="newHuntBtn" class="button secondary" style="width: 100%; margin-top: 15px;">
+                🔄 Ny jakt
+            </button>
+        </div>
+
+        <!-- Leaderboard Modal -->
+        <div id="leaderboardModal" class="modal hidden">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2>🏆 Resultattavle</h2>
+                    <button id="closeLeaderboardBtn" class="close-btn">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div id="leaderboardContent">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/scanner.js"></script>
+    <script src="/js/scavenger-hunt.js"></script>
+</body>
+</html>

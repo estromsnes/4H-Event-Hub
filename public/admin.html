@@ -356,6 +356,7 @@
             <button class="tab-button active" data-tab="event">📋 Arrangement</button>
             <button class="tab-button" data-tab="teams">🏆 Lag</button>
             <button class="tab-button" data-tab="participants">👥 Deltakere</button>
+            <button class="tab-button" data-tab="scavenger">🎯 QR Skattejakt</button>
             <button class="tab-button" data-tab="stats">📊 Statistikk</button>
         </div>
 
@@ -560,6 +561,34 @@
         </div>
         <!-- End Participants Tab -->
 
+        <!-- Scavenger Hunt Tab -->
+        <div id="scavengerTab" class="tab-content">
+        <!-- Checkpoint Management Section -->
+        <div class="section no-print">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Administrer Checkpoints</h2>
+                <button id="addCheckpointBtn" class="button primary btn-small">
+                    ➕ Nytt Checkpoint
+                </button>
+            </div>
+
+            <div id="checkpointsList" style="display: flex; flex-direction: column; gap: 15px;">
+                <p class="text-center" style="color: var(--text-light);">Laster checkpoints...</p>
+            </div>
+
+            <div id="checkpointStatus" class="hidden mt-2"></div>
+        </div>
+
+        <!-- Scavenger Hunt Leaderboard Section -->
+        <div class="section no-print" style="margin-top: 30px;">
+            <h2>Resultattavle - QR Skattejakt</h2>
+            <div id="scavengerLeaderboard">
+                <p class="text-center" style="color: var(--text-light);">Laster resultater...</p>
+            </div>
+        </div>
+        </div>
+        <!-- End Scavenger Hunt Tab -->
+
         <!-- Stats Tab -->
         <div id="statsTab" class="tab-content">
         <!-- Stats content can be added here in the future -->
@@ -755,6 +784,46 @@
             </div>
 
             <div id="teamModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Checkpoint Modal (Add/Edit) -->
+    <div id="checkpointModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="checkpointModalTitle">Legg til Checkpoint</h2>
+                <button id="closeCheckpointBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="checkpointForm">
+                <input type="hidden" id="checkpointId">
+
+                <div class="form-group">
+                    <label for="checkpointName">Checkpoint-navn *</label>
+                    <input type="text" id="checkpointName" required placeholder="F.eks: Flaggstangen">
+                </div>
+
+                <div class="form-group">
+                    <label for="checkpointClue">Ledetråd/gåte *</label>
+                    <textarea id="checkpointClue" rows="3" required placeholder="F.eks: Der 4H-flagget vaier..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="checkpointOrder">Rekkefølge</label>
+                    <input type="number" id="checkpointOrder" min="1" value="1" placeholder="1">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Lagre
+                    </button>
+                    <button type="button" id="cancelCheckpointBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="checkpointModalStatus" class="hidden mt-2"></div>
         </div>
     </div>
 

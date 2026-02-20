@@ -11,6 +11,7 @@ const scannerView = document.getElementById('scannerView');
 const profileView = document.getElementById('profileView');
 const barcodeInput = document.getElementById('barcodeInput');
 const startScanBtn = document.getElementById('startScanBtn');
+const qrFileInput = document.getElementById('qrFileInput');
 const scanStatus = document.getElementById('scanStatus');
 const scanAgainBtn = document.getElementById('scanAgainBtn');
 
@@ -61,6 +62,7 @@ function initApp() {
 
     // Setup event listeners
     startScanBtn.addEventListener('click', startScanning);
+    qrFileInput.addEventListener('change', handleQrFileUpload);
     scanAgainBtn.addEventListener('click', showScannerView);
     takeSelfieBtn.addEventListener('click', openCameraModal);
     closeCameraBtn.addEventListener('click', closeCameraModal);
@@ -72,6 +74,23 @@ function initApp() {
     setupBarcodeScanner();
 
     console.log('App initialized');
+}
+
+async function handleQrFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    showStatus('Leser QR-kode fra bilde...', 'info');
+
+    try {
+        await scanner.scanFile(file);
+    } catch (err) {
+        console.error('Error scanning file:', err);
+        showStatus('Kunne ikke lese QR-kode fra bilde', 'error');
+    }
+
+    // Reset file input so same file can be selected again
+    event.target.value = '';
 }
 
 // Load event information
@@ -228,8 +247,29 @@ async function startScanning() {
     }
 }
 
-async function onScanSuccess(participantCode) {
-    console.log('Participant code scanned:', participantCode);
+async function onScanSuccess(qrData) {
+    console.log('QR Code scanned:', qrData);
+
+    let participantCode;
+
+    try {
+        // Try to parse as JSON first
+        const parsed = JSON.parse(qrData);
+        if (parsed.type === 'participant' && parsed.code) {
+            participantCode = parsed.code;
+        } else {
+            throw new Error('Ugyldig QR-kode. Vennligst bruk et 4H deltakerkort.');
+        }
+    } catch (e) {
+        if (e.message.includes('Ugyldig QR-kode')) {
+            showStatus(e.message, 'error');
+            startScanBtn.disabled = false;
+            startScanBtn.textContent = '📷 Prøv Igjen';
+            return;
+        }
+        // Not JSON, use as-is
+        participantCode = qrData;
+    }
 
     // Stop scanner
     await scanner.stop();

@@ -54,7 +54,39 @@ async function generateParticipantQR(participantCode) {
     return `/uploads/qr-codes/${filename}`;
 }
 
+/**
+ * Generate QR code for a checkpoint
+ * @param {string} checkpointQRCode - Checkpoint QR code string (e.g., "CHECKPOINT-...")
+ * @param {number} checkpointId - Checkpoint ID
+ * @returns {Promise<string>} - Relative path to QR code
+ */
+async function generateCheckpointQR(checkpointQRCode, checkpointId) {
+    const filename = `checkpoint-${checkpointId}.png`;
+    const uploadsDir = path.join(__dirname, '..', 'uploads', 'qr-codes');
+
+    // Ensure directory exists
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const fullPath = path.join(uploadsDir, filename);
+
+    // Generate QR code with checkpoint data
+    await QRCode.toFile(fullPath, checkpointQRCode, {
+        width: 400,
+        margin: 2,
+        errorCorrectionLevel: 'M',
+        color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+        }
+    });
+
+    return `/uploads/qr-codes/${filename}`;
+}
+
 module.exports = {
     generateQRCode,
-    generateParticipantQR
+    generateParticipantQR,
+    generateCheckpointQR
 };

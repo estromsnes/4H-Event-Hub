@@ -6,6 +6,7 @@
     <title>Min Profil - 4H Event Hub</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
     <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/qr-scanner.css">
     <link rel="stylesheet" href="/css/profile.css">
 </head>
 <body>
@@ -46,6 +47,11 @@
             <button id="startScanBtn" class="button primary large-button">
                 📷 Start Kamera-Skanning
             </button>
+
+            <label for="qrFileInput" class="button secondary large-button" style="margin-top: 15px; cursor: pointer;">
+                🖼️ Last opp bilde av QR
+            </label>
+            <input type="file" id="qrFileInput" accept="image/*" style="display: none;">
 
             <div id="scanStatus" class="scan-status hidden"></div>
         </div>

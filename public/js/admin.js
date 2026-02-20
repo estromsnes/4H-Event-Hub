@@ -93,6 +93,22 @@ const printQRBtn = document.getElementById('printQRBtn');
 const qrSection = document.getElementById('qrSection');
 const qrGrid = document.getElementById('qrGrid');
 
+// Scavenger Hunt elements
+const checkpointsList = document.getElementById('checkpointsList');
+const addCheckpointBtn = document.getElementById('addCheckpointBtn');
+const checkpointModal = document.getElementById('checkpointModal');
+const checkpointModalTitle = document.getElementById('checkpointModalTitle');
+const checkpointForm = document.getElementById('checkpointForm');
+const checkpointIdInput = document.getElementById('checkpointId');
+const checkpointNameInput = document.getElementById('checkpointName');
+const checkpointClueInput = document.getElementById('checkpointClue');
+const checkpointOrderInput = document.getElementById('checkpointOrder');
+const closeCheckpointBtn = document.getElementById('closeCheckpointBtn');
+const cancelCheckpointBtn = document.getElementById('cancelCheckpointBtn');
+const checkpointModalStatus = document.getElementById('checkpointModalStatus');
+const checkpointStatus = document.getElementById('checkpointStatus');
+const scavengerLeaderboard = document.getElementById('scavengerLeaderboard');
+
 // State
 let participants = [];
 let teams = [];
@@ -101,6 +117,8 @@ let currentEvent = null;
 let currentTeam = null;
 let currentPhotoParticipantCode = null;
 let currentPhotoTeamName = null;
+let checkpoints = [];
+let currentCheckpoint = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -146,6 +164,10 @@ async function initAdmin() {
     // Re-render teams now that participants are loaded
     renderTeams();
 
+    // Load scavenger hunt data
+    await loadCheckpoints();
+    await loadScavengerLeaderboard();
+
     // Setup event listeners
     eventInfoForm.addEventListener('submit', handleSaveEventInfo);
     eventLogoInput.addEventListener('change', handleLogoPreview);
@@ -176,6 +198,12 @@ async function initAdmin() {
     autoAssignTeamsBtn.addEventListener('click', autoAssignTeams);
     generateAllQRBtn.addEventListener('click', generateAllQRCodes);
     printQRBtn.addEventListener('click', showQRForPrint);
+
+    // Scavenger hunt event listeners
+    addCheckpointBtn.addEventListener('click', () => openCheckpointModal());
+    checkpointForm.addEventListener('submit', handleSaveCheckpoint);
+    closeCheckpointBtn.addEventListener('click', closeCheckpointModal);
+    cancelCheckpointBtn.addEventListener('click', closeCheckpointModal);
 
     // Auto-generate new code when name changes
     firstNameInput.addEventListener('input', generateNextCode);
@@ -1484,6 +1512,446 @@ async function handleEditParticipant(e) {
         editStatus.classList.remove('hidden');
     }
 }
+
+// ==============================================
+// SCAVENGER HUNT FUNCTIONS
+// ==============================================
+
+/**
+ * Load checkpoints from API
+ */
+async function loadCheckpoints() {
+    try {
+        const response = await fetch('/api/scavenger/checkpoints');
+        if (!response.ok) {
+            throw new Error('Failed to load checkpoints');
+        }
+
+        checkpoints = await response.json();
+        renderCheckpoints();
+    } catch (err) {
+        console.error('Error loading checkpoints:', err);
+        checkpointsList.innerHTML = '<p class="text-center" style="color: var(--error);">Kunne ikke laste checkpoints</p>';
+    }
+}
+
+/**
+ * Render checkpoints list
+ */
+function renderCheckpoints() {
+    if (checkpoints.length === 0) {
+        checkpointsList.innerHTML = '<p class="text-center" style="color: var(--text-light);">Ingen checkpoints opprettet ennå. Klikk "+ Nytt Checkpoint" for å legge til.</p>';
+        return;
+    }
+
+    checkpointsList.innerHTML = checkpoints.map((checkpoint, index) => `
+        <div class="card" style="position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: start; gap: 15px;">
+                <div style="flex: 1;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <span style="font-size: 24px; font-weight: bold; color: var(--primary-color);">#${checkpoint.order_number}</span>
+                        <h3 style="margin: 0;">${checkpoint.name}</h3>
+                        ${checkpoint.active ? '' : '<span style="background: #999; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">Inaktiv</span>'}
+                    </div>
+                    <p style="margin: 10px 0; font-style: italic; color: var(--text-light);">"${checkpoint.clue}"</p>
+                    <p style="font-size: 14px; color: var(--text-light); margin: 5px 0;">
+                        <strong>QR-kode:</strong> <code>${checkpoint.qr_code}</code>
+                    </p>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="button secondary btn-small" onclick="editCheckpoint(${checkpoint.id})">
+                        ✏️ Rediger
+                    </button>
+                    <button class="button secondary btn-small" onclick="printCheckpointQR(${checkpoint.id})">
+                        🖨️ Print QR
+                    </button>
+                    <button class="button secondary btn-small" onclick="deleteCheckpoint(${checkpoint.id}, '${checkpoint.name.replace(/'/g, "\\'")}')">
+                        🗑️ Slett
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * Open checkpoint modal for adding or editing
+ */
+function openCheckpointModal(checkpointId = null) {
+    if (checkpointId) {
+        // Edit mode
+        const checkpoint = checkpoints.find(c => c.id === checkpointId);
+        if (!checkpoint) return;
+
+        checkpointModalTitle.textContent = 'Rediger Checkpoint';
+        checkpointIdInput.value = checkpoint.id;
+        checkpointNameInput.value = checkpoint.name;
+        checkpointClueInput.value = checkpoint.clue;
+        checkpointOrderInput.value = checkpoint.order_number;
+        currentCheckpoint = checkpoint;
+    } else {
+        // Add mode
+        checkpointModalTitle.textContent = 'Legg til Checkpoint';
+        checkpointForm.reset();
+        checkpointIdInput.value = '';
+        checkpointOrderInput.value = checkpoints.length + 1;
+        currentCheckpoint = null;
+    }
+
+    checkpointModalStatus.classList.add('hidden');
+    checkpointModal.classList.remove('hidden');
+}
+
+/**
+ * Close checkpoint modal
+ */
+function closeCheckpointModal() {
+    checkpointModal.classList.add('hidden');
+    checkpointForm.reset();
+    currentCheckpoint = null;
+}
+
+/**
+ * Handle save checkpoint (create or update)
+ */
+async function handleSaveCheckpoint(e) {
+    e.preventDefault();
+
+    const data = {
+        name: checkpointNameInput.value.trim(),
+        clue: checkpointClueInput.value.trim(),
+        order_number: parseInt(checkpointOrderInput.value) || 1,
+        active: 1
+    };
+
+    if (!data.name || !data.clue) {
+        showCheckpointModalStatus('Navn og ledetråd er påkrevd', 'error');
+        return;
+    }
+
+    try {
+        let response;
+        if (checkpointIdInput.value) {
+            // Update existing checkpoint
+            response = await fetch(`/api/scavenger/checkpoints/${checkpointIdInput.value}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } else {
+            // Create new checkpoint
+            response = await fetch('/api/scavenger/checkpoints', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        }
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save checkpoint');
+        }
+
+        await loadCheckpoints();
+        closeCheckpointModal();
+        showCheckpointStatus(
+            checkpointIdInput.value ? 'Checkpoint oppdatert!' : 'Nytt checkpoint opprettet!',
+            'success'
+        );
+    } catch (err) {
+        console.error('Error saving checkpoint:', err);
+        showCheckpointModalStatus(err.message, 'error');
+    }
+}
+
+/**
+ * Edit checkpoint (global function for onclick)
+ */
+window.editCheckpoint = function(checkpointId) {
+    openCheckpointModal(checkpointId);
+};
+
+/**
+ * Delete checkpoint (global function for onclick)
+ */
+window.deleteCheckpoint = async function(checkpointId, checkpointName) {
+    const confirmed = confirm(`Er du sikker på at du vil slette checkpoint "${checkpointName}"?`);
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/api/scavenger/checkpoints/${checkpointId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete checkpoint');
+        }
+
+        await loadCheckpoints();
+        showCheckpointStatus('Checkpoint slettet', 'success');
+    } catch (err) {
+        console.error('Error deleting checkpoint:', err);
+        showCheckpointStatus(err.message, 'error');
+    }
+};
+
+/**
+ * Print checkpoint QR code (global function for onclick)
+ */
+window.printCheckpointQR = function(checkpointId) {
+    const checkpoint = checkpoints.find(c => c.id === checkpointId);
+    if (!checkpoint) return;
+
+    // Create print window with server-generated QR code
+    const printWindow = window.open('', '_blank', 'width=800,height=900');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="no">
+        <head>
+            <meta charset="UTF-8">
+            <title>QR - ${checkpoint.name}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    padding: 40px 20px;
+                    margin: 0;
+                }
+                h1 {
+                    color: #2c5f2d;
+                    margin-bottom: 20px;
+                    font-size: 28px;
+                }
+                .clue {
+                    font-size: 20px;
+                    font-style: italic;
+                    color: #666;
+                    margin: 30px auto;
+                    padding: 20px;
+                    background: #f5f5f5;
+                    border-radius: 8px;
+                    max-width: 600px;
+                    line-height: 1.6;
+                }
+                .qr-code {
+                    margin: 40px 0;
+                }
+                .qr-code img {
+                    max-width: 400px;
+                    width: 100%;
+                    height: auto;
+                    border: 3px solid #2c5f2d;
+                    border-radius: 8px;
+                    padding: 10px;
+                    background: white;
+                }
+                .instructions {
+                    font-size: 16px;
+                    color: #999;
+                    margin-top: 30px;
+                }
+                .print-btn {
+                    margin-top: 30px;
+                    padding: 15px 30px;
+                    font-size: 18px;
+                    background: #4CAF50;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                }
+                .print-btn:hover {
+                    background: #2c5f2d;
+                }
+                @media print {
+                    .no-print {
+                        display: none;
+                    }
+                    body {
+                        padding: 20px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <h1>🎯 Sjekkpunkt #${checkpoint.order_number}: ${checkpoint.name}</h1>
+            <div class="clue">"${checkpoint.clue}"</div>
+            <div class="qr-code">
+                <img src="/api/scavenger/checkpoint-qr/${checkpoint.id}" alt="QR Code">
+            </div>
+            <div class="instructions">
+                Skann denne QR-koden når dere finner sjekkpunktet!
+            </div>
+            <button class="print-btn no-print" onclick="window.print();">
+                🖨️ Print denne siden
+            </button>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+};
+
+/**
+ * Load scavenger hunt leaderboard
+ */
+async function loadScavengerLeaderboard() {
+    try {
+        const response = await fetch('/api/scavenger/live-scoreboard');
+        if (!response.ok) {
+            throw new Error('Failed to load scoreboard');
+        }
+
+        const data = await response.json();
+        await renderScavengerLeaderboard(data);
+    } catch (err) {
+        console.error('Error loading scavenger leaderboard:', err);
+        scavengerLeaderboard.innerHTML = '<p class="text-center" style="color: var(--error);">Kunne ikke laste scoreboard</p>';
+    }
+}
+
+/**
+ * Render scavenger hunt leaderboard with detailed scans
+ */
+async function renderScavengerLeaderboard(data) {
+    if (!data.scoreboard || data.scoreboard.length === 0) {
+        scavengerLeaderboard.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 40px 20px;">Ingen lag har startet skattejakt ennå</p>';
+        return;
+    }
+
+    // Get detailed scan info for each team
+    const detailedScoreboard = await Promise.all(data.scoreboard.map(async (entry) => {
+        try {
+            const response = await fetch(`/api/scavenger/session/${encodeURIComponent(entry.team_name)}`);
+            if (response.ok) {
+                const sessionData = await response.json();
+                return {
+                    ...entry,
+                    session: sessionData.session,
+                    scans: sessionData.scans || []
+                };
+            }
+        } catch (err) {
+            console.error(`Error loading session for ${entry.team_name}:`, err);
+        }
+        return entry;
+    }));
+
+    scavengerLeaderboard.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            ${detailedScoreboard.map((entry, index) => {
+                const rank = index + 1;
+                const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+                const statusBadge = entry.status === 'completed'
+                    ? '<span style="background: #4CAF50; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Fullført</span>'
+                    : '<span style="background: #FFC107; color: black; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">Pågår</span>';
+
+                const scansHtml = entry.scans && entry.scans.length > 0
+                    ? `
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+                            <div style="font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text-dark);">
+                                Funnet sjekkpunkter:
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${entry.scans.map(scan => `
+                                    <div style="display: flex; align-items: center; gap: 8px; background: #e8f5e9; padding: 6px 12px; border-radius: 8px; font-size: 13px;">
+                                        <span>✅ #${scan.order_number}: ${scan.name}</span>
+                                        <button
+                                            onclick="deleteScan(${scan.id}, '${entry.team_name}', '${scan.name}')"
+                                            class="button secondary btn-small"
+                                            style="padding: 2px 8px; font-size: 11px; margin: 0;">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `
+                    : '<div style="margin-top: 10px; padding: 8px; background: #f5f5f5; border-radius: 8px; font-size: 13px; color: var(--text-light); text-align: center;">Ingen sjekkpunkter funnet ennå</div>';
+
+                return `
+                    <div class="card" style="padding: 20px;">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                            <div style="font-size: 32px; min-width: 50px; text-align: center;">
+                                ${rankEmoji}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                    <span style="font-size: 20px; font-weight: bold;">${entry.team_name}</span>
+                                    ${statusBadge}
+                                </div>
+                                <div style="font-size: 16px; color: var(--text-light);">
+                                    ⏱️ ${formatTime(entry.elapsed_seconds)} •
+                                    ✅ ${entry.checkpoints_found}/${entry.total_checkpoints} sjekkpunkter
+                                </div>
+                            </div>
+                        </div>
+                        ${scansHtml}
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `;
+}
+
+/**
+ * Delete a scan (global function for onclick)
+ */
+window.deleteScan = async function(scanId, teamName, checkpointName) {
+    if (!confirm(`Vil du slette registreringen av "${checkpointName}" for ${teamName}?\n\nDette kan ikke angres.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/scavenger/scan/${scanId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete scan');
+        }
+
+        alert('Skanningen ble slettet');
+        await loadScavengerLeaderboard();
+    } catch (err) {
+        console.error('Error deleting scan:', err);
+        alert('Kunne ikke slette skanning: ' + err.message);
+    }
+};
+
+/**
+ * Format seconds to MM:SS
+ */
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Show checkpoint modal status message
+ */
+function showCheckpointModalStatus(message, type) {
+    checkpointModalStatus.textContent = message;
+    checkpointModalStatus.className = `alert ${type}`;
+    checkpointModalStatus.classList.remove('hidden');
+}
+
+/**
+ * Show checkpoint status message
+ */
+function showCheckpointStatus(message, type) {
+    checkpointStatus.textContent = message;
+    checkpointStatus.className = `alert ${type}`;
+    checkpointStatus.classList.remove('hidden');
+    setTimeout(() => {
+        checkpointStatus.classList.add('hidden');
+    }, 3000);
+}
+
+// ==============================================
+// END SCAVENGER HUNT FUNCTIONS
+// ==============================================
 
 // Make functions globally available
 window.editParticipant = editParticipant;

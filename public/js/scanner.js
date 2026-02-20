@@ -96,6 +96,30 @@ class QRScanner {
     }
 
     /**
+     * Scan QR code from an image file
+     * @param {File} file - The image file to scan
+     */
+    async scanFile(file) {
+        if (!this.html5QrCode) {
+            console.error('Scanner not initialized');
+            if (this.onScanError) {
+                this.onScanError('Skanner ikke initialisert');
+            }
+            return;
+        }
+
+        try {
+            const decodedText = await this.html5QrCode.scanFile(file, false);
+            this.handleScanSuccess(decodedText);
+        } catch (err) {
+            console.error('Error scanning file:', err);
+            if (this.onScanError) {
+                this.onScanError('Kunne ikke lese QR-kode fra bilde. Prøv igjen.');
+            }
+        }
+    }
+
+    /**
      * Handle successful QR code scan
      * @param {string} decodedText - The decoded QR code data
      */
@@ -112,26 +136,10 @@ class QRScanner {
 
         console.log('QR Code scanned:', decodedText);
 
-        try {
-            // Parse JSON data from QR code
-            const data = JSON.parse(decodedText);
-
-            // Validate that this is a participant QR code
-            if (data.type === 'participant' && data.code) {
-                if (this.onScanSuccess) {
-                    this.onScanSuccess(data.code);
-                }
-            } else {
-                console.warn('Invalid QR code format:', data);
-                if (this.onScanError) {
-                    this.onScanError('Ugyldig QR-kode. Vennligst bruk et 4H deltakerkort.');
-                }
-            }
-        } catch (err) {
-            console.error('Error parsing QR code:', err);
-            if (this.onScanError) {
-                this.onScanError('Kunne ikke lese QR-koden. Prøv igjen.');
-            }
+        // Pass the raw scanned data to the callback
+        // Let the calling code decide how to handle it
+        if (this.onScanSuccess) {
+            this.onScanSuccess(decodedText);
         }
     }
 

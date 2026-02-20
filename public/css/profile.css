@@ -134,6 +134,11 @@
     color: #721c24;
 }
 
+.scan-status.info {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
 /* Profile View */
 .profile-container {
     display: flex;
