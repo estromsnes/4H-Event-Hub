@@ -1,145 +1,429 @@
 # 4H Event Hub - Skautrollet 4H
 
-En Node.js webapplikasjon for å skape sosialt samhold på 4H-leirer og arrangement. Applikasjonen lar deltakere skanne sine QR-koder og ta selfies som lagres på deres profil.
+En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer og arrangement. Applikasjonen gir deltakere en interaktiv opplevelse med spill, konkurranser, profiler og program-oversikt.
 
-## Funksjoner
+## 📋 Innholdsfortegnelse
 
-### Profilside
-- **Skann QR-kode** med to metoder:
-  - Strekkodeskanner (keyboard-emulering) - anbefalt for arrangementer
-  - Webkamera - for testing og backup
-- Vis deltakerprofil (navn, alder, hjemsted)
-- Ta selfie med webkamera
-- Lagre selfie på profil
-- Automatisk fokus på keyboard-input for rask scanning
+- [Funksjoner](#-funksjoner)
+- [Teknisk Stack](#-teknisk-stack)
+- [Installasjon](#-installasjon)
+- [Database Setup](#-database-setup)
+- [Kjøre Applikasjonen](#-kjøre-applikasjonen)
+- [Admin Panel](#-admin-panel)
+- [Bruksanvisning](#-bruksanvisning)
+- [Hardware Setup](#-hardware-setup)
+- [API Endepunkter](#-api-endepunkter)
+- [Feilsøking](#-feilsøking)
 
-### Admin Panel
-- Legg til nye deltakere
-- Auto-generer unike deltakerkoder (SK-2026-001, osv.)
-- Generer QR-koder automatisk
-- Print QR-koder for fysiske kort
-- Liste over alle deltakere
-- Slett deltakere
+## 🎯 Funksjoner
 
-## Teknisk Stack
+### For Deltakere
+
+#### 📱 Min Profil
+- Skann QR-kode med strekkodeskanner eller webkamera
+- Vis deltakerprofil (navn, alder, hjemsted, klubb, rolle, lag)
+- Ta selfie med webkamera og lagre på profil
+- Se lagkamerater og lagets medlemmer
+
+#### 🏆 Lag & Konkurranser
+- **Lagutfordring**: Ta bilder av laget som oppfyller forskjellige oppgaver
+- **Live Scoreboard**: Se sanntids poengoversikt for alle lag
+- **Tic-Tac-Toe**: Spill bondesjakk mot andre lag
+- **Quiz**: Svar på quiz-spørsmål som lag og konkurer om beste tid
+- **QR Skattejakt**: Skann QR-koder på forskjellige steder og konkurer om best tid
+
+#### 📅 Program
+- Se arrangementets program dag for dag
+- Oversikt over aktiviteter med klokkeslett og sted
+
+#### 👥 Deltakere
+- Se alle deltakere på arrangementet
+- Filtrer på lag, klubb og rolle
+- Se profilbilder og informasjon
+
+### For Arrangører (Admin)
+
+#### 📋 Arrangement
+- Opprett og rediger arrangementinformasjon
+- Last opp arrangementlogo
+- Sett datoer, sted og arrangør
+- Statistikk over deltakere per rolle
+
+#### 👥 Deltakere
+- Legg til nye deltakere med auto-genererte koder
+- Importer deltakere fra CSV
+- Manuelt opprett og rediger deltakere
+- Generer og print QR-koder
+- Tildel deltakere til lag (automatisk eller manuelt)
+- Eksporter deltakerliste
+
+#### 🏆 Lag
+- Opprett nye lag
+- Bulk-opprettelse med auto-genererte norske navn
+- Rediger lagstørrelser
+- Se lagmedlemmer og statistikk
+- Automatisk fordeling av deltakere til lag
+
+#### 🎯 QR Skattejakt
+- Opprett sjekkpunkter med navn, hint og QR-kode
+- Rediger og slett sjekkpunkter
+- Se leaderboard
+- Print QR-koder for sjekkpunkter
+
+#### 🎮 Tic-Tac-Toe
+- Se pågående og avsluttede spill
+- Nullstill spill
+- Overvåk spillaktivitet
+
+#### 🧠 Quiz
+- Opprett quiz-spørsmål med 4 svaralternativer
+- Last opp bilder til spørsmål
+- Sett riktig svar og rekkefølge
+- Se leaderboard med tid og poeng
+
+#### 📅 Program
+- Opprett programpunkter med tid, tittel, sted og beskrivelse
+- Organiser program per dag
+- Rediger og slett programpunkter
+
+#### 🗄️ Database Management
+- **Last inn testdata**: Genererer 100 deltakere, 5 quiz-spørsmål, 5 skattejakt-poster, lag og arrangement
+- **Nullstill database**: Sletter ALL data (deltakere, lag, spill, svar, etc.)
+- Sikker nullstilling med dobbel bekreftelse
+
+## 🔧 Teknisk Stack
 
 - **Backend**: Node.js + Express
-- **Database**: SQLite (fil-basert)
+- **Database**: SQLite (fil-basert, ingen ekstern server nødvendig)
 - **Frontend**: Vanilla HTML/CSS/JavaScript
 - **QR-generering**: qrcode npm pakke
 - **QR-scanning**: html5-qrcode library
-- **Bildeprosessering**: Sharp
+- **Bildeprosessering**: Sharp (automatisk komprimering og EXIF-fjerning)
 - **Kamera**: Native browser MediaDevices API
+- **File Upload**: Multer middleware
 
-## Installasjon
+## 📦 Installasjon
 
 ### Forutsetninger
-- Node.js (v14 eller nyere)
-- npm (kommer med Node.js)
 
-### Steg 1: Installer dependencies
+- **Node.js** (v14 eller nyere) - [Last ned](https://nodejs.org/)
+- **npm** (kommer med Node.js)
+- **Git** (valgfritt, for kloning)
+- **Webkamera** (for selfies og QR-scanning)
+- **Strekkodeskanner** (valgfritt, men anbefalt for arrangementer)
+
+### Steg 1: Last ned prosjektet
+
+**Alternativ A: Med Git**
 ```bash
+git clone https://github.com/[din-bruker]/4h-event-hub.git
 cd 4h-event-hub
+```
+
+**Alternativ B: Last ned ZIP**
+1. Klikk "Code" → "Download ZIP" på GitHub
+2. Pakk ut ZIP-filen
+3. Åpne terminalen i mappen
+
+### Steg 2: Installer avhengigheter
+
+```bash
 npm install
 ```
 
-### Steg 2: Initialiser database
+*Tips: Hvis du får feil, prøv:*
+```bash
+npm install --registry=https://registry.npmjs.org/
+```
+
+## 🗄️ Database Setup
+
+### Initialiser Database
+
+Første gang du setter opp applikasjonen:
+
 ```bash
 npm run init-db
 ```
 
-Dette oppretter SQLite databasen og nødvendige tabeller.
+Dette oppretter SQLite databasen (`database/data.db`) med alle nødvendige tabeller.
 
-### Steg 3: Start serveren
+### Kjør Database-migrasjoner
+
+Hvis du har lastet ned en nyere versjon av koden, kjør migrasjonene:
+
+```bash
+node database/migrate-add-event-info.js
+node database/migrate-add-teams-table.js
+node database/migrate-add-scavenger-hunt.js
+node database/migrate-add-tic-tac-toe.js
+node database/migrate-add-quiz.js
+node database/migrate-add-event-start-time.js
+node database/migrate-add-program.js
+```
+
+*Tips: Du kan kjøre alle migrasjonene på en gang uten feil - skript som allerede er kjørt vil bli hoppet over.*
+
+### Last inn Testdata (Valgfritt)
+
+For å teste applikasjonen med dummy-data:
+
+1. Start serveren (se nedenfor)
+2. Åpne Admin Panel: http://localhost:3000/admin.html
+3. Gå til **Database** fanen
+4. Klikk **"Last inn testdata"**
+
+Dette oppretter:
+- 1 arrangement (Sommerleir 2026)
+- 100 testdeltakere
+- 20 klubber
+- 15 lag
+- 5 quiz-spørsmål
+- 5 skattejakt-sjekkpunkter
+
+### Nullstill Database
+
+For å slette ALL data og starte på nytt:
+
+1. Åpne Admin Panel: http://localhost:3000/admin.html
+2. Gå til **Database** fanen
+3. Klikk **"Nullstill Database"**
+4. Bekreft THREE ganger (det er meningen!)
+5. Skriv "SLETT ALT" for å bekrefte
+
+**Advarsel**: Dette sletter PERMANENT:
+- Alle deltakere og profilbilder
+- Alle lag
+- Alle quiz-svar og økter
+- Alle skattejakt-økter
+- Alle spill (tic-tac-toe)
+- Alle lagutfordring-svar
+- Arrangement-informasjon
+- Alle program-poster
+
+## 🚀 Kjøre Applikasjonen
+
+### Start Server
+
 ```bash
 npm start
 ```
 
-Serveren starter på http://localhost:3000
+Serveren starter på: **http://localhost:3000**
 
-## Bruksanvisning
-
-### For Arrangører (Admin)
-
-1. **Åpne Admin Panel**: http://localhost:3000/admin.html
-
-2. **Legg til deltakere**:
-   - Fyll inn fornavn, etternavn, alder og hjemsted
-   - Deltakerkode genereres automatisk (SK-YYYY-NNN)
-   - Klikk "Legg til Deltaker"
-   - QR-kode genereres automatisk
-
-3. **Print QR-koder**:
-   - Klikk "Print QR-koder" i deltakerlisten
-   - Velg print i nettleseren
-   - Print på kartong eller klistrelapper
-   - Klipp ut og lim på fysiske kort
-
-4. **Generere QR-koder for eksisterende deltakere**:
-   - Klikk "Generer alle QR" for å generere QR-koder for alle
-   - Eller klikk "Generer QR" på enkeltdeltakere
-
-### For Deltakere (Profilside)
-
-1. **Åpne Profilside**: http://localhost:3000/profile.html
-
-2. **Skann QR-kode** (to metoder):
-
-   **Metode 1: Strekkodeskanner (anbefalt for arrangementer)**
-   - Skjermen viser "Strekkodeskanner klar"
-   - Hold QR-koden foran strekkodeskanneren
-   - Skanneren leser koden automatisk (fungerer som tastatur)
-   - Profilen vises automatisk
-
-   **Metode 2: Webkamera (for testing)**
-   - Klikk "Start Kamera-Skanning"
-   - Gi kamera-tillatelse når nettleseren ber om det
-   - Hold QR-koden på kortet ditt foran kameraet
-   - Profilen din vises automatisk
-
-3. **Ta Selfie**:
-   - Klikk "Ta Selfie" når profilen er åpen
-   - Gi kamera-tillatelse hvis nødvendig
-   - Poser for kameraet
-   - Klikk "Ta Bilde"
-   - Klikk "Lagre Selfie" eller "Ta På Nytt"
-
-4. **Skann ny kode**:
-   - Klikk "Skann Ny Kode" for å la noen andre bruke enheten
-
-## Prosjektstruktur
-
+Du vil se:
 ```
-4h-event-hub/
-├── package.json              # npm konfigurasjon
-├── server.js                 # Express server
-├── database/
-│   ├── init.js              # Database initialisering
-│   ├── schema.sql           # Database schema
-│   └── data.db              # SQLite database (genereres)
-├── routes/
-│   ├── participants.js      # Deltaker API
-│   └── qr.js                # QR-kode API
-├── public/
-│   ├── index.html           # Hjemmeside
-│   ├── profile.html         # Profilside
-│   ├── admin.html           # Admin panel
-│   ├── css/
-│   │   ├── main.css         # Global styling
-│   │   └── profile.css      # Profilside styling
-│   └── js/
-│       ├── scanner.js       # QR-scanning logikk
-│       ├── camera.js        # Kamera-håndtering
-│       ├── profile.js       # Profilside logikk
-│       └── admin.js         # Admin panel logikk
-├── uploads/
-│   ├── profile-photos/      # Deltaker selfies
-│   └── qr-codes/            # Genererte QR-koder
-└── utils/
-    └── qr-generator.js      # QR-generering utility
+Server running on port 3000
+✅ Database connected
 ```
 
-## API Endepunkter
+### Åpne Applikasjonen
+
+- **Hovedside**: http://localhost:3000
+- **Min Profil**: http://localhost:3000/profile.html
+- **Admin Panel**: http://localhost:3000/admin.html
+- **Quiz**: http://localhost:3000/quiz.html
+- **Program**: http://localhost:3000/program.html
+
+## 👨‍💼 Admin Panel
+
+### Tilgang
+
+Åpne: http://localhost:3000/admin.html
+
+*NB: Det er ingen passord-beskyttelse. For produksjon, legg til autentisering.*
+
+### Admin-faner
+
+1. **📋 Arrangement** - Rediger arrangementinfo, last opp logo
+2. **🏆 Lag** - Administrer lag, bulk-opprett, se medlemmer
+3. **👥 Deltakere** - Legg til, rediger, slett deltakere, tildel lag
+4. **🎯 QR Skattejakt** - Opprett sjekkpunkter, se leaderboard
+5. **🎮 Tripp-Trapp-Tresko** - Se spill, nullstill
+6. **🧠 Quiz** - Administrer spørsmål, se leaderboard
+7. **📅 Program** - Opprett program for arrangementet
+8. **📊 Statistikk** - Oversikt og analyse
+9. **🗄️ Database** - Last testdata, nullstill database
+
+## 📖 Bruksanvisning
+
+### For Deltakere
+
+#### Skanne QR-kode
+
+**Metode 1: Strekkodeskanner (Anbefalt for arrangementer)**
+1. Åpne Min Profil: http://localhost:3000/profile.html
+2. Skjermen viser "Strekkodeskanner klar"
+3. Hold QR-koden foran strekkodeskanneren
+4. Profilen vises automatisk
+
+**Metode 2: Webkamera**
+1. Åpne Min Profil
+2. Klikk **"Start Kamera-Skanning"**
+3. Gi kamera-tillatelse
+4. Hold QR-koden foran kameraet
+5. Profilen vises automatisk
+
+#### Ta Selfie
+
+1. Når profilen er åpen, klikk **"Ta Selfie"**
+2. Gi kamera-tillatelse hvis nødvendig
+3. Poser for kameraet
+4. Klikk **"Ta Bilde"**
+5. Fornøyd? Klikk **"Lagre Selfie"**
+6. Vil du ta på nytt? Klikk **"Ta På Nytt"**
+
+#### Spill Quiz
+
+1. Åpne Quiz: http://localhost:3000/quiz.html
+2. Skann deltaker-QR for å starte
+3. Velg lag hvis du er på flere lag
+4. Svar på spørsmålene så raskt som mulig
+5. Se resultat og poeng når du er ferdig
+
+#### Delta i QR Skattejakt
+
+1. Åpne QR Skattejakt: http://localhost:3000/scavenger-hunt.html
+2. Skann deltaker-QR
+3. Velg lag
+4. Les hintet
+5. Finn stedet og skann QR-koden
+6. Fortsett til alle sjekkpunkter er funnet
+7. Se tid og plassering
+
+### For Arrangører
+
+#### Opprette Arrangement
+
+1. Åpne Admin Panel → **Arrangement**
+2. Fyll inn:
+   - Arrangementsnavn
+   - Beskrivelse
+   - Sted
+   - Startdato og sluttdato
+   - Starttidspunkt
+   - Arrangørnavn og kontaktinfo
+3. Last opp logo (valgfritt)
+4. Klikk **"Lagre Arrangement-info"**
+
+#### Legge til Deltakere
+
+**Manuelt (enkeltvis):**
+1. Gå til **Deltakere** fanen
+2. Klikk **"Legg til Deltaker"**
+3. Fyll inn informasjon
+4. Klikk **"Legg til Deltaker"**
+5. QR-kode genereres automatisk
+
+**Import fra CSV:**
+1. Klikk **"Importer CSV"**
+2. Velg CSV-fil med kolonnene: `first_name,last_name,age,home_location,club,role,team`
+3. Deltakere legges til automatisk
+
+#### Opprette Lag
+
+**Enkeltvis:**
+1. Gå til **Lag** fanen
+2. Klikk **"Nytt Lag"**
+3. Skriv inn lagnavn og max medlemmer
+4. Klikk **"Lagre"**
+
+**Bulk (flere lag samtidig):**
+1. Klikk **"Opprett Flere Lag"**
+2. Skriv inn antall lag (1-50)
+3. Lagnavnene genereres automatisk med mønster:
+   - Adjektiv + Substantiv på samme bokstav
+   - Eksempel: "Glade Geiter", "Raske Rever"
+
+#### Tildele Deltakere til Lag
+
+**Automatisk:**
+1. Gå til **Lag** fanen
+2. Klikk **"Tildel lag automatisk"**
+3. Bekreft antall lag
+4. Systemet fordeler deltakere jevnt
+
+**Manuelt:**
+1. Gå til **Deltakere** fanen
+2. Klikk **"Rediger"** på en deltaker
+3. Velg lag fra dropdown
+4. Klikk **"Oppdater Deltaker"**
+
+#### Print QR-koder
+
+**For Deltakere:**
+1. Gå til **Deltakere** fanen
+2. Klikk **"Print QR-koder"**
+3. Velg print i nettleseren
+4. Skriv ut på klistremerker eller kartong
+
+**For Skattejakt:**
+1. Gå til **QR Skattejakt** fanen
+2. Klikk **"Print QR"** på hvert sjekkpunkt
+3. Skriv ut og plasser på steder
+
+#### Opprette Program
+
+1. Gå til **Program** fanen
+2. Klikk **"Nytt Programpunkt"**
+3. Fyll inn:
+   - Tittel
+   - Beskrivelse (valgfritt)
+   - Starttid og sluttid
+   - Sted (valgfritt)
+   - Dag-nummer
+4. Klikk **"Lagre"**
+
+## 💻 Hardware Setup
+
+### Webkamera
+
+**Innebygget Kamera:**
+- De fleste laptops fungerer direkte
+- Nettleseren ber om tillatelse første gang
+
+**Eksternt USB-kamera:**
+1. Koble til USB
+2. Vent til det installeres (Windows)
+3. Test i kamera-appen først
+4. Åpne applikasjonen og gi tillatelse
+
+### Strekkodeskanner
+
+**Anbefalt type:**
+- USB eller trådløs 2D-skanner
+- Må kunne lese QR-koder
+- Keyboard-emulation modus
+
+**Setup:**
+1. Koble til USB (eller par trådløst)
+2. Test i et tekstfelt (Notepad/TextEdit)
+3. Skann en QR-kode
+4. Sjekk at den skriver koden + Enter
+5. Klar til bruk!
+
+**Konfigurere skanner:**
+- Sjekk manualen for "Keyboard mode"
+- Aktiver "Send Enter" etter scan
+- Deaktiver prefiks/suffiks hvis mulig
+
+### Touchskjerm (Valgfritt)
+
+For kiosk-modus på arrangementer:
+1. Koble til USB touchskjerm
+2. Kalibrer touchskjermen i OS-innstillinger
+3. Åpne nettleser i fullscreen (F11)
+4. Deltakere kan bruke touch i stedet for mus
+
+### Printer
+
+For utskrift av QR-koder:
+- Vanlig skriver fungerer
+- Klebemerke-printer anbefales
+- Print på A4 og klipp ut, eller
+- Print direkte på klistremerker
+
+## 🔌 API Endepunkter
 
 ### Deltakere
 - `GET /api/participants` - Hent alle deltakere
@@ -149,102 +433,228 @@ Serveren starter på http://localhost:3000
 - `DELETE /api/participants/:code` - Slett deltaker
 - `POST /api/participants/:code/photo` - Last opp selfie
 
+### Lag (Teams)
+- `GET /api/teams` - Hent alle lag
+- `GET /api/teams/:id` - Hent spesifikt lag
+- `POST /api/teams` - Opprett nytt lag
+- `PUT /api/teams/:id` - Oppdater lag
+- `DELETE /api/teams/:id` - Slett lag
+
 ### QR-koder
 - `GET /api/qr/:code` - Hent/generer QR-kode
 - `POST /api/qr/generate-batch` - Generer QR for alle deltakere
 
-## Deployment for Leir/Arrangement
+### Quiz
+- `GET /api/quiz/questions` - Hent alle quiz-spørsmål
+- `POST /api/quiz/questions` - Opprett spørsmål
+- `PUT /api/quiz/questions/:id` - Oppdater spørsmål
+- `DELETE /api/quiz/questions/:id` - Slett spørsmål
+- `POST /api/quiz/start` - Start quiz-økt
+- `POST /api/quiz/answer` - Send inn svar
+- `GET /api/quiz/leaderboard` - Hent leaderboard
 
-### På Linux PC med Touchskjerm
+### QR Skattejakt
+- `GET /api/scavenger/checkpoints` - Hent alle sjekkpunkter
+- `POST /api/scavenger/checkpoints` - Opprett sjekkpunkt
+- `POST /api/scavenger/start` - Start skattejakt-økt
+- `POST /api/scavenger/scan` - Registrer scan
+- `GET /api/scavenger/leaderboard` - Hent leaderboard
 
-1. **Installer Node.js**:
-```bash
-sudo apt update
-sudo apt install nodejs npm
+### Program
+- `GET /api/program` - Hent alle programpunkter
+- `POST /api/program` - Opprett programpunkt
+- `PUT /api/program/:id` - Oppdater programpunkt
+- `DELETE /api/program/:id` - Slett programpunkt
+
+### Arrangement
+- `GET /api/event` - Hent arrangementinfo
+- `PUT /api/event` - Oppdater arrangementinfo
+- `POST /api/event/logo` - Last opp logo
+
+### Admin
+- `POST /api/admin/reset` - Nullstill database
+- `POST /api/admin/load-dummy-data` - Last inn testdata
+- `POST /api/admin/bulk-create-teams` - Bulk-opprett lag
+
+## 🐛 Feilsøking
+
+### Serveren starter ikke
+
+**Problem**: `Error: Cannot find module...`
+- **Løsning**: Kjør `npm install` på nytt
+
+**Problem**: `Port 3000 is already in use`
+- **Løsning**:
+  - Stopp eksisterende server (Ctrl+C)
+  - Eller endre port i `server.js` (linje 6)
+
+### Database-feil
+
+**Problem**: `SQLITE_ERROR: no such table`
+- **Løsning**: Kjør database-migrasjonene på nytt
+
+**Problem**: `Database is locked`
+- **Løsning**:
+  - Stopp serveren
+  - Slett `database/data.db`
+  - Kjør `npm run init-db`
+
+### Kamera fungerer ikke
+
+**Problem**: Får ikke tilgang til kamera
+- **Løsning**:
+  1. Sjekk nettleser-innstillinger for kamera-tillatelse
+  2. Bruk Chrome eller Edge (best støtte)
+  3. På Mac: Sjekk System Preferences → Security & Privacy → Camera
+  4. På Windows: Sjekk Settings → Privacy → Camera
+
+**Problem**: Kameraet er svart/tomt
+- **Løsning**:
+  - Lukk andre programmer som bruker kameraet (Zoom, Teams, etc.)
+  - Koble USB-kameraet ut og inn igjen
+  - Restart nettleseren
+
+### Strekkodeskanner fungerer ikke
+
+**Problem**: Skanneren leser ikke QR-koder
+- **Løsning**:
+  1. Test i et tekstfelt først (Notepad)
+  2. Sjekk at den er i "keyboard mode"
+  3. Sjekk at den sender Enter etter scanning
+  4. Sjekk at QR-koden er trykt i god kvalitet
+
+**Problem**: Skanneren skriver feil tegn
+- **Løsning**:
+  - Konfigurer keyboard layout i skanner-innstillinger
+  - Scan konfigurasjonskoden i manualen for Norwegian keyboard
+
+### QR-koder scannes ikke med kamera
+
+**Problem**: Kameraet ser QR-koden men registrerer ikke
+- **Løsning**:
+  1. Sørg for god belysning
+  2. Hold QR-koden stille og i fokus
+  3. Ikke hold for nært eller for langt unna
+  4. Sjekk at QR-koden er trykt skarpt (ikke uskarpt)
+  5. Prøv å øke størrelsen på QR-koden ved printing
+
+### Bilder lastes ikke opp
+
+**Problem**: Selfies lagres ikke
+- **Løsning**:
+  1. Sjekk at `uploads/profile-photos/` mappen eksisterer
+  2. Sjekk skrivetillatelser på mappen
+  3. Sjekk nettverks-fanen i browser DevTools for feil
+
+## 📁 Prosjektstruktur
+
+```
+4h-event-hub/
+├── package.json              # npm konfigurasjon og scripts
+├── server.js                 # Express server hovedfil
+├── database/
+│   ├── init.js              # Database initialisering
+│   ├── schema.sql           # Database schema
+│   ├── data.db              # SQLite database (genereres automatisk)
+│   └── migrate-*.js         # Database migrasjoner
+├── routes/
+│   ├── participants.js      # Deltaker API
+│   ├── qr.js                # QR-kode API
+│   ├── event.js             # Arrangement API
+│   ├── teams.js             # Lag API
+│   ├── quiz.js              # Quiz API
+│   ├── scavenger-hunt.js    # Skattejakt API
+│   ├── tic-tac-toe.js       # Tic-Tac-Toe API
+│   ├── team-challenge.js    # Lagutfordring API
+│   ├── program.js           # Program API
+│   └── admin.js             # Admin API
+├── public/
+│   ├── index.html           # Hovedside med navigasjon
+│   ├── profile.html         # Profilside (QR-scan + selfie)
+│   ├── admin.html           # Admin panel
+│   ├── quiz.html            # Quiz
+│   ├── scavenger-hunt.html  # QR Skattejakt
+│   ├── tic-tac-toe.html     # Tripp-Trapp-Tresko
+│   ├── team-challenge.html  # Lagutfordring
+│   ├── program.html         # Program oversikt
+│   ├── participant-info.html # Deltakeroversikt
+│   ├── live-scoreboard.html # Live scoreboard
+│   ├── css/                 # Stylesheets
+│   └── js/                  # Client-side JavaScript
+├── uploads/
+│   ├── profile-photos/      # Deltaker selfies
+│   ├── qr-codes/            # Genererte QR-koder
+│   ├── event-logos/         # Arrangementlogos
+│   └── team-challenge/      # Lagutfordring bilder
+└── utils/
+    └── qr-generator.js      # QR-generering utility
+
 ```
 
-2. **Klon/kopier prosjektet** til Linux PC
+## 🔒 Sikkerhet og Personvern
 
-3. **Installer og initialiser**:
-```bash
-cd 4h-event-hub
-npm install --registry=https://registry.npmjs.org/
-npm run init-db
-```
+- ✅ Alle bilder lagres lokalt på serveren
+- ✅ Ingen data sendes til eksterne tjenester
+- ✅ Applikasjonen fungerer helt offline
+- ✅ EXIF-metadata fjernes automatisk fra bilder
+- ✅ Bilder komprimeres automatisk (maks 800px bredde)
+- ⚠️ **OBS**: Admin panel har ingen passord-beskyttelse
+  - For produksjon: Legg til autentisering
+  - Eller kjør kun på lukket nettverk
 
-4. **Installer PM2** (for auto-restart):
+## 🚀 Production Deployment
+
+### På dedikert PC/Laptop for arrangement
+
+1. **Installer Node.js** på maskinen
+2. **Klon/kopier prosjektet**
+3. **Installer avhengigheter**: `npm install`
+4. **Initialiser database**: `npm run init-db`
+5. **Last inn testdata** (valgfritt) via Admin Panel
+6. **Start server**: `npm start`
+7. **Åpne nettleser i fullscreen** (F11) på http://localhost:3000
+
+### Med PM2 (Auto-restart)
+
 ```bash
-sudo npm install -g pm2
+# Installer PM2 globalt
+npm install -g pm2
+
+# Start applikasjonen
 pm2 start server.js --name "4h-event-hub"
+
+# Lagre PM2-konfigurasjon
 pm2 save
+
+# Start PM2 ved boot
 pm2 startup
 ```
 
-5. **Konfigurer nettleser** til å starte i fullscreen:
-   - Legg til i autostart
-   - Åpne http://localhost:3000/profile.html
-   - F11 for fullscreen
+### Kiosk-modus (Fullscreen uten kontroller)
 
-6. **Deaktiver skjermsparring**:
+**Chrome Kiosk Mode:**
 ```bash
-xset s off
-xset -dpms
+chrome --kiosk --app=http://localhost:3000/profile.html
 ```
 
-## Feilsøking
+**Fullscreen i nettleser:**
+- Trykk **F11** for fullscreen
+- Skjul bookmarks bar (Ctrl+Shift+B)
 
-### Strekkodeskanner virker ikke
-- Sjekk at strekkodeskanneren er tilkoblet via USB
-- Sjekk at skjermen har fokus (klikk på siden)
-- Test skanneren i et tekstfelt (Notepad) for å bekrefte at den fungerer
-- Sjekk at skanneren er konfigurert til å sende Enter etter scanning
-- Verifiser at QR-kodene er i riktig format (SK-YYYY-NNN)
+## 🤝 Bidra
 
-### Kamera virker ikke (for webkamera-scanning)
-- Sjekk at nettleseren har tillatelse til kamera
-- Prøv i Chrome/Edge (bedre støtte enn Firefox)
-- Sjekk at kamera er tilkoblet og fungerer
+Dette er et klubbprosjekt for Skautrollet 4H. Forslag og forbedringer er velkomne!
 
-### QR-koder scannes ikke med webkamera
-- Sørg for god belysning
-- Hold QR-koden stille foran kameraet
-- Sjekk at QR-koden er trykt i god kvalitet
-- Prøv med bakoverkamera hvis tilgjengelig
+## 📄 Lisens
 
-### Database feil
-- Slett `database/data.db` og kjør `npm run init-db` på nytt
-- Sjekk at du har skrivetillatelse i database-mappen
+MIT License - Fri programvare for 4H-klubber
 
-### npm install feil
-- Bruk `--registry=https://registry.npmjs.org/` flagget
-- Sjekk internettforbindelse
+## 📞 Support
 
-## Sikkerhet og Personvern
-
-- Alle bilder lagres lokalt på serveren
-- Ingen data sendes til eksterne tjenester
-- Applikasjonen fungerer helt offline
-- EXIF-metadata fjernes fra bilder
-- Deltakere kan slettes (soft delete)
-
-## Fremtidig Utvidelse
-
-Arkitekturen støtter enkel tilføying av:
-- Aktivitets-tracking (sjekk inn på stasjoner)
-- Poeng/achievements system
-- Team/lag-konkurranser
-- Kompliment-vegg
-- Bingo/scavenger hunt
-- "Finn din match" basert på interesser
-
-## Support
-
-For spørsmål eller problemer, kontakt klubbrådgiver eller opprett en issue i prosjektet.
-
-## Lisens
-
-MIT License - Dette er et klubbprosjekt for Skautrollet 4H
+For spørsmål eller problemer:
+- Opprett en issue på GitHub
+- Kontakt klubbrådgiver: Espen Strømsnes
 
 ---
 
-**4H - Klart hode • Varmt hjerte • Flinke hender • God helse**
+**4H - Klart hode • Varmt hjerte • Flinke hender • God helse** 🍀
