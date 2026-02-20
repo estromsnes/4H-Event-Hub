@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lagbilde-utfordring - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/team-challenge.css">
+    <!-- Confetti library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- QR Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navbar">
+        <a href="/index.html" class="nav-link">← Hjem</a>
+        <h2>📸 Lagbilde-utfordring</h2>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <!-- Initial View: Instructions -->
+    <div id="instructionsView" class="view">
+        <div class="instructions-container">
+            <div class="instructions-icon">🏆</div>
+            <h1>Lagbilde-utfordring</h1>
+            <div class="instructions-box">
+                <p class="instructions-intro">Samle hele laget ditt og skann så raskt som mulig!</p>
+                <ul class="instructions-list">
+                    <li>👤 Første lagmedlem skanner først</li>
+                    <li>⏱️ Andre lagmedlem starter tidtakeren</li>
+                    <li>🏃 Alle må skanne innen 2 minutter</li>
+                    <li>📸 Ta lagbilde når dere er ferdige!</li>
+                </ul>
+            </div>
+            <button id="startChallengeBtn" class="button primary large-button">
+                🚀 Start Lagbilde-utfordring
+            </button>
+            <button id="viewLeaderboardBtn2" class="button secondary">
+                🏆 Se Resultattavle
+            </button>
+        </div>
+    </div>
+
+    <!-- Scanner View -->
+    <div id="scannerView" class="view hidden">
+        <div class="challenge-container">
+            <!-- Team Info Header -->
+            <div id="teamHeader" class="team-header hidden">
+                <h2 id="teamName" class="team-name">-</h2>
+                <div id="timerDisplay" class="timer-display hidden">
+                    <span class="timer-icon">⏱️</span>
+                    <span id="timerValue" class="timer-value">2:00</span>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div id="progressSection" class="progress-section hidden">
+                <div class="progress-header">
+                    <span id="progressText">Venter på første skanning...</span>
+                </div>
+
+                <!-- Team Member Checklist -->
+                <div id="teamMemberList" class="team-member-list">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Scanner Interface -->
+            <div class="scanner-interface">
+                <input type="text" id="barcodeInput" class="barcode-input"
+                       autocomplete="off" autofocus placeholder="Skann QR-kode...">
+
+                <div class="scanner-status">
+                    <span class="keyboard-icon">⌨️</span>
+                    <span>Klar til å skanne</span>
+                </div>
+
+                <div class="divider"><span>eller</span></div>
+
+                <div id="qr-reader" class="qr-reader"></div>
+                <button id="startCameraBtn" class="button secondary">
+                    📷 Bruk Kamera
+                </button>
+            </div>
+
+            <div id="scanFeedback" class="scan-feedback hidden"></div>
+
+            <button id="cancelChallengeBtn" class="button secondary" style="margin-top: 20px;">
+                ← Tilbake til Start
+            </button>
+        </div>
+    </div>
+
+    <!-- Success View -->
+    <div id="successView" class="view hidden">
+        <div class="success-container">
+            <div class="success-icon">🎉</div>
+            <h1 class="success-title">Gratulerer!</h1>
+            <p class="success-message">
+                <strong id="successTeamName">Laget</strong> fullførte utfordringen!
+            </p>
+            <div class="completion-stats">
+                <div class="stat-box">
+                    <span class="stat-icon">⏱️</span>
+                    <span class="stat-value" id="completionTime">--:--</span>
+                    <span class="stat-label">Tid brukt</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-icon">👥</span>
+                    <span class="stat-value" id="memberCount">-</span>
+                    <span class="stat-label">Lagmedlemmer</span>
+                </div>
+            </div>
+
+            <button id="takeTeamPhotoBtn" class="button primary large-button">
+                📸 Ta Lagbilde
+            </button>
+
+            <button id="viewLeaderboardBtn" class="button secondary">
+                🏆 Se Resultattavle
+            </button>
+
+            <button id="newChallengeBtn" class="button secondary">
+                🔄 Ny Utfordring
+            </button>
+        </div>
+    </div>
+
+    <!-- Failure View -->
+    <div id="failureView" class="view hidden">
+        <div class="failure-container">
+            <div class="failure-icon">⏰</div>
+            <h1 class="failure-title">Tiden løp ut!</h1>
+            <p class="failure-message">
+                Dessverre klarte ikke <strong id="failureTeamName">laget</strong> å skanne alle innen tiden.
+            </p>
+            <div class="failure-stats">
+                <p><span id="scannedCount">-</span> av <span id="requiredCount">-</span> medlemmer skannet</p>
+            </div>
+            <button id="tryAgainBtn" class="button primary">
+                🔄 Prøv Igjen
+            </button>
+            <button id="backToHomeBtn" class="button secondary">
+                🏠 Tilbake til Start
+            </button>
+        </div>
+    </div>
+
+    <!-- Camera Modal for Team Photo -->
+    <div id="cameraModal" class="modal hidden">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Ta Lagbilde</h2>
+                <button id="closeCameraBtn" class="close-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <video id="cameraVideo" autoplay playsinline></video>
+                <canvas id="photoCanvas" class="hidden"></canvas>
+                <img id="capturedPhoto" class="hidden" alt="Captured photo">
+            </div>
+            <div class="modal-footer">
+                <button id="captureBtn" class="button primary">📸 Ta Bilde</button>
+                <button id="retakeBtn" class="button secondary hidden">🔄 Ta På Nytt</button>
+                <button id="savePhotoBtn" class="button success hidden">✓ Lagre Bilde</button>
+            </div>
+            <div id="photoStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Leaderboard Modal -->
+    <div id="leaderboardModal" class="modal hidden">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>🏆 Resultattavle</h2>
+                <button id="closeLeaderboardBtn" class="close-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="leaderboard-tabs">
+                    <button id="tabFastest" class="tab-button active" data-sort="fastest">
+                        ⚡ Kjappeste lag
+                    </button>
+                    <button id="tabFirst" class="tab-button" data-sort="first">
+                        🥇 Første lag
+                    </button>
+                </div>
+                <div id="leaderboardContent" class="leaderboard-content">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Load event info and update title
+        async function loadEventInfo() {
+            try {
+                const response = await fetch('/api/event');
+                if (response.ok) {
+                    const event = await response.json();
+                    if (event.event_name) {
+                        document.title = `${event.event_name} - Lagbilde-utfordring`;
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading event info:', err);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', loadEventInfo);
+    </script>
+    <script src="/js/scanner.js"></script>
+    <script src="/js/camera.js"></script>
+    <script src="/js/team-challenge.js"></script>
+</body>
+</html>

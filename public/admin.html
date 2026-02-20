@@ -390,15 +390,16 @@
                         <input type="text" id="eventLocation" placeholder="Folkvang Eina">
                     </div>
                     <div class="form-group">
-                        <label for="eventStartDate">Startdato</label>
-                        <input type="date" id="eventStartDate">
+                        <label for="eventStartDateTime">Starttidspunkt</label>
+                        <input type="datetime-local" id="eventStartDateTime">
+                        <small style="color: var(--text-light); font-size: 14px;">Brukes for leaderboard i lagutfordring</small>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="eventEndDate">Sluttdato</label>
-                        <input type="date" id="eventEndDate">
+                        <label for="eventEndDateTime">Sluttidspunkt</label>
+                        <input type="datetime-local" id="eventEndDateTime">
                     </div>
                     <div class="form-group">
                         <label for="organizerClub">Arrangør klubb</label>
@@ -665,6 +666,39 @@
             </div>
 
             <div id="photoModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Team Photo Modal -->
+    <div id="teamPhotoModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="teamPhotoModalTitle">Lagbilde</h2>
+                <button id="closeTeamPhotoBtn" class="close-btn">✕</button>
+            </div>
+
+            <div style="text-align: center;">
+                <img id="teamPhotoModalImg" src="" alt="Team photo" style="max-width: 100%; max-height: 60vh; border-radius: 10px; margin-bottom: 20px;">
+                <p id="teamPhotoPlaceholder" class="hidden" style="color: var(--text-light); padding: 40px;">
+                    📷 Laget har ikke tatt lagbilde ennå.<br>
+                    Laget må fullføre Lagbilde-utfordringen for å ta bilde.
+                </p>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <input type="file" id="teamPhotoInput" accept="image/*" class="hidden">
+                <button id="uploadTeamPhotoBtn" class="button secondary" style="flex: 1;">
+                    📤 Last opp nytt bilde
+                </button>
+                <button id="deleteTeamPhotoBtn" class="button secondary" style="flex: 1;" disabled>
+                    🗑️ Slett bilde
+                </button>
+                <button id="closeTeamPhotoModal2Btn" class="button primary" style="flex: 1;">
+                    ✅ Lukk
+                </button>
+            </div>
+
+            <div id="teamPhotoModalStatus" class="hidden mt-2"></div>
         </div>
     </div>
 

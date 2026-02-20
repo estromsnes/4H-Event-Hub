@@ -9,8 +9,8 @@ const logoPreview = document.getElementById('logoPreview');
 const logoPreviewImg = document.getElementById('logoPreviewImg');
 const removeLogo = document.getElementById('removeLogo');
 const eventLocationInput = document.getElementById('eventLocation');
-const eventStartDateInput = document.getElementById('eventStartDate');
-const eventEndDateInput = document.getElementById('eventEndDate');
+const eventStartDateTimeInput = document.getElementById('eventStartDateTime');
+const eventEndDateTimeInput = document.getElementById('eventEndDateTime');
 const organizerNameInput = document.getElementById('organizerName');
 const organizerClubInput = document.getElementById('organizerClub');
 const organizerContactInput = document.getElementById('organizerContact');
@@ -69,6 +69,18 @@ const closePhotoModal2Btn = document.getElementById('closePhotoModal2Btn');
 const deletePhotoBtn = document.getElementById('deletePhotoBtn');
 const photoModalStatus = document.getElementById('photoModalStatus');
 
+// Team Photo Modal elements
+const teamPhotoModal = document.getElementById('teamPhotoModal');
+const teamPhotoModalTitle = document.getElementById('teamPhotoModalTitle');
+const teamPhotoModalImg = document.getElementById('teamPhotoModalImg');
+const teamPhotoPlaceholder = document.getElementById('teamPhotoPlaceholder');
+const closeTeamPhotoBtn = document.getElementById('closeTeamPhotoBtn');
+const closeTeamPhotoModal2Btn = document.getElementById('closeTeamPhotoModal2Btn');
+const uploadTeamPhotoBtn = document.getElementById('uploadTeamPhotoBtn');
+const deleteTeamPhotoBtn = document.getElementById('deleteTeamPhotoBtn');
+const teamPhotoInput = document.getElementById('teamPhotoInput');
+const teamPhotoModalStatus = document.getElementById('teamPhotoModalStatus');
+
 const participantsList = document.getElementById('participantsList');
 const participantCount = document.getElementById('participantCount');
 const teamStats = document.getElementById('teamStats');
@@ -86,6 +98,7 @@ let nextParticipantNumber = 1;
 let currentEvent = null;
 let currentTeam = null;
 let currentPhotoParticipantCode = null;
+let currentPhotoTeamName = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -128,6 +141,9 @@ async function initAdmin() {
     // Load participants
     await loadParticipants();
 
+    // Re-render teams now that participants are loaded
+    renderTeams();
+
     // Setup event listeners
     eventInfoForm.addEventListener('submit', handleSaveEventInfo);
     eventLogoInput.addEventListener('change', handleLogoPreview);
@@ -143,6 +159,13 @@ async function initAdmin() {
     closePhotoBtn.addEventListener('click', closePhotoModal);
     closePhotoModal2Btn.addEventListener('click', closePhotoModal);
     deletePhotoBtn.addEventListener('click', handleDeletePhoto);
+
+    // Team photo modal event listeners
+    closeTeamPhotoBtn.addEventListener('click', closeTeamPhotoModal);
+    closeTeamPhotoModal2Btn.addEventListener('click', closeTeamPhotoModal);
+    uploadTeamPhotoBtn.addEventListener('click', () => teamPhotoInput.click());
+    teamPhotoInput.addEventListener('change', handleUploadTeamPhoto);
+    deleteTeamPhotoBtn.addEventListener('click', handleDeleteTeamPhoto);
 
     addParticipantForm.addEventListener('submit', handleAddParticipant);
     editParticipantForm.addEventListener('submit', handleEditParticipant);
@@ -177,8 +200,8 @@ async function loadEventInfo() {
         eventNameInput.value = currentEvent.event_name || '';
         eventDescriptionInput.value = currentEvent.event_description || '';
         eventLocationInput.value = currentEvent.location || '';
-        eventStartDateInput.value = currentEvent.start_date || '';
-        eventEndDateInput.value = currentEvent.end_date || '';
+        eventStartDateTimeInput.value = currentEvent.start_datetime || '';
+        eventEndDateTimeInput.value = currentEvent.end_datetime || '';
         organizerNameInput.value = currentEvent.organizer_name || '';
         organizerClubInput.value = currentEvent.organizer_club || '';
         organizerContactInput.value = currentEvent.organizer_contact || '';
@@ -187,6 +210,11 @@ async function loadEventInfo() {
         if (currentEvent.logo_path) {
             logoPreviewImg.src = currentEvent.logo_path + '?t=' + Date.now();
             logoPreview.classList.remove('hidden');
+        }
+
+        // Update browser tab title
+        if (currentEvent.event_name) {
+            document.title = `${currentEvent.event_name} - Admin`;
         }
 
         console.log('Event info loaded:', currentEvent);
@@ -229,8 +257,8 @@ async function handleSaveEventInfo(e) {
         event_name: eventNameInput.value.trim(),
         event_description: eventDescriptionInput.value.trim() || null,
         location: eventLocationInput.value.trim() || null,
-        start_date: eventStartDateInput.value || null,
-        end_date: eventEndDateInput.value || null,
+        start_datetime: eventStartDateTimeInput.value || null,
+        end_datetime: eventEndDateTimeInput.value || null,
         organizer_name: organizerNameInput.value.trim() || null,
         organizer_club: organizerClubInput.value.trim() || null,
         organizer_contact: organizerContactInput.value.trim() || null
@@ -355,13 +383,29 @@ function renderTeams() {
     teamsList.innerHTML = teams.map(team => {
         const memberCount = participants.filter(p => p.role === 'Deltaker' && p.team === team.name).length;
 
+        // Get team photo from any participant on this team
+        const teamMember = participants.find(p => p.team === team.name && p.team_photo_path);
+        const teamPhoto = teamMember?.team_photo_path;
+
+        const photoHtml = teamPhoto
+            ? `<div class="team-photo-container">
+                   <img src="${teamPhoto}" alt="${team.name} lagbilde" class="team-photo">
+               </div>`
+            : '';
+
         return `
             <div class="team-card">
-                <h3>${team.name}</h3>
+                <div class="team-card-header">
+                    <h3>${team.name}</h3>
+                    ${photoHtml}
+                </div>
                 ${team.description ? `<p>${team.description}</p>` : ''}
                 <p><strong>Maks medlemmer:</strong> ${team.max_members}</p>
                 <p><strong>Nåværende medlemmer:</strong> ${memberCount}</p>
                 <div class="team-card-actions">
+                    <button class="button secondary btn-small" onclick="viewTeamPhoto('${team.name.replace(/'/g, "\\'")}', ${teamPhoto ? `'${teamPhoto}'` : 'null'})">
+                        📷 Bilde
+                    </button>
                     <button class="button secondary btn-small" onclick="editTeam(${team.id})">
                         ✏️ Rediger
                     </button>
@@ -635,6 +679,149 @@ function showPhotoModalStatus(message, type) {
 }
 
 // ============================================================================
+// TEAM PHOTO MANAGEMENT
+// ============================================================================
+
+/**
+ * Open team photo modal
+ */
+function viewTeamPhoto(teamName, photoPath) {
+    currentPhotoTeamName = teamName;
+    teamPhotoModalTitle.textContent = `${teamName} - Lagbilde`;
+    teamPhotoModalStatus.classList.add('hidden');
+
+    if (photoPath) {
+        teamPhotoModalImg.src = photoPath + '?t=' + Date.now(); // Cache bust
+        teamPhotoModalImg.classList.remove('hidden');
+        teamPhotoPlaceholder.classList.add('hidden');
+        deleteTeamPhotoBtn.disabled = false;
+    } else {
+        teamPhotoModalImg.classList.add('hidden');
+        teamPhotoPlaceholder.classList.remove('hidden');
+        deleteTeamPhotoBtn.disabled = true;
+    }
+
+    teamPhotoModal.classList.remove('hidden');
+}
+
+/**
+ * Close team photo modal
+ */
+function closeTeamPhotoModal() {
+    teamPhotoModal.classList.add('hidden');
+    teamPhotoModalImg.src = '';
+    currentPhotoTeamName = null;
+    teamPhotoModalStatus.classList.add('hidden');
+    teamPhotoInput.value = '';
+}
+
+/**
+ * Handle upload team photo
+ */
+async function handleUploadTeamPhoto(e) {
+    if (!e.target.files || e.target.files.length === 0) return;
+    if (!currentPhotoTeamName) return;
+
+    const file = e.target.files[0];
+
+    try {
+        uploadTeamPhotoBtn.disabled = true;
+        uploadTeamPhotoBtn.textContent = '⏳ Laster opp...';
+
+        const formData = new FormData();
+        formData.append('photo', file);
+        formData.append('team_name', currentPhotoTeamName);
+
+        const response = await fetch('/api/team-challenge/teams/photo', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to upload photo');
+        }
+
+        showTeamPhotoModalStatus('Lagbilde lastet opp!', 'success');
+
+        // Reload participants and update modal
+        setTimeout(async () => {
+            await loadParticipants();
+            const teamMember = participants.find(p => p.team === currentPhotoTeamName && p.team_photo_path);
+            if (teamMember) {
+                viewTeamPhoto(currentPhotoTeamName, teamMember.team_photo_path);
+            }
+        }, 1000);
+
+    } catch (err) {
+        console.error('Error uploading team photo:', err);
+        showTeamPhotoModalStatus('Kunne ikke laste opp bilde: ' + err.message, 'error');
+    } finally {
+        uploadTeamPhotoBtn.disabled = false;
+        uploadTeamPhotoBtn.textContent = '📤 Last opp nytt bilde';
+        teamPhotoInput.value = '';
+    }
+}
+
+/**
+ * Handle delete team photo
+ */
+async function handleDeleteTeamPhoto() {
+    if (!currentPhotoTeamName) return;
+
+    const confirmed = confirm(
+        `Er du sikker på at du vil slette lagbildet for ${currentPhotoTeamName}?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        deleteTeamPhotoBtn.disabled = true;
+        deleteTeamPhotoBtn.textContent = '⏳ Sletter...';
+
+        const response = await fetch(`/api/team-challenge/teams/${encodeURIComponent(currentPhotoTeamName)}/photo`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete photo');
+        }
+
+        showTeamPhotoModalStatus('Lagbildet ble slettet', 'success');
+
+        // Reload participants and close modal after short delay
+        setTimeout(async () => {
+            await loadParticipants();
+            closeTeamPhotoModal();
+        }, 1000);
+
+    } catch (err) {
+        console.error('Error deleting team photo:', err);
+        showTeamPhotoModalStatus('Kunne ikke slette bilde: ' + err.message, 'error');
+    } finally {
+        deleteTeamPhotoBtn.disabled = false;
+        deleteTeamPhotoBtn.textContent = '🗑️ Slett bilde';
+    }
+}
+
+/**
+ * Show team photo modal status message
+ */
+function showTeamPhotoModalStatus(message, type) {
+    teamPhotoModalStatus.textContent = message;
+    teamPhotoModalStatus.className = `alert ${type}`;
+    teamPhotoModalStatus.classList.remove('hidden');
+}
+
+// Make viewTeamPhoto globally accessible
+window.viewTeamPhoto = viewTeamPhoto;
+
+// ============================================================================
+// END TEAM PHOTO MANAGEMENT
+// ============================================================================
+
+// ============================================================================
 // END PHOTO MANAGEMENT
 // ============================================================================
 
@@ -889,6 +1076,9 @@ function renderParticipants() {
 
     // Update team statistics
     updateTeamStats();
+
+    // Update team member counts in teams list
+    renderTeams();
 
     if (participants.length === 0) {
         participantsList.innerHTML = `

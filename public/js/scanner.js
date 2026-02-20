@@ -7,6 +7,9 @@ class QRScanner {
         this.isScanning = false;
         this.onScanSuccess = null;
         this.onScanError = null;
+        this.lastScannedCode = null;
+        this.lastScanTime = 0;
+        this.scanCooldown = 2000; // 2 seconds cooldown
     }
 
     /**
@@ -97,6 +100,16 @@ class QRScanner {
      * @param {string} decodedText - The decoded QR code data
      */
     handleScanSuccess(decodedText) {
+        // Debounce: prevent logging/processing same code multiple times rapidly
+        const now = Date.now();
+        if (decodedText === this.lastScannedCode && (now - this.lastScanTime) < this.scanCooldown) {
+            // Silently ignore during cooldown period
+            return;
+        }
+
+        this.lastScannedCode = decodedText;
+        this.lastScanTime = now;
+
         console.log('QR Code scanned:', decodedText);
 
         try {

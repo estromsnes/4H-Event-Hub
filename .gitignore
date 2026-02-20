@@ -10,12 +10,16 @@ database/*.db-wal
 database/*.db-shm
 
 # Uploads (user-generated content)
+uploads/event-logos/*
 uploads/profile-photos/*
 uploads/qr-codes/*
+uploads/team-photos/*
 
 # Keep directory structure
+!uploads/event-logos/.gitkeep
 !uploads/profile-photos/.gitkeep
 !uploads/qr-codes/.gitkeep
+!uploads/team-photos/.gitkeep
 
 # Logs
 *.log

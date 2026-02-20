@@ -232,3 +232,24 @@ input:focus, textarea:focus, select:focus {
 .mt-1 { margin-top: 10px; }
 .mt-2 { margin-top: 20px; }
 .mt-3 { margin-top: 30px; }
+
+/* Team Photo Styles */
+.team-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.team-photo-container {
+    flex-shrink: 0;
+}
+
+.team-photo {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--border-color, #ddd);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}

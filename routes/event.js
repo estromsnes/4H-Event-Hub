@@ -74,6 +74,7 @@ router.post('/', (req, res) => {
         location,
         start_date,
         end_date,
+        start_datetime,
         organizer_name,
         organizer_club,
         organizer_contact
@@ -96,15 +97,16 @@ router.post('/', (req, res) => {
         // Insert new active event
         db.run(
             `INSERT INTO event_info (
-                event_name, event_description, location, start_date, end_date,
+                event_name, event_description, location, start_date, end_date, start_datetime,
                 organizer_name, organizer_club, organizer_contact, active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
             [
                 event_name,
                 event_description,
                 location,
                 start_date,
                 end_date,
+                start_datetime,
                 organizer_name,
                 organizer_club,
                 organizer_contact
@@ -142,6 +144,7 @@ router.put('/:id', (req, res) => {
         location,
         start_date,
         end_date,
+        start_datetime,
         organizer_name,
         organizer_club,
         organizer_contact
@@ -154,6 +157,7 @@ router.put('/:id', (req, res) => {
              location = COALESCE(?, location),
              start_date = COALESCE(?, start_date),
              end_date = COALESCE(?, end_date),
+             start_datetime = COALESCE(?, start_datetime),
              organizer_name = COALESCE(?, organizer_name),
              organizer_club = COALESCE(?, organizer_club),
              organizer_contact = COALESCE(?, organizer_contact),
@@ -165,6 +169,7 @@ router.put('/:id', (req, res) => {
             location,
             start_date,
             end_date,
+            start_datetime,
             organizer_name,
             organizer_club,
             organizer_contact,

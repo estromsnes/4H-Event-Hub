@@ -160,6 +160,11 @@
                     document.getElementById('eventTitle').textContent = event.event_name || '4H Event Hub';
                     document.getElementById('eventSubtitle').textContent = event.organizer_club || 'Skautrollet 4H';
 
+                    // Update browser tab title
+                    if (event.event_name) {
+                        document.title = event.event_name;
+                    }
+
                     // Show logo if exists
                     if (event.logo_path) {
                         const logoImg = document.getElementById('eventLogo');
@@ -281,6 +286,11 @@
             <a href="/profile.html" class="nav-button primary">
                 <span class="nav-button-icon">👤</span>
                 <span>Min Profil</span>
+            </a>
+
+            <a href="/team-challenge.html" class="nav-button primary">
+                <span class="nav-button-icon">📸</span>
+                <span>Lagbilde-utfordring</span>
             </a>
 
             <a href="/admin.html" class="nav-button secondary">

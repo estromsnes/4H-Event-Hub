@@ -87,6 +87,11 @@ async function loadEventInfo() {
                 navTitle.textContent = event.event_name;
             }
 
+            // Update browser tab title
+            if (event.event_name) {
+                document.title = `${event.event_name} - Min Profil`;
+            }
+
             // Show event banner with dates/location
             if (event.start_date || event.location) {
                 const banner = document.getElementById('eventBanner');
@@ -324,9 +329,80 @@ function showProfileView() {
         photoPlaceholder.classList.remove('hidden');
     }
 
+    // Load and show team members if participant has a team
+    if (currentParticipant.team) {
+        loadTeamMembers(currentParticipant.team, currentParticipant.participant_code);
+    } else {
+        document.getElementById('teamMembersSection').classList.add('hidden');
+    }
+
     // Switch views
     scannerView.classList.add('hidden');
     profileView.classList.remove('hidden');
+}
+
+// Load and display team members
+async function loadTeamMembers(teamName, currentParticipantCode) {
+    const teamMembersSection = document.getElementById('teamMembersSection');
+    const teamMembersList = document.getElementById('teamMembersList');
+
+    try {
+        // Fetch all participants
+        const response = await fetch('/api/participants');
+        if (!response.ok) {
+            throw new Error('Failed to fetch participants');
+        }
+
+        const allParticipants = await response.json();
+
+        // Filter to get team members
+        const teamMembers = allParticipants.filter(p => p.team === teamName);
+
+        if (teamMembers.length === 0) {
+            teamMembersSection.classList.add('hidden');
+            return;
+        }
+
+        // Sort: current user first, then alphabetically
+        teamMembers.sort((a, b) => {
+            if (a.participant_code === currentParticipantCode) return -1;
+            if (b.participant_code === currentParticipantCode) return 1;
+            return a.first_name.localeCompare(b.first_name);
+        });
+
+        // Render team members
+        teamMembersList.innerHTML = teamMembers.map(member => {
+            const isCurrentUser = member.participant_code === currentParticipantCode;
+            const photoHtml = member.profile_photo_path
+                ? `<img src="${member.profile_photo_path}" class="team-member-photo" alt="${member.first_name}">`
+                : `<div class="team-member-photo-placeholder">👤</div>`;
+
+            const details = [];
+            if (member.age) details.push(`${member.age} år`);
+            if (member.home_location) details.push(member.home_location);
+
+            return `
+                <div class="team-member-card ${isCurrentUser ? 'current-user' : ''}">
+                    ${photoHtml}
+                    <div class="team-member-info">
+                        <div class="team-member-name">
+                            ${member.first_name} ${member.last_name}
+                        </div>
+                        <div class="team-member-details">
+                            ${details.join(' • ')}
+                        </div>
+                        ${isCurrentUser ? '<span class="team-member-badge">Det er deg!</span>' : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        teamMembersSection.classList.remove('hidden');
+
+    } catch (err) {
+        console.error('Error loading team members:', err);
+        teamMembersSection.classList.add('hidden');
+    }
 }
 
 // Camera modal functions

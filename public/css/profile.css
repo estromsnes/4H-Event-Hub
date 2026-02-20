@@ -348,4 +348,116 @@
     .profile-details p {
         font-size: 18px;
     }
+
+    .team-member-card {
+        padding: 15px;
+    }
+
+    .team-member-photo {
+        width: 60px;
+        height: 60px;
+    }
+
+    .team-member-name {
+        font-size: 18px;
+    }
+
+    .team-member-details {
+        font-size: 14px;
+    }
+}
+
+/* Team Members Section */
+.team-members-section {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 2px solid var(--background);
+}
+
+.team-section-title {
+    text-align: center;
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+    font-size: 28px;
+}
+
+.team-members-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.team-member-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.team-member-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.team-member-card.current-user {
+    border: 2px solid var(--primary-color);
+    background: linear-gradient(135deg, #e8f5e9, white);
+}
+
+.team-member-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--background);
+    flex-shrink: 0;
+}
+
+.team-member-photo-placeholder {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--background);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    border: 3px solid var(--background);
+    flex-shrink: 0;
+}
+
+.team-member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.team-member-name {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.team-member-details {
+    font-size: 16px;
+    color: var(--text-light);
+    line-height: 1.5;
+}
+
+.team-member-badge {
+    display: inline-block;
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 5px;
 }
