@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deltakere - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/participant-info.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <div class="navbar">
+        <a href="/index.html" class="nav-link">← Hjem</a>
+        <h2>👥 Deltakere</h2>
+        <div style="width: 60px;"></div>
+    </div>
+
+    <div class="container">
+        <!-- Search Input Display -->
+        <div class="search-display">
+            <div class="search-text" id="searchText">_</div>
+            <button id="resetBtn" class="reset-button" title="Nullstill søk">
+                ✕ Nullstill
+            </button>
+        </div>
+
+        <!-- On-screen Keyboard -->
+        <div class="keyboard" id="keyboard">
+            <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Participant Count -->
+        <div class="participant-count">
+            <span id="participantCount">0</span> deltakere
+        </div>
+
+        <!-- Participant Cards -->
+        <div class="participants-grid" id="participantsGrid">
+            <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Laster deltakere...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state hidden">
+            <p>🔍</p>
+            <p>Ingen deltakere funnet</p>
+        </div>
+    </div>
+
+    <!-- Participant Detail Modal -->
+    <div id="detailModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Deltakerinfo</h2>
+                <button id="closeModalBtn" class="close-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-photo-container">
+                    <img id="detailPhoto" src="" alt="Profilbilde" class="detail-photo">
+                    <div id="detailPhotoPlaceholder" class="detail-photo-placeholder">
+                        👤
+                    </div>
+                </div>
+                <div class="detail-info">
+                    <h1 id="detailName">-</h1>
+                    <div class="detail-fields">
+                        <p><strong>Alder:</strong> <span id="detailAge">-</span> år</p>
+                        <p id="detailClubRow"><strong>Klubb:</strong> <span id="detailClub">-</span></p>
+                        <p id="detailRoleRow"><strong>Rolle:</strong> <span id="detailRole">-</span></p>
+                        <p id="detailTeamRow"><strong>Lag:</strong> <span id="detailTeam">-</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/participant-info.js"></script>
+</body>
+</html>
