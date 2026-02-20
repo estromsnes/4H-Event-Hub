@@ -41,3 +41,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Claude
+nul
+settings.local.json
