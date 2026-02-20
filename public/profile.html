@@ -13,42 +13,46 @@
     <!-- Navigation -->
     <div class="navbar">
         <a href="/index.html" class="nav-link">← Hjem</a>
-        <h2 id="navEventName">Min Profil</h2>
+        <h2>Profil</h2>
         <div style="width: 60px;"></div> <!-- Spacer for center alignment -->
     </div>
 
     <!-- Scanner View (Initial state) -->
     <div id="scannerView" class="view">
-        <div class="scanner-container">
-            <div class="instruction-text">
-                <h1>Skann din QR-kode</h1>
-                <p>Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
+        <div class="container">
+            <div class="team-selector">
+                <h1>👤</h1>
+                <h2>Skann din QR-kode</h2>
+                <p style="color: var(--text-light); margin-bottom: 30px;">Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
+
+                <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <input type="text" id="barcodeInput" class="barcode-input"
+                           autocomplete="off" autofocus placeholder="Skann QR-kode..."
+                           style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px;">
+
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
+                        <span style="font-size: 24px;">⌨️</span>
+                        <span style="color: var(--text-light);">Strekkodeskanner klar</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
+                    eller
+                </div>
+
+                <div id="qr-reader" style="margin-bottom: 20px;"></div>
+
+                <button id="startScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
+                    📷 Start Kamera-Skanning
+                </button>
+
+                <label for="qrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                    🖼️ Last opp bilde av QR
+                </label>
+                <input type="file" id="qrFileInput" accept="image/*" style="display: none;">
+
+                <div id="scanStatus" class="scan-status hidden"></div>
             </div>
-
-            <!-- Hidden input for barcode scanner (keyboard emulation) -->
-            <input type="text" id="barcodeInput" class="barcode-input" autocomplete="off" autofocus>
-
-            <div class="scanner-mode-indicator">
-                <span class="keyboard-icon">⌨️</span>
-                <span>Strekkodeskanner klar</span>
-            </div>
-
-            <div class="divider">
-                <span>eller</span>
-            </div>
-
-            <div id="qr-reader" class="qr-reader"></div>
-
-            <button id="startScanBtn" class="button primary large-button">
-                📷 Start Kamera-Skanning
-            </button>
-
-            <label for="qrFileInput" class="button secondary large-button" style="margin-top: 15px; cursor: pointer;">
-                🖼️ Last opp bilde av QR
-            </label>
-            <input type="file" id="qrFileInput" accept="image/*" style="display: none;">
-
-            <div id="scanStatus" class="scan-status hidden"></div>
         </div>
     </div>
 

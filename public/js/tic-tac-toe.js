@@ -412,6 +412,15 @@ class TicTacToeGame {
             this.resultEmoji.textContent = '🏆';
             this.resultMessage.textContent = 'Gratulerer!';
             this.resultDetails.textContent = `${gameData.winner.name} vant!`;
+
+            // Trigger confetti effect for winner
+            if (typeof confetti !== 'undefined') {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
         }
     }
 
