@@ -373,27 +373,41 @@ class TeamChallengeManager {
 
         closeBtn.addEventListener('click', () => this.closeCameraModal());
 
-        captureBtn.addEventListener('click', () => {
-            // Capture photo from video
-            const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        captureBtn.addEventListener('click', async () => {
+            try {
+                // Disable capture button during countdown
+                captureBtn.disabled = true;
 
-            // Convert to blob and display
-            canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                capturedPhoto.src = url;
-                capturedPhoto.classList.remove('hidden');
-                video.classList.add('hidden');
+                // Get countdown overlay element
+                const countdownOverlay = document.getElementById('countdownOverlay');
 
-                captureBtn.classList.add('hidden');
-                retakeBtn.classList.remove('hidden');
-                savePhotoBtn.classList.remove('hidden');
+                // Create a temporary camera instance for countdown
+                const camera = new Camera(video, canvas);
+                camera.stream = this.cameraStream; // Use existing stream
 
-                // Store blob for upload
-                this.photoBlob = blob;
-            }, 'image/jpeg', 0.85);
+                // Capture with countdown
+                await camera.captureWithCountdown(countdownOverlay);
+
+                // Convert to blob and display
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    capturedPhoto.src = url;
+                    capturedPhoto.classList.remove('hidden');
+                    video.classList.add('hidden');
+
+                    captureBtn.classList.add('hidden');
+                    retakeBtn.classList.remove('hidden');
+                    savePhotoBtn.classList.remove('hidden');
+
+                    // Store blob for upload
+                    this.photoBlob = blob;
+                }, 'image/jpeg', 0.85);
+            } catch (err) {
+                console.error('Error capturing photo:', err);
+                alert('Kunne ikke ta bilde: ' + err.message);
+            } finally {
+                captureBtn.disabled = false;
+            }
         });
 
         retakeBtn.addEventListener('click', () => {

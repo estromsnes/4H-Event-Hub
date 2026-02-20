@@ -156,8 +156,9 @@
                 <h2>Ta Lagbilde</h2>
                 <button id="closeCameraBtn" class="close-btn">✕</button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body" style="position: relative;">
                 <video id="cameraVideo" autoplay playsinline></video>
+                <div id="countdownOverlay" style="display: none; transition: all 0.3s ease;"></div>
                 <canvas id="photoCanvas" class="hidden"></canvas>
                 <img id="capturedPhoto" class="hidden" alt="Captured photo">
             </div>

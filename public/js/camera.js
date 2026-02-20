@@ -50,8 +50,66 @@ class Camera {
     }
 
     /**
-     * Capture a photo from the video stream
-     * @returns {Blob} - The captured image as a Blob
+     * Capture a photo with countdown
+     * @param {HTMLElement} overlayElement - Element to show countdown
+     * @returns {Promise<Canvas>} - The captured image canvas
+     */
+    async captureWithCountdown(overlayElement) {
+        if (!this.stream) {
+            throw new Error('Camera not started');
+        }
+
+        // Create countdown overlay
+        overlayElement.style.display = 'flex';
+        overlayElement.style.position = 'absolute';
+        overlayElement.style.top = '0';
+        overlayElement.style.left = '0';
+        overlayElement.style.width = '100%';
+        overlayElement.style.height = '100%';
+        overlayElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        overlayElement.style.color = 'white';
+        overlayElement.style.fontSize = '120px';
+        overlayElement.style.fontWeight = 'bold';
+        overlayElement.style.justifyContent = 'center';
+        overlayElement.style.alignItems = 'center';
+        overlayElement.style.zIndex = '1000';
+
+        // Countdown from 3 to 1
+        for (let i = 3; i > 0; i--) {
+            overlayElement.textContent = i;
+            overlayElement.style.transform = 'scale(1.2)';
+
+            // Play beep sound
+            this.playBeep(i === 1 ? 1200 : 800, 200);
+
+            await this.sleep(1000);
+
+            overlayElement.style.transform = 'scale(1)';
+        }
+
+        // Flash effect
+        overlayElement.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+        overlayElement.textContent = '📸';
+
+        // Play shutter sound
+        this.playShutterSound();
+
+        await this.sleep(100);
+
+        // Capture the photo
+        const canvas = this.capture();
+
+        // Hide overlay
+        await this.sleep(200);
+        overlayElement.style.display = 'none';
+        overlayElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+
+        return canvas;
+    }
+
+    /**
+     * Capture a photo from the video stream (without countdown)
+     * @returns {Canvas} - The captured image canvas
      */
     capture() {
         if (!this.stream) {
@@ -68,6 +126,70 @@ class Camera {
 
         console.log('Photo captured');
         return this.canvas;
+    }
+
+    /**
+     * Play a beep sound
+     * @param {number} frequency - Frequency in Hz
+     * @param {number} duration - Duration in ms
+     */
+    playBeep(frequency, duration) {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration / 1000);
+        } catch (err) {
+            // Silently fail if audio not supported
+            console.log('Audio not supported');
+        }
+    }
+
+    /**
+     * Play camera shutter sound
+     */
+    playShutterSound() {
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Create a short "click" sound
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = 1000;
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        } catch (err) {
+            console.log('Audio not supported');
+        }
+    }
+
+    /**
+     * Sleep helper function
+     * @param {number} ms - Milliseconds to sleep
+     * @returns {Promise}
+     */
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     /**
