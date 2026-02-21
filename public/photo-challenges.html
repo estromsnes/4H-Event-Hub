@@ -120,6 +120,11 @@
             background: linear-gradient(135deg, #fff3e0, white);
         }
 
+        .challenge-card.rejected {
+            border-color: #f44336;
+            background: linear-gradient(135deg, #ffebee, white);
+        }
+
         .challenge-header {
             display: flex;
             align-items: center;
@@ -167,11 +172,91 @@
             color: white;
         }
 
+        .challenge-status-badge.rejected {
+            background: #f44336;
+            color: white;
+        }
+
         .challenge-description {
             font-size: 16px;
             color: var(--text-gray);
             line-height: 1.5;
             margin-bottom: 15px;
+        }
+
+        .submission-thumbnail {
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .submission-thumbnail img {
+            max-width: 100%;
+            height: auto;
+            max-height: 300px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .submission-thumbnail img:hover {
+            transform: scale(1.02);
+        }
+
+        .review-details {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .review-points {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .review-points.positive {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .review-points.zero {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .points-icon {
+            font-size: 24px;
+        }
+
+        .points-value {
+            font-size: 20px;
+        }
+
+        .review-comment {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-green);
+        }
+
+        .comment-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-gray);
+            margin-bottom: 5px;
+        }
+
+        .comment-text {
+            font-size: 16px;
+            color: var(--text-dark);
+            line-height: 1.5;
         }
 
         .challenge-action {

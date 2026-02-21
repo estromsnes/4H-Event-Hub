@@ -69,6 +69,9 @@ class TeamChallengeManager {
         document.getElementById('startCameraBtn')
             .addEventListener('click', () => this.scanner.start());
 
+        document.getElementById('qrFileInput')
+            .addEventListener('change', (e) => this.handleQrFileUpload(e));
+
         document.getElementById('takeTeamPhotoBtn')
             .addEventListener('click', () => this.openCameraModal());
 
@@ -185,6 +188,32 @@ class TeamChallengeManager {
         } catch (err) {
             console.error('Scan error:', err);
             this.showScanError(err.message || 'Ukjent feil ved skanning');
+        }
+    }
+
+    async handleQrFileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        this.showScanFeedback('Leser QR-kode fra bilde...', 'info');
+
+        try {
+            // Create a temporary Html5Qrcode instance for file scanning
+            const html5QrCode = new Html5Qrcode("qr-reader");
+
+            const decodedText = await html5QrCode.scanFile(file, true);
+            this.handleScan(decodedText);
+
+            // Clear the file input so same file can be selected again
+            e.target.value = '';
+            // Clear the qr-reader div to remove displayed image
+            document.getElementById('qr-reader').innerHTML = '';
+        } catch (err) {
+            console.error('QR File scan error:', err);
+            this.showScanFeedback('Kunne ikke lese QR-kode fra bildet. Prøv igjen.', 'error');
+            e.target.value = '';
+            // Clear the qr-reader div
+            document.getElementById('qr-reader').innerHTML = '';
         }
     }
 

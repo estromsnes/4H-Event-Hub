@@ -3864,7 +3864,15 @@ async function openReviewSubmissionModal(submissionId) {
         reviewSubmissionStatus.textContent = submission.status === 'pending' ? 'Venter på vurdering' :
                                              submission.status === 'reviewed' ? 'Vurdert' : 'Avvist';
 
-        reviewSubmissionPoints.value = submission.points_awarded !== null ? submission.points_awarded : submission.max_points;
+        // For pending submissions (new or resubmitted), default to max_points
+        // For already reviewed submissions, keep existing points
+        if (submission.points_awarded !== null) {
+            reviewSubmissionPoints.value = submission.points_awarded;
+        } else if (submission.status === 'pending') {
+            reviewSubmissionPoints.value = submission.max_points;
+        } else {
+            reviewSubmissionPoints.value = 0;
+        }
         reviewSubmissionMaxPointsDisplay.textContent = submission.max_points;
         reviewSubmissionPoints.max = submission.max_points;
         reviewSubmissionComment.value = submission.admin_comment || '';

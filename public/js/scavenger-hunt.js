@@ -89,9 +89,13 @@ class ScavengerHunt {
 
         try {
             await this.participantScanner.scanFile(file);
+            // Clear the qr-reader div to remove displayed image
+            document.getElementById('participantQrReader').innerHTML = '';
         } catch (err) {
             console.error('Error scanning file:', err);
             this.showParticipantScanFeedback('Kunne ikke lese QR-kode fra bilde', 'error');
+            // Clear the qr-reader div
+            document.getElementById('participantQrReader').innerHTML = '';
         }
 
         // Reset file input so same file can be selected again
@@ -126,9 +130,13 @@ class ScavengerHunt {
 
         try {
             await this.checkpointScanner.scanFile(file);
+            // Clear the qr-reader div to remove displayed image
+            document.getElementById('checkpointQrReader').innerHTML = '';
         } catch (err) {
             console.error('Error scanning file:', err);
             this.showScanFeedback('Kunne ikke lese QR-kode fra bilde', 'error');
+            // Clear the qr-reader div
+            document.getElementById('checkpointQrReader').innerHTML = '';
         }
 
         // Reset file input so same file can be selected again
@@ -239,8 +247,11 @@ class ScavengerHunt {
             participantCode = decodedData;
         }
 
-        // Validate participant code format (should be like SK-2026-001)
-        if (!participantCode || !participantCode.match(/^[A-Z]+-\d{4}-\d{3}$/)) {
+        // Trim whitespace
+        participantCode = participantCode?.trim();
+
+        // Basic validation - just check if we have something
+        if (!participantCode) {
             this.showParticipantScanFeedback('Ugyldig deltaker-QR. Skann din deltaker-QR kode.', 'error');
             return;
         }

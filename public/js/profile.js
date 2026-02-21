@@ -272,8 +272,8 @@ function processBarcodeInput(input) {
         // Not JSON, might be direct participant code
     }
 
-    // Check if input looks like a participant code (SK-YYYY-NNN)
-    const participantCodePattern = /^SK-\d{4}-\d{3}$/;
+    // Check if input looks like a participant code (e.g. SK-2026-001 or sk-2026-001)
+    const participantCodePattern = /^[A-Za-z]+-\d{4}-\d{3}$/i;
     if (participantCodePattern.test(decodedInput)) {
         onScanSuccess(decodedInput);
         return;

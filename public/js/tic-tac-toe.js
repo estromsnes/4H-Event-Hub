@@ -114,6 +114,10 @@ class TicTacToeGame {
         this.startPlayer1ScanBtn.addEventListener('click', () => this.togglePlayer1Scanner());
         this.startPlayer2ScanBtn.addEventListener('click', () => this.togglePlayer2Scanner());
 
+        // File upload for QR codes
+        document.getElementById('player1QrFileInput').addEventListener('change', (e) => this.handlePlayer1FileUpload(e));
+        document.getElementById('player2QrFileInput').addEventListener('change', (e) => this.handlePlayer2FileUpload(e));
+
         // Game cells
         this.gameCells.forEach((cell, index) => {
             cell.addEventListener('click', () => this.handleCellClick(index));
@@ -156,6 +160,42 @@ class TicTacToeGame {
             this.startPlayer2ScanBtn.textContent = '⏹️ Stopp Kamera';
             this.startPlayer2ScanBtn.classList.remove('primary');
             this.startPlayer2ScanBtn.classList.add('secondary');
+        }
+    }
+
+    async handlePlayer1FileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const html5QrCode = new Html5Qrcode("player1QrReader");
+            const qrData = await html5QrCode.scanFile(file, true);
+            this.handlePlayer1Scan(qrData);
+            e.target.value = '';
+            document.getElementById('player1QrReader').innerHTML = '';
+        } catch (err) {
+            console.error('Error scanning file:', err);
+            this.showPlayer1ScanFeedback('Kunne ikke lese QR-kode fra bilde', 'error');
+            e.target.value = '';
+            document.getElementById('player1QrReader').innerHTML = '';
+        }
+    }
+
+    async handlePlayer2FileUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            const html5QrCode = new Html5Qrcode("player2QrReader");
+            const qrData = await html5QrCode.scanFile(file, true);
+            this.handlePlayer2Scan(qrData);
+            e.target.value = '';
+            document.getElementById('player2QrReader').innerHTML = '';
+        } catch (err) {
+            console.error('Error scanning file:', err);
+            this.showPlayer2ScanFeedback('Kunne ikke lese QR-kode fra bilde', 'error');
+            e.target.value = '';
+            document.getElementById('player2QrReader').innerHTML = '';
         }
     }
 
@@ -204,7 +244,11 @@ class TicTacToeGame {
             participantCode = decodedData;
         }
 
-        if (!participantCode || !participantCode.match(/^[A-Z]+-\d{4}-\d{3}$/)) {
+        // Trim whitespace
+        participantCode = participantCode?.trim();
+
+        // Basic validation - just check if we have something
+        if (!participantCode) {
             this.showPlayer1ScanFeedback('Ugyldig deltaker-QR. Skann din deltaker-QR kode.', 'error');
             return;
         }
@@ -257,7 +301,11 @@ class TicTacToeGame {
             participantCode = decodedData;
         }
 
-        if (!participantCode || !participantCode.match(/^[A-Z]+-\d{4}-\d{3}$/)) {
+        // Trim whitespace
+        participantCode = participantCode?.trim();
+
+        // Basic validation - just check if we have something
+        if (!participantCode) {
             this.showPlayer2ScanFeedback('Ugyldig deltaker-QR. Skann din deltaker-QR kode.', 'error');
             return;
         }

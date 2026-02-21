@@ -121,19 +121,41 @@
         html5QrCode.scanFile(file, true)
             .then(decodedText => {
                 lookupParticipant(decodedText);
+                // Clear file input so same file can be selected again
+                e.target.value = '';
+                // Clear the qr-reader div to remove displayed image
+                document.getElementById('qr-reader').innerHTML = '';
             })
             .catch(err => {
                 showStatus('error', 'Kunne ikke lese QR-kode fra bildet. Prøv igjen.');
                 console.error('QR File scan error:', err);
+                // Clear file input
+                e.target.value = '';
+                // Clear the qr-reader div
+                document.getElementById('qr-reader').innerHTML = '';
             });
     }
 
     // Lookup Participant
-    async function lookupParticipant(code) {
+    async function lookupParticipant(qrData) {
         showStatus('info', 'Søker etter deltaker...');
 
+        // Parse QR code - try JSON first
+        let participantCode;
         try {
-            const response = await fetch(`/api/participants/code/${code}`);
+            const parsed = JSON.parse(qrData);
+            if (parsed.type === 'participant' && parsed.code) {
+                participantCode = parsed.code;
+            } else {
+                throw new Error('Invalid QR format');
+            }
+        } catch (e) {
+            // Not JSON, use as-is
+            participantCode = qrData;
+        }
+
+        try {
+            const response = await fetch(`/api/participants/${participantCode}`);
 
             if (!response.ok) {
                 if (response.status === 404) {
@@ -149,13 +171,13 @@
             currentParticipant = participant;
 
             // Check if participant has a team
-            if (!participant.team_name) {
+            if (!participant.team) {
                 showStatus('error', 'Du må være tildelt et lag for å delta i bildeoppgaver.');
                 barcodeInput.value = '';
                 return;
             }
 
-            currentTeam = participant.team_name;
+            currentTeam = participant.team;
             showStatus('success', `Velkommen, ${participant.first_name}!`);
 
             setTimeout(() => {
@@ -228,16 +250,60 @@
             let statusBadge = '';
             let cardClass = '';
             let actionButton = '';
+            let thumbnailHTML = '';
 
             if (isCompleted) {
-                if (status === 'pending' || status === 'reviewed') {
+                // Show thumbnail of submitted image
+                if (submission.image_path) {
+                    thumbnailHTML = `
+                        <div class="submission-thumbnail">
+                            <img src="${submission.image_path}" alt="Innsendt bilde"
+                                 onclick="window.photoChallengesApp.viewImage('${submission.image_path}')">
+                        </div>
+                    `;
+                }
+
+                // Check if submission has been reviewed (by checking if reviewed_at exists or points_awarded is set)
+                const hasBeenReviewed = submission.reviewed_at !== null || submission.points_awarded !== null;
+
+                if (hasBeenReviewed) {
+                    // Image has been reviewed - show evaluation
+                    const pointsAwarded = submission.points_awarded !== null ? submission.points_awarded : 0;
+                    // Consider rejected if status is 'rejected' OR points are 0
+                    const isApproved = submission.status !== 'rejected' && pointsAwarded > 0;
+
+                    cardClass = isApproved ? 'completed' : 'rejected';
+                    statusBadge = isApproved
+                        ? `<div class="challenge-status-badge completed">✓ Godkjent</div>`
+                        : `<div class="challenge-status-badge rejected">✗ Avvist</div>`;
+
+                    // Show review details
+                    thumbnailHTML += `
+                        <div class="review-details">
+                            <div class="review-points ${isApproved ? 'positive' : 'zero'}">
+                                <span class="points-icon">${isApproved ? '🏆' : '⭕'}</span>
+                                <span class="points-value">${pointsAwarded} poeng</span>
+                            </div>
+                            ${submission.admin_comment ? `
+                                <div class="review-comment">
+                                    <div class="comment-label">Tilbakemelding:</div>
+                                    <div class="comment-text">${submission.admin_comment}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+
+                    // If not approved, allow resubmission
+                    if (isApproved) {
+                        actionButton = '<button class="secondary" disabled>Fullført</button>';
+                    } else {
+                        actionButton = `<button class="primary" onclick="window.photoChallengesApp.openCamera(${challenge.id})">🔄 Send inn på nytt</button>`;
+                    }
+                } else {
+                    // Image submitted but not reviewed yet - allow replacement
                     cardClass = 'in-review';
                     statusBadge = `<div class="challenge-status-badge in-review">⏳ Sendt inn</div>`;
-                    actionButton = '<button class="secondary" disabled>Allerede sendt inn</button>';
-                } else {
-                    cardClass = 'completed';
-                    statusBadge = `<div class="challenge-status-badge completed">✓ Fullført</div>`;
-                    actionButton = '<button class="secondary" disabled>Fullført</button>';
+                    actionButton = `<button class="secondary" onclick="window.photoChallengesApp.openCamera(${challenge.id})">🔄 Bytt bilde</button>`;
                 }
             } else {
                 actionButton = `<button class="primary" onclick="window.photoChallengesApp.openCamera(${challenge.id})">📸 Ta bilde</button>`;
@@ -254,6 +320,7 @@
                         ${statusBadge}
                     </div>
                     ${challenge.description ? `<div class="challenge-description">${challenge.description}</div>` : ''}
+                    ${thumbnailHTML}
                     <div class="challenge-action">
                         ${actionButton}
                     </div>
@@ -397,9 +464,15 @@
         cameraStatus.classList.remove('hidden');
     }
 
+    // View Image in modal/new tab
+    function viewImage(imagePath) {
+        window.open(imagePath, '_blank');
+    }
+
     // Export functions for global access
     window.photoChallengesApp = {
-        openCamera
+        openCamera,
+        viewImage
     };
 
     // Initialize on load

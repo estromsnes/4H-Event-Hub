@@ -228,7 +228,7 @@ router.post('/submit', upload.single('photo'), async (req, res) => {
 
         // Check if team has already submitted for this challenge
         db.get(
-            'SELECT id FROM photo_submissions WHERE challenge_id = ? AND team_name = ?',
+            'SELECT id, status, image_path, points_awarded FROM photo_submissions WHERE challenge_id = ? AND team_name = ?',
             [challengeId, teamName],
             (err, existing) => {
                 if (err) {
@@ -238,28 +238,73 @@ router.post('/submit', upload.single('photo'), async (req, res) => {
                 }
 
                 if (existing) {
-                    fs.unlinkSync(req.file.path);
-                    return res.status(400).json({ error: 'Team has already submitted for this challenge' });
-                }
-
-                // Insert submission
-                db.run(
-                    `INSERT INTO photo_submissions (challenge_id, team_name, participant_code, image_path, status)
-                     VALUES (?, ?, ?, ?, 'pending')`,
-                    [challengeId, teamName, participantCode, imagePath],
-                    function(err) {
-                        if (err) {
-                            console.error('Error creating submission:', err);
-                            fs.unlinkSync(req.file.path);
-                            return res.status(500).json({ error: 'Failed to submit photo' });
-                        }
-                        res.json({
-                            message: 'Photo submitted successfully',
-                            id: this.lastID,
-                            imagePath: imagePath
-                        });
+                    // Check if submission has been reviewed and approved - if so, don't allow replacement
+                    // Allow replacement if: status is 'rejected' OR points_awarded is 0 or NULL OR status is 'pending'
+                    const isApproved = existing.status !== 'rejected' && existing.points_awarded > 0;
+                    if (existing.status === 'reviewed' && isApproved) {
+                        fs.unlinkSync(req.file.path);
+                        return res.status(400).json({ error: 'Cannot replace an approved submission' });
                     }
-                );
+
+                    // Submission exists - allow replacement (either pending or rejected)
+                    // Delete old image file if it exists
+                    if (existing.image_path) {
+                        const oldImagePath = path.join(__dirname, '..', 'public', existing.image_path);
+                        if (fs.existsSync(oldImagePath)) {
+                            try {
+                                fs.unlinkSync(oldImagePath);
+                            } catch (deleteErr) {
+                                console.error('Error deleting old image:', deleteErr);
+                            }
+                        }
+                    }
+
+                    // Update existing submission with new image
+                    // Reset to pending status if it was previously reviewed and rejected
+                    db.run(
+                        `UPDATE photo_submissions
+                         SET image_path = ?,
+                             participant_code = ?,
+                             status = 'pending',
+                             points_awarded = NULL,
+                             admin_comment = NULL,
+                             reviewed_at = NULL,
+                             submitted_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+                         WHERE id = ?`,
+                        [imagePath, participantCode, existing.id],
+                        function(err) {
+                            if (err) {
+                                console.error('Error updating submission:', err);
+                                fs.unlinkSync(req.file.path);
+                                return res.status(500).json({ error: 'Failed to update photo' });
+                            }
+                            res.json({
+                                message: 'Photo replaced successfully',
+                                id: existing.id,
+                                imagePath: imagePath
+                            });
+                        }
+                    );
+                } else {
+                    // No existing submission - insert new one
+                    db.run(
+                        `INSERT INTO photo_submissions (challenge_id, team_name, participant_code, image_path, status)
+                         VALUES (?, ?, ?, ?, 'pending')`,
+                        [challengeId, teamName, participantCode, imagePath],
+                        function(err) {
+                            if (err) {
+                                console.error('Error creating submission:', err);
+                                fs.unlinkSync(req.file.path);
+                                return res.status(500).json({ error: 'Failed to submit photo' });
+                            }
+                            res.json({
+                                message: 'Photo submitted successfully',
+                                id: this.lastID,
+                                imagePath: imagePath
+                            });
+                        }
+                    );
+                }
             }
         );
     } catch (error) {

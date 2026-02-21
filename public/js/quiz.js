@@ -187,31 +187,47 @@ class QuizManager {
             // Clear file input
             e.target.value = '';
 
+            // Clear the qr-reader div to remove displayed image
+            document.getElementById('participantQrReader').innerHTML = '';
+
             // Process the scanned data
             await this.handleParticipantScan(qrData);
         } catch (err) {
             console.error('Error reading QR from file:', err);
             this.showParticipantScanFeedback('Kunne ikke lese QR-kode fra bildet. Prøv igjen.', 'error');
             e.target.value = '';
+            // Clear the qr-reader div
+            document.getElementById('participantQrReader').innerHTML = '';
         }
     }
 
     async handleParticipantScan(qrData) {
+        console.log('Raw QR data:', qrData);
         const decodedData = this.decodeBarcodeInput(qrData);
+        console.log('Decoded data:', decodedData);
         let participantCode;
 
         try {
             const parsed = JSON.parse(decodedData);
+            console.log('Parsed JSON:', parsed);
             if (parsed.type === 'participant' && parsed.code) {
                 participantCode = parsed.code;
             } else {
                 participantCode = decodedData;
             }
         } catch (e) {
+            console.log('Not JSON, using raw:', decodedData);
             participantCode = decodedData;
         }
 
-        if (!participantCode || !participantCode.match(/^[A-Z]+-\d{4}-\d{3}$/)) {
+        console.log('Final participant code:', participantCode);
+
+        // Trim whitespace
+        participantCode = participantCode?.trim();
+
+        // Basic validation - just check if we have something
+        if (!participantCode) {
+            console.error('No participant code provided');
             this.showParticipantScanFeedback('Ugyldig deltaker-QR. Skann din deltaker-QR kode.', 'error');
             return;
         }

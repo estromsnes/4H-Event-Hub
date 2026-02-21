@@ -46,51 +46,65 @@
 
     <!-- Scanner View -->
     <div id="scannerView" class="view hidden">
-        <div class="challenge-container">
-            <!-- Team Info Header -->
-            <div id="teamHeader" class="team-header hidden">
-                <h2 id="teamName" class="team-name">-</h2>
-                <div id="timerDisplay" class="timer-display hidden">
-                    <span class="timer-icon">⏱️</span>
-                    <span id="timerValue" class="timer-value">2:00</span>
-                </div>
-            </div>
+        <div class="container">
+            <div class="team-selector">
+                <h1>🏆</h1>
+                <h2>Skann din QR-kode</h2>
+                <p style="color: var(--text-light); margin-bottom: 30px;">Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
 
-            <!-- Progress Section -->
-            <div id="progressSection" class="progress-section hidden">
-                <div class="progress-header">
-                    <span id="progressText">Venter på første skanning...</span>
-                </div>
-
-                <!-- Team Member Checklist -->
-                <div id="teamMemberList" class="team-member-list">
-                    <!-- Dynamically populated -->
-                </div>
-            </div>
-
-            <!-- Scanner Interface -->
-            <div class="scanner-interface">
-                <input type="text" id="barcodeInput" class="barcode-input"
-                       autocomplete="off" autofocus placeholder="Skann QR-kode...">
-
-                <div class="scanner-status">
-                    <span class="keyboard-icon">⌨️</span>
-                    <span>Klar til å skanne</span>
+                <!-- Team Info Header (shown after first scan) -->
+                <div id="teamHeader" class="team-header hidden" style="margin-bottom: 20px;">
+                    <h2 id="teamName" class="team-name">-</h2>
+                    <div id="timerDisplay" class="timer-display hidden">
+                        <span class="timer-icon">⏱️</span>
+                        <span id="timerValue" class="timer-value">2:00</span>
+                    </div>
                 </div>
 
-                <div class="divider"><span>eller</span></div>
+                <!-- Progress Section (shown after first scan) -->
+                <div id="progressSection" class="progress-section hidden" style="margin-bottom: 20px;">
+                    <div class="progress-header">
+                        <span id="progressText">Venter på neste skanning...</span>
+                    </div>
 
-                <div id="qr-reader" class="qr-reader"></div>
-                <button id="startCameraBtn" class="button secondary">
-                    📷 Bruk Kamera
+                    <!-- Team Member Checklist -->
+                    <div id="teamMemberList" class="team-member-list">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <input type="text" id="barcodeInput" class="barcode-input"
+                           autocomplete="off" autofocus placeholder="Skann QR-kode..."
+                           style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px;">
+
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
+                        <span style="font-size: 24px;">⌨️</span>
+                        <span style="color: var(--text-light);">Strekkodeskanner klar</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
+                    eller
+                </div>
+
+                <div id="qr-reader" style="margin-bottom: 20px;"></div>
+
+                <button id="startCameraBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
+                    📷 Start Kamera-Skanning
+                </button>
+
+                <label for="qrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 15px;">
+                    🖼️ Last opp bilde av QR
+                </label>
+                <input type="file" id="qrFileInput" accept="image/*" style="display: none;">
+
+                <div id="scanFeedback" class="scan-feedback hidden"></div>
+
+                <button id="cancelChallengeBtn" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px;">
+                    ← Tilbake til Start
                 </button>
             </div>
-
-            <div id="scanFeedback" class="scan-feedback hidden"></div>
-
-            <button id="cancelChallengeBtn" class="button secondary" style="margin-top: 20px;">
-                ← Tilbake til Start
-            </button>
         </div>
     </div>
 
