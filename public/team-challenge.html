@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lagbilde-utfordring - 4H Event Hub</title>
+    <title>Samle laget - 4H Event Hub</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/qr-scanner.css">
     <link rel="stylesheet" href="/css/team-challenge.css">
@@ -14,18 +15,17 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
-    <!-- Navigation -->
-    <div class="navbar">
-        <a href="/index.html" class="nav-link">← Hjem</a>
-        <h2>📸 Lagbilde-utfordring</h2>
-        <div style="width: 60px;"></div>
-    </div>
+    <!-- Back Button -->
+    <a href="/participant.html" class="back-btn" title="Tilbake">← Tilbake</a>
+
+    <!-- Settings Icon -->
+    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
 
     <!-- Initial View: Instructions -->
     <div id="instructionsView" class="view">
         <div class="instructions-container">
             <div class="instructions-icon">🏆</div>
-            <h1>Lagbilde-utfordring</h1>
+            <h1>Samle laget</h1>
             <div class="instructions-box">
                 <p class="instructions-intro">Samle hele laget ditt og skann så raskt som mulig!</p>
                 <ul class="instructions-list">
@@ -36,7 +36,7 @@
                 </ul>
             </div>
             <button id="startChallengeBtn" class="button primary large-button">
-                🚀 Start Lagbilde-utfordring
+                🚀 Start
             </button>
             <button id="viewLeaderboardBtn2" class="button secondary">
                 🏆 Se Resultattavle

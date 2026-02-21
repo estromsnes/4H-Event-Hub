@@ -21,7 +21,9 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e8f5e9 100%);
+    background:
+        linear-gradient(135deg, rgba(245, 247, 250, 0.85) 0%, rgba(232, 245, 233, 0.85) 100%),
+        url('/images/4h-background.jpg') center/cover fixed;
     min-height: 100vh;
     overflow-x: hidden;
     -webkit-tap-highlight-color: transparent;
