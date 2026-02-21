@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bildeoppgaver - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/qr-scanner.css">
+    <link rel="stylesheet" href="/css/profile.css">
+    <style>
+        /* Photo Challenges specific styles */
+        .challenges-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .team-selector-mini {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .team-selector-mini h2 {
+            margin: 0 0 15px 0;
+            color: var(--primary-dark);
+            font-size: 24px;
+        }
+
+        .team-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .challenges-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .challenges-header h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+            color: var(--primary-dark);
+        }
+
+        .progress-bar-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .challenges-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .challenge-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+
+        .challenge-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .challenge-card.completed {
+            border-color: var(--primary-green);
+            background: linear-gradient(135deg, #e8f5e9, white);
+        }
+
+        .challenge-card.in-review {
+            border-color: #ff9800;
+            background: linear-gradient(135deg, #fff3e0, white);
+        }
+
+        .challenge-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .challenge-icon {
+            font-size: 48px;
+            flex-shrink: 0;
+        }
+
+        .challenge-title-section {
+            flex: 1;
+        }
+
+        .challenge-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+            color: var(--text-dark);
+        }
+
+        .challenge-points {
+            font-size: 16px;
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        .challenge-status-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .challenge-status-badge.completed {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .challenge-status-badge.in-review {
+            background: #ff9800;
+            color: white;
+        }
+
+        .challenge-description {
+            font-size: 16px;
+            color: var(--text-gray);
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .challenge-action {
+            text-align: center;
+            padding-top: 15px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .challenge-action button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .challenge-action button.primary {
+            background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
+            color: white;
+        }
+
+        .challenge-action button.secondary {
+            background: #e0e0e0;
+            color: var(--text-dark);
+        }
+
+        .challenge-action button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Camera Modal */
+        .camera-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .camera-content {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .camera-header h2 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--text-dark);
+        }
+
+        .close-camera-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            background: transparent;
+            font-size: 30px;
+            cursor: pointer;
+            color: var(--text-light);
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .close-camera-btn:active {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .camera-view {
+            width: 100%;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: black;
+            min-height: 300px;
+        }
+
+        .camera-view video,
+        .camera-view canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .camera-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .camera-status {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .camera-status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .camera-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .camera-status.info {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        @media (max-width: 768px) {
+            .challenges-header h1 {
+                font-size: 32px;
+            }
+
+            .challenge-card {
+                padding: 20px;
+            }
+
+            .challenge-icon {
+                font-size: 40px;
+            }
+
+            .challenge-title {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Back Button -->
+    <a href="/participant.html" class="back-btn" title="Tilbake">← Tilbake</a>
+
+    <!-- Settings Icon -->
+    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
+
+    <!-- Scanner View (Initial state) -->
+    <div id="scannerView" class="view">
+        <div class="container">
+            <div class="team-selector">
+                <h1>📸</h1>
+                <h2>Skann din QR-kode</h2>
+                <p style="color: var(--text-light); margin-bottom: 30px;">Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
+
+                <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                    <input type="text" id="barcodeInput" class="barcode-input"
+                           autocomplete="off" autofocus placeholder="Skann QR-kode..."
+                           style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px;">
+
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
+                        <span style="font-size: 24px;">⌨️</span>
+                        <span style="color: var(--text-light);">Strekkodeskanner klar</span>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
+                    eller
+                </div>
+
+                <div id="qr-reader" style="margin-bottom: 20px;"></div>
+
+                <button id="startScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
+                    📷 Start Kamera-Skanning
+                </button>
+
+                <label for="qrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                    🖼️ Last opp bilde av QR
+                </label>
+                <input type="file" id="qrFileInput" accept="image/*" style="display: none;">
+
+                <div id="scanStatus" class="scan-status hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Challenges View (After successful scan) -->
+    <div id="challengesView" class="view hidden">
+        <div class="challenges-container">
+            <!-- Team Info -->
+            <div class="team-selector-mini">
+                <h2>Ditt lag</h2>
+                <div class="team-badge">
+                    <span id="teamNameDisplay">-</span>
+                </div>
+                <div style="margin-top: 10px; color: var(--text-light);">
+                    <span id="participantNameDisplay">-</span>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-bar-container">
+                <div class="progress-text">
+                    <span id="completedCount">0</span> av <span id="totalCount">0</span> oppgaver fullført
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%;">
+                        <span id="progressPercent">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Challenges Header -->
+            <div class="challenges-header">
+                <h1>📸 Bildeoppgaver</h1>
+                <p style="color: var(--text-light); font-size: 18px;">Fullfør oppgavene ved å ta bilder</p>
+            </div>
+
+            <!-- Challenges Grid -->
+            <div class="challenges-grid" id="challengesGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="camera-modal hidden">
+        <div class="camera-content">
+            <div class="camera-header">
+                <h2 id="cameraModalTitle">Ta bilde</h2>
+                <button id="closeCameraBtn" class="close-camera-btn">✕</button>
+            </div>
+
+            <div class="camera-view">
+                <video id="cameraVideo" autoplay playsinline></video>
+                <canvas id="cameraCanvas" class="hidden"></canvas>
+            </div>
+
+            <div class="camera-controls">
+                <button id="captureBtn" class="button primary large-button">
+                    📸 Ta Bilde
+                </button>
+                <button id="retakeBtn" class="button secondary large-button hidden">
+                    🔄 Ta På Nytt
+                </button>
+                <button id="uploadBtn" class="button primary large-button hidden">
+                    ✅ Last Opp Bilde
+                </button>
+            </div>
+
+            <div id="cameraStatus" class="camera-status hidden"></div>
+        </div>
+    </div>
+
+    <!-- Include html5-qrcode library from CDN -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- Include JavaScript -->
+    <script src="/js/photo-challenges.js"></script>
+</body>
+</html>

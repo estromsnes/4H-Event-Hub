@@ -160,6 +160,14 @@ body {
 }
 
 /* Card Colors */
+.challenge-card {
+    --card-color: #FFA07A;
+}
+
+.photo-card {
+    --card-color: #9B59B6;
+}
+
 .quiz-card {
     --card-color: #FF6B6B;
 }
@@ -170,10 +178,6 @@ body {
 
 .game-card {
     --card-color: #95E1D3;
-}
-
-.challenge-card {
-    --card-color: #FFA07A;
 }
 
 .activity-icon {

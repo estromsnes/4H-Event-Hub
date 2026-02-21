@@ -361,6 +361,7 @@
             <button class="tab-button" data-tab="tictactoe">🎮 Tripp-Trapp-Tresko</button>
             <button class="tab-button" data-tab="quiz">🧠 Quiz</button>
             <button class="tab-button" data-tab="program">📅 Program</button>
+            <button class="tab-button" data-tab="photo-challenges">📸 Bildeoppgaver</button>
             <button class="tab-button" data-tab="stats">📊 Statistikk</button>
             <button class="tab-button" data-tab="database">🗄️ Database</button>
         </div>
@@ -720,6 +721,57 @@
             </div>
         </div>
         <!-- End Program Tab -->
+
+        <!-- Photo Challenges Tab -->
+        <div id="photo-challengesTab" class="tab-content">
+            <!-- Challenge Management Section -->
+            <div class="section no-print">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Administrer Bildeoppgaver</h2>
+                    <button id="addPhotoChallengeBtn" class="button primary btn-small">
+                        ➕ Ny Oppgave
+                    </button>
+                </div>
+
+                <div id="photoChallengesList" style="display: flex; flex-direction: column; gap: 15px;">
+                    <p class="text-center" style="color: var(--text-light);">Laster bildeoppgaver...</p>
+                </div>
+
+                <div id="photoChallengeStatus" class="hidden mt-2"></div>
+            </div>
+
+            <!-- Submissions Section -->
+            <div class="section no-print" style="margin-top: 30px;">
+                <h2>Innsendte bilder</h2>
+                <p style="color: var(--text-light); margin-bottom: 20px;">
+                    Vurder og gi poeng til innsendte bilder fra lagene
+                </p>
+
+                <div class="form-group" style="max-width: 400px;">
+                    <label for="submissionsFilter">Filtrer etter status</label>
+                    <select id="submissionsFilter">
+                        <option value="all">Alle innleveringer</option>
+                        <option value="pending">⏳ Venter på vurdering</option>
+                        <option value="reviewed">✓ Vurdert</option>
+                    </select>
+                </div>
+
+                <div id="photoSubmissionsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; margin-top: 20px;">
+                    <p class="text-center" style="color: var(--text-light);">Laster innleveringer...</p>
+                </div>
+
+                <div id="submissionStatus" class="hidden mt-2"></div>
+            </div>
+
+            <!-- Leaderboard Section -->
+            <div class="section no-print" style="margin-top: 30px;">
+                <h2>Resultattavle - Bildeoppgaver</h2>
+                <div id="photoChallengeLeaderboard">
+                    <p class="text-center" style="color: var(--text-light);">Laster resultater...</p>
+                </div>
+            </div>
+        </div>
+        <!-- End Photo Challenges Tab -->
 
         <!-- Stats Tab -->
         <div id="statsTab" class="tab-content">
@@ -1295,6 +1347,124 @@
             </form>
 
             <div id="bulkEnrollModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Photo Challenge Modal (Add/Edit) -->
+    <div id="photoChallengeModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="photoChallengeModalTitle">Legg til Bildeoppgave</h2>
+                <button id="closePhotoChallengeBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="photoChallengeForm">
+                <input type="hidden" id="photoChallengeId">
+
+                <div class="form-group">
+                    <label for="photoChallengeTitle">Tittel *</label>
+                    <input type="text" id="photoChallengeTitle" required placeholder="F.eks: Lagbilde ved flaggstangen">
+                </div>
+
+                <div class="form-group">
+                    <label for="photoChallengeDescription">Beskrivelse</label>
+                    <textarea id="photoChallengeDescription" rows="3" placeholder="Beskriv hva laget skal ta bilde av..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="photoChallengePoints">Poeng</label>
+                        <input type="number" id="photoChallengePoints" min="0" max="100" value="10">
+                    </div>
+                    <div class="form-group">
+                        <label for="photoChallengeIcon">Emoji/ikon</label>
+                        <input type="text" id="photoChallengeIcon" placeholder="📸" maxlength="10">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="photoChallengeOrder">Rekkefølge</label>
+                    <input type="number" id="photoChallengeOrder" min="0" value="0">
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="photoChallengeActive" checked>
+                        <span>Oppgaven er aktiv</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Lagre
+                    </button>
+                    <button type="button" id="cancelPhotoChallengeBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="photoChallengeModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Photo Submission Review Modal -->
+    <div id="reviewSubmissionModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 id="reviewSubmissionModalTitle">Vurder Bildeoppgave</h2>
+                <button id="closeReviewSubmissionBtn" class="close-btn">✕</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div>
+                    <img id="reviewSubmissionImage" src="" alt="Submitted photo" style="width: 100%; border-radius: 10px; border: 2px solid #ddd;">
+                </div>
+                <div>
+                    <h3 id="reviewSubmissionChallenge" style="margin-top: 0; color: var(--primary-dark);">Oppgave</h3>
+                    <p><strong>Lag:</strong> <span id="reviewSubmissionTeam">-</span></p>
+                    <p><strong>Deltaker:</strong> <span id="reviewSubmissionParticipant">-</span></p>
+                    <p><strong>Sendt inn:</strong> <span id="reviewSubmissionTime">-</span></p>
+                    <p><strong>Status:</strong> <span id="reviewSubmissionStatus">-</span></p>
+                </div>
+            </div>
+
+            <form id="reviewSubmissionForm">
+                <input type="hidden" id="reviewSubmissionId">
+                <input type="hidden" id="reviewSubmissionMaxPoints">
+
+                <div class="form-group">
+                    <label for="reviewSubmissionPoints">Tildel poeng *</label>
+                    <input type="number" id="reviewSubmissionPoints" min="0" required>
+                    <small style="color: var(--text-light); font-size: 14px;">
+                        Maks poeng for denne oppgaven: <span id="reviewSubmissionMaxPointsDisplay">0</span>
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewSubmissionComment">Kommentar (valgfritt)</label>
+                    <textarea id="reviewSubmissionComment" rows="3" placeholder="Tilbakemelding til laget..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewSubmissionStatusSelect">Status</label>
+                    <select id="reviewSubmissionStatusSelect">
+                        <option value="reviewed">✓ Godkjent</option>
+                        <option value="rejected">✗ Avvist</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Lagre vurdering
+                    </button>
+                    <button type="button" id="cancelReviewSubmissionBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="reviewSubmissionModalStatus" class="hidden mt-2"></div>
         </div>
     </div>
 

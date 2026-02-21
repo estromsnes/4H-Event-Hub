@@ -228,6 +228,11 @@ async function initAdmin() {
     // Load program data
     await loadProgram();
 
+    // Load photo challenges
+    await loadPhotoChallenges();
+    await loadPhotoSubmissions();
+    await loadPhotoChallengeLeaderboard();
+
     // Setup event listeners
     eventInfoForm.addEventListener('submit', handleSaveEventInfo);
     eventLogoInput.addEventListener('change', handleLogoPreview);
@@ -3519,6 +3524,464 @@ async function saveBulkEnrollment(e) {
 // END COURSES MANAGEMENT FUNCTIONS
 // ==============================================
 
+// ==============================================
+// PHOTO CHALLENGES MANAGEMENT FUNCTIONS
+// ==============================================
+
+// DOM Elements - Photo Challenges
+const photoChallengesList = document.getElementById('photoChallengesList');
+const addPhotoChallengeBtn = document.getElementById('addPhotoChallengeBtn');
+const photoChallengeModal = document.getElementById('photoChallengeModal');
+const photoChallengeModalTitle = document.getElementById('photoChallengeModalTitle');
+const photoChallengeForm = document.getElementById('photoChallengeForm');
+const photoChallengeIdInput = document.getElementById('photoChallengeId');
+const photoChallengeTitleInput = document.getElementById('photoChallengeTitle');
+const photoChallengeDescriptionInput = document.getElementById('photoChallengeDescription');
+const photoChallengePointsInput = document.getElementById('photoChallengePoints');
+const photoChallengeIconInput = document.getElementById('photoChallengeIcon');
+const photoChallengeOrderInput = document.getElementById('photoChallengeOrder');
+const photoChallengeActiveInput = document.getElementById('photoChallengeActive');
+const closePhotoChallengeBtn = document.getElementById('closePhotoChallengeBtn');
+const cancelPhotoChallengeBtn = document.getElementById('cancelPhotoChallengeBtn');
+const photoChallengeModalStatus = document.getElementById('photoChallengeModalStatus');
+const photoChallengeStatus = document.getElementById('photoChallengeStatus');
+
+// DOM Elements - Submissions
+const submissionsFilter = document.getElementById('submissionsFilter');
+const photoSubmissionsList = document.getElementById('photoSubmissionsList');
+const submissionStatus = document.getElementById('submissionStatus');
+
+// DOM Elements - Review Modal
+const reviewSubmissionModal = document.getElementById('reviewSubmissionModal');
+const reviewSubmissionForm = document.getElementById('reviewSubmissionForm');
+const reviewSubmissionIdInput = document.getElementById('reviewSubmissionId');
+const reviewSubmissionMaxPointsInput = document.getElementById('reviewSubmissionMaxPoints');
+const reviewSubmissionImage = document.getElementById('reviewSubmissionImage');
+const reviewSubmissionChallenge = document.getElementById('reviewSubmissionChallenge');
+const reviewSubmissionTeam = document.getElementById('reviewSubmissionTeam');
+const reviewSubmissionParticipant = document.getElementById('reviewSubmissionParticipant');
+const reviewSubmissionTime = document.getElementById('reviewSubmissionTime');
+const reviewSubmissionStatus = document.getElementById('reviewSubmissionStatus');
+const reviewSubmissionPoints = document.getElementById('reviewSubmissionPoints');
+const reviewSubmissionMaxPointsDisplay = document.getElementById('reviewSubmissionMaxPointsDisplay');
+const reviewSubmissionComment = document.getElementById('reviewSubmissionComment');
+const reviewSubmissionStatusSelect = document.getElementById('reviewSubmissionStatusSelect');
+const closeReviewSubmissionBtn = document.getElementById('closeReviewSubmissionBtn');
+const cancelReviewSubmissionBtn = document.getElementById('cancelReviewSubmissionBtn');
+const reviewSubmissionModalStatus = document.getElementById('reviewSubmissionModalStatus');
+
+// DOM Elements - Leaderboard
+const photoChallengeLeaderboard = document.getElementById('photoChallengeLeaderboard');
+
+// Event Listeners - Photo Challenges
+addPhotoChallengeBtn.addEventListener('click', () => openPhotoChallengeModal());
+closePhotoChallengeBtn.addEventListener('click', closePhotoChallengeModal);
+cancelPhotoChallengeBtn.addEventListener('click', closePhotoChallengeModal);
+photoChallengeForm.addEventListener('submit', savePhotoChallenge);
+
+// Event Listeners - Submissions
+submissionsFilter.addEventListener('change', loadPhotoSubmissions);
+
+// Event Listeners - Review Modal
+closeReviewSubmissionBtn.addEventListener('click', closeReviewSubmissionModal);
+cancelReviewSubmissionBtn.addEventListener('click', closeReviewSubmissionModal);
+reviewSubmissionForm.addEventListener('submit', saveReview);
+
+/**
+ * Load all photo challenges
+ */
+async function loadPhotoChallenges() {
+    try {
+        const response = await fetch('/api/photo-challenges?admin=true');
+        const challenges = await response.json();
+
+        if (challenges.length === 0) {
+            photoChallengesList.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 40px;">Ingen bildeoppgaver opprettet ennå</p>';
+            return;
+        }
+
+        photoChallengesList.innerHTML = challenges.map(challenge => `
+            <div class="team-card" style="background: ${challenge.active ? '#f9f9f9' : '#ffe0e0'};">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 20px;">
+                        ${challenge.icon || '📸'} ${challenge.title}
+                    </h3>
+                    ${!challenge.active ? '<span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">INAKTIV</span>' : ''}
+                </div>
+
+                ${challenge.description ? `<p style="margin: 5px 0; color: var(--text-light); font-size: 14px;">${challenge.description}</p>` : ''}
+
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Poeng:</strong> ${challenge.points}</p>
+                <p style="margin: 5px 0; font-size: 14px;"><strong>Rekkefølge:</strong> ${challenge.order_number}</p>
+
+                <div class="team-card-actions">
+                    <button onclick="editPhotoChallenge(${challenge.id})" class="button secondary btn-small">
+                        ✏️ Rediger
+                    </button>
+                    <button onclick="deletePhotoChallenge(${challenge.id}, '${challenge.title.replace(/'/g, "\\'")}')" class="button secondary btn-small">
+                        🗑️ Slett
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (error) {
+        console.error('Error loading photo challenges:', error);
+        photoChallengesList.innerHTML = '<p class="text-center" style="color: #f44336;">Kunne ikke laste bildeoppgaver</p>';
+    }
+}
+
+/**
+ * Open photo challenge modal for adding/editing
+ */
+function openPhotoChallengeModal(challengeId = null) {
+    if (challengeId) {
+        photoChallengeModalTitle.textContent = 'Rediger Bildeoppgave';
+        loadPhotoChallengeForEdit(challengeId);
+    } else {
+        photoChallengeModalTitle.textContent = 'Legg til Bildeoppgave';
+        photoChallengeForm.reset();
+        photoChallengeIdInput.value = '';
+        photoChallengeActiveInput.checked = true;
+        photoChallengePointsInput.value = 10;
+        photoChallengeOrderInput.value = 0;
+    }
+    photoChallengeModal.classList.remove('hidden');
+}
+
+/**
+ * Close photo challenge modal
+ */
+function closePhotoChallengeModal() {
+    photoChallengeModal.classList.add('hidden');
+    photoChallengeForm.reset();
+    photoChallengeModalStatus.classList.add('hidden');
+}
+
+/**
+ * Load photo challenge data for editing
+ */
+async function loadPhotoChallengeForEdit(challengeId) {
+    try {
+        const response = await fetch(`/api/photo-challenges/${challengeId}`);
+        const challenge = await response.json();
+
+        photoChallengeIdInput.value = challenge.id;
+        photoChallengeTitleInput.value = challenge.title;
+        photoChallengeDescriptionInput.value = challenge.description || '';
+        photoChallengePointsInput.value = challenge.points;
+        photoChallengeIconInput.value = challenge.icon || '';
+        photoChallengeOrderInput.value = challenge.order_number;
+        photoChallengeActiveInput.checked = challenge.active === 1;
+
+    } catch (error) {
+        console.error('Error loading photo challenge:', error);
+        alert('Kunne ikke laste bildeoppgave');
+    }
+}
+
+/**
+ * Save photo challenge (create or update)
+ */
+async function savePhotoChallenge(e) {
+    e.preventDefault();
+
+    const challengeId = photoChallengeIdInput.value;
+    const challengeData = {
+        title: photoChallengeTitleInput.value.trim(),
+        description: photoChallengeDescriptionInput.value.trim(),
+        points: parseInt(photoChallengePointsInput.value),
+        icon: photoChallengeIconInput.value.trim() || '📸',
+        order_number: parseInt(photoChallengeOrderInput.value),
+        active: photoChallengeActiveInput.checked ? 1 : 0
+    };
+
+    const url = challengeId ? `/api/photo-challenges/${challengeId}` : '/api/photo-challenges';
+    const method = challengeId ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(challengeData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save challenge');
+        }
+
+        const result = await response.json();
+
+        photoChallengeModalStatus.textContent = challengeId ? '✅ Oppgaven ble oppdatert!' : '✅ Oppgaven ble opprettet!';
+        photoChallengeModalStatus.style.background = '#c8e6c9';
+        photoChallengeModalStatus.style.color = '#2e7d32';
+        photoChallengeModalStatus.classList.remove('hidden');
+
+        setTimeout(() => {
+            closePhotoChallengeModal();
+            loadPhotoChallenges();
+        }, 1500);
+
+    } catch (error) {
+        console.error('Error saving photo challenge:', error);
+        photoChallengeModalStatus.textContent = `❌ ${error.message}`;
+        photoChallengeModalStatus.style.background = '#ffcdd2';
+        photoChallengeModalStatus.style.color = '#c62828';
+        photoChallengeModalStatus.classList.remove('hidden');
+    }
+}
+
+/**
+ * Edit photo challenge
+ */
+function editPhotoChallenge(challengeId) {
+    openPhotoChallengeModal(challengeId);
+}
+
+/**
+ * Delete photo challenge
+ */
+async function deletePhotoChallenge(challengeId, challengeTitle) {
+    const confirmation = confirm(`Er du sikker på at du vil slette oppgaven "${challengeTitle}"?\n\nAlle innleveringer for denne oppgaven vil også bli slettet.`);
+    if (!confirmation) return;
+
+    try {
+        const response = await fetch(`/api/photo-challenges/${challengeId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete challenge');
+        }
+
+        showStatus(photoChallengeStatus, '✅ Oppgaven ble slettet', 'success');
+        loadPhotoChallenges();
+        loadPhotoSubmissions();
+
+    } catch (error) {
+        console.error('Error deleting photo challenge:', error);
+        showStatus(photoChallengeStatus, '❌ Kunne ikke slette oppgaven', 'error');
+    }
+}
+
+/**
+ * Load photo submissions
+ */
+async function loadPhotoSubmissions() {
+    try {
+        const response = await fetch('/api/photo-challenges/submissions/all');
+        let submissions = await response.json();
+
+        // Apply filter
+        const filterValue = submissionsFilter.value;
+        if (filterValue !== 'all') {
+            submissions = submissions.filter(s => s.status === filterValue);
+        }
+
+        if (submissions.length === 0) {
+            photoSubmissionsList.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 40px;">Ingen innleveringer ennå</p>';
+            return;
+        }
+
+        photoSubmissionsList.innerHTML = submissions.map(sub => {
+            const statusBadge = sub.status === 'pending'
+                ? '<span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">⏳ VENTER</span>'
+                : sub.status === 'reviewed'
+                ? '<span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✓ VURDERT</span>'
+                : '<span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✗ AVVIST</span>';
+
+            const submittedTime = new Date(sub.submitted_at).toLocaleString('no-NO', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `
+                <div class="team-card" style="cursor: pointer;" onclick="openReviewSubmissionModal(${sub.id})">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 18px;">
+                            ${sub.icon || '📸'} ${sub.challenge_title}
+                        </h3>
+                        ${statusBadge}
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <img src="${sub.image_path}" alt="Submission" style="width: 100%; border-radius: 10px; border: 2px solid #ddd;">
+                    </div>
+
+                    <p style="margin: 5px 0; font-size: 14px;"><strong>Lag:</strong> ${sub.team_name}</p>
+                    <p style="margin: 5px 0; font-size: 14px;"><strong>Deltaker:</strong> ${sub.participant_code}</p>
+                    <p style="margin: 5px 0; font-size: 14px;"><strong>Sendt inn:</strong> ${submittedTime}</p>
+                    ${sub.points_awarded !== null ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Poeng tildelt:</strong> ${sub.points_awarded} / ${sub.max_points}</p>` : ''}
+                    ${sub.admin_comment ? `<p style="margin: 5px 0; font-size: 14px; color: var(--text-light);"><strong>Kommentar:</strong> ${sub.admin_comment}</p>` : ''}
+
+                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd; text-align: center; color: var(--primary-color); font-weight: 600;">
+                        Klikk for å vurdere
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Error loading photo submissions:', error);
+        photoSubmissionsList.innerHTML = '<p class="text-center" style="color: #f44336;">Kunne ikke laste innleveringer</p>';
+    }
+}
+
+/**
+ * Open review submission modal
+ */
+async function openReviewSubmissionModal(submissionId) {
+    try {
+        const response = await fetch('/api/photo-challenges/submissions/all');
+        const submissions = await response.json();
+        const submission = submissions.find(s => s.id === submissionId);
+
+        if (!submission) {
+            alert('Kunne ikke finne innlevering');
+            return;
+        }
+
+        reviewSubmissionIdInput.value = submission.id;
+        reviewSubmissionMaxPointsInput.value = submission.max_points;
+        reviewSubmissionImage.src = submission.image_path;
+        reviewSubmissionChallenge.textContent = `${submission.icon || '📸'} ${submission.challenge_title}`;
+        reviewSubmissionTeam.textContent = submission.team_name;
+        reviewSubmissionParticipant.textContent = submission.participant_code;
+
+        const submittedTime = new Date(submission.submitted_at).toLocaleString('no-NO', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        reviewSubmissionTime.textContent = submittedTime;
+
+        reviewSubmissionStatus.textContent = submission.status === 'pending' ? 'Venter på vurdering' :
+                                             submission.status === 'reviewed' ? 'Vurdert' : 'Avvist';
+
+        reviewSubmissionPoints.value = submission.points_awarded !== null ? submission.points_awarded : submission.max_points;
+        reviewSubmissionMaxPointsDisplay.textContent = submission.max_points;
+        reviewSubmissionPoints.max = submission.max_points;
+        reviewSubmissionComment.value = submission.admin_comment || '';
+        reviewSubmissionStatusSelect.value = submission.status === 'rejected' ? 'rejected' : 'reviewed';
+
+        reviewSubmissionModal.classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error loading submission:', error);
+        alert('Kunne ikke laste innlevering');
+    }
+}
+
+/**
+ * Close review submission modal
+ */
+function closeReviewSubmissionModal() {
+    reviewSubmissionModal.classList.add('hidden');
+    reviewSubmissionForm.reset();
+    reviewSubmissionModalStatus.classList.add('hidden');
+}
+
+/**
+ * Save review
+ */
+async function saveReview(e) {
+    e.preventDefault();
+
+    const submissionId = reviewSubmissionIdInput.value;
+    const reviewData = {
+        points_awarded: parseInt(reviewSubmissionPoints.value),
+        status: reviewSubmissionStatusSelect.value,
+        admin_comment: reviewSubmissionComment.value.trim()
+    };
+
+    try {
+        const response = await fetch(`/api/photo-challenges/submissions/${submissionId}/review`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reviewData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save review');
+        }
+
+        reviewSubmissionModalStatus.textContent = '✅ Vurdering lagret!';
+        reviewSubmissionModalStatus.style.background = '#c8e6c9';
+        reviewSubmissionModalStatus.style.color = '#2e7d32';
+        reviewSubmissionModalStatus.classList.remove('hidden');
+
+        setTimeout(() => {
+            closeReviewSubmissionModal();
+            loadPhotoSubmissions();
+            loadPhotoChallengeLeaderboard();
+        }, 1500);
+
+    } catch (error) {
+        console.error('Error saving review:', error);
+        reviewSubmissionModalStatus.textContent = `❌ ${error.message}`;
+        reviewSubmissionModalStatus.style.background = '#ffcdd2';
+        reviewSubmissionModalStatus.style.color = '#c62828';
+        reviewSubmissionModalStatus.classList.remove('hidden');
+    }
+}
+
+/**
+ * Load photo challenge leaderboard
+ */
+async function loadPhotoChallengeLeaderboard() {
+    try {
+        const response = await fetch('/api/photo-challenges/leaderboard/teams');
+        const teams = await response.json();
+
+        if (teams.length === 0) {
+            photoChallengeLeaderboard.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 40px;">Ingen lag har sendt inn bilder ennå</p>';
+            return;
+        }
+
+        photoChallengeLeaderboard.innerHTML = `
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: var(--primary-color); color: white;">
+                        <th style="padding: 15px; text-align: left; border-radius: 10px 0 0 0;">Plassering</th>
+                        <th style="padding: 15px; text-align: left;">Lag</th>
+                        <th style="padding: 15px; text-align: center;">Innleveringer</th>
+                        <th style="padding: 15px; text-align: center;">Vurdert</th>
+                        <th style="padding: 15px; text-align: center; border-radius: 0 10px 0 0;">Total poeng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${teams.map((team, index) => `
+                        <tr style="background: ${index % 2 === 0 ? 'white' : '#f9f9f9'}; border-bottom: 1px solid #ddd;">
+                            <td style="padding: 15px; font-size: 24px; font-weight: bold; color: ${index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : index === 2 ? '#CD7F32' : 'var(--text-dark)'};">
+                                ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                            </td>
+                            <td style="padding: 15px; font-weight: 600;">${team.team_name}</td>
+                            <td style="padding: 15px; text-align: center;">${team.submissions_count}</td>
+                            <td style="padding: 15px; text-align: center;">${team.reviewed_count}</td>
+                            <td style="padding: 15px; text-align: center; font-size: 20px; font-weight: bold; color: var(--primary-color);">${team.total_points}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+    } catch (error) {
+        console.error('Error loading photo challenge leaderboard:', error);
+        photoChallengeLeaderboard.innerHTML = '<p class="text-center" style="color: #f44336;">Kunne ikke laste resultattavle</p>';
+    }
+}
+
+// ==============================================
+// END PHOTO CHALLENGES MANAGEMENT FUNCTIONS
+// ==============================================
+
 // Make functions globally available
 window.editParticipant = editParticipant;
 window.viewPhoto = function(participantCode, photoPath) {
@@ -3527,3 +3990,6 @@ window.viewPhoto = function(participantCode, photoPath) {
 window.editCourse = editCourse;
 window.deleteCourse = deleteCourse;
 window.removeEnrollment = removeEnrollment;
+window.editPhotoChallenge = editPhotoChallenge;
+window.deletePhotoChallenge = deletePhotoChallenge;
+window.openReviewSubmissionModal = openReviewSubmissionModal;

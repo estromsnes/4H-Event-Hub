@@ -16,6 +16,8 @@ router.post('/reset', async (req, res) => {
             'quiz_sessions',
             'quiz_questions',
             'tic_tac_toe_games',
+            'photo_submissions',
+            'photo_challenges',
             'program',
             'participant_courses',
             'courses',
@@ -676,6 +678,66 @@ router.post('/load-dummy-data', async (req, res) => {
             });
         }
 
+        // Create photo challenges
+        const photoChallenges = [
+            {
+                title: 'Blid 4H-leder',
+                description: 'Ta bilde av en smilende 4H-leder',
+                points: 10,
+                icon: '😊',
+                order: 1
+            },
+            {
+                title: 'Alle på laget står på ett ben',
+                description: 'Hele laget må stå på ett ben samtidig',
+                points: 15,
+                icon: '🦩',
+                order: 2
+            },
+            {
+                title: 'Menneskepyramide',
+                description: 'Lag en pyramide med hele laget',
+                points: 20,
+                icon: '🔺',
+                order: 3
+            },
+            {
+                title: 'Finne noe grønt',
+                description: 'Ta bilde av laget med noe grønt (4H-fargen!)',
+                points: 10,
+                icon: '💚',
+                order: 4
+            },
+            {
+                title: 'Kreativ lagstilling',
+                description: 'Lag en kreativ og morsom posisjon sammen',
+                points: 15,
+                icon: '🎭',
+                order: 5
+            },
+            {
+                title: 'Finne et kløverblad',
+                description: 'Ta bilde av laget med et ekte kløverblad',
+                points: 20,
+                icon: '🍀',
+                order: 6
+            }
+        ];
+
+        for (const challenge of photoChallenges) {
+            await new Promise((resolve, reject) => {
+                db.run(
+                    `INSERT INTO photo_challenges (title, description, points, icon, active, order_number)
+                     VALUES (?, ?, ?, ?, 1, ?)`,
+                    [challenge.title, challenge.description, challenge.points, challenge.icon, challenge.order],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        }
+
         console.log('✅ Dummy data loaded successfully');
         console.log(`   - Event: Sommerleir 2026`);
         console.log(`   - Participants: ${participants.length}`);
@@ -684,6 +746,7 @@ router.post('/load-dummy-data', async (req, res) => {
         console.log(`   - Courses: ${courses.length}`);
         console.log(`   - Quiz questions: ${quizQuestions.length}`);
         console.log(`   - Scavenger checkpoints: ${checkpoints.length}`);
+        console.log(`   - Photo challenges: ${photoChallenges.length}`);
         console.log(`   - Program items: ${programItems.length}`);
 
         res.json({
@@ -696,6 +759,7 @@ router.post('/load-dummy-data', async (req, res) => {
                 courses: courses.length,
                 quizQuestions: quizQuestions.length,
                 checkpoints: checkpoints.length,
+                photoChallenges: photoChallenges.length,
                 programItems: programItems.length
             }
         });

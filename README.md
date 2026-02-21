@@ -27,6 +27,7 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 
 #### 🏆 Lag & Konkurranser
 - **Lagutfordring**: Ta bilder av laget som oppfyller forskjellige oppgaver
+- **Bildeoppgaver**: Ta morsomme bilder basert på oppgaver (f.eks. "Alle står på ett ben", "Finn noe grønt")
 - **Live Scoreboard**: Se sanntids poengoversikt for alle lag
 - **Tic-Tac-Toe**: Spill bondesjakk mot andre lag
 - **Quiz**: Svar på quiz-spørsmål som lag og konkurer om beste tid
@@ -80,6 +81,13 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 - Last opp bilder til spørsmål
 - Sett riktig svar og rekkefølge
 - Se leaderboard med tid og poeng
+
+#### 📸 Bildeoppgaver
+- Opprett bildeoppgaver med tittel, beskrivelse, ikon og poeng
+- Se innsendte bilder fra alle lag
+- Gi poeng til innsendte bilder (0 til max)
+- Godkjenn eller avvis innsendte bilder
+- Se leaderboard for bildeoppgaver
 
 #### 📅 Program
 - Opprett programpunkter med tid, tittel, sted og beskrivelse
@@ -161,6 +169,7 @@ node database/migrate-add-quiz.js
 node database/migrate-add-event-start-time.js
 node database/migrate-add-program.js
 node database/migrate-add-courses.js
+node database/migrate-add-photo-challenges.js
 ```
 
 *Tips: Du kan kjøre alle migrasjonene på en gang uten feil - skript som allerede er kjørt vil bli hoppet over.*
@@ -183,6 +192,7 @@ Dette oppretter:
 - Deltakere påmeldes automatisk til 1-2 kurs hver
 - 5 quiz-spørsmål
 - 5 skattejakt-sjekkpunkter
+- 6 bildeoppgaver (Blid 4H-leder, Alle på ett ben, Menneskepyramide, osv.)
 
 ### Nullstill Database
 
