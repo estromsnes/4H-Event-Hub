@@ -37,6 +37,27 @@ router.get('/', (req, res) => {
     );
 });
 
+// GET general participant statistics
+router.get('/stats', (req, res) => {
+    const db = req.app.locals.db;
+
+    db.get(
+        `SELECT
+            COUNT(*) as total_participants,
+            COUNT(DISTINCT team) as total_teams
+         FROM participants
+         WHERE active = 1`,
+        [],
+        (err, row) => {
+            if (err) {
+                console.error('Error fetching statistics:', err);
+                return res.status(500).json({ error: 'Failed to fetch statistics' });
+            }
+            res.json(row);
+        }
+    );
+});
+
 // GET participant statistics by role
 router.get('/stats/roles', (req, res) => {
     const db = req.app.locals.db;

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4H Event Hub - Skautrollet</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        .home-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 40px;
+        }
+
+        .logo-image {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            margin-bottom: 20px;
+            border-radius: 15px;
+        }
+
+        .logo h1 {
+            font-size: 48px;
+            margin: 0 0 10px 0;
+            color: #2c5f2d;
+        }
+
+        .logo p {
+            font-size: 24px;
+            margin: 0;
+            color: #666;
+        }
+
+        .nav-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .nav-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 30px;
+            font-size: 24px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            text-decoration: none;
+            color: white;
+            min-height: 100px;
+        }
+
+        .nav-button.primary {
+            background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .nav-button.secondary {
+            background: linear-gradient(135deg, #666, #444);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button-icon {
+            font-size: 36px;
+        }
+
+        .event-info-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .event-info-card p {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .event-details {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .event-details p {
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        .role-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .role-stat {
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+            border-radius: 8px;
+            color: white;
+        }
+
+        .role-stat .count {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .role-stat .label {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .footer {
+            margin-top: 60px;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Load event info
+        async function loadEventInfo() {
+            try {
+                const response = await fetch('/api/event');
+                if (response.ok) {
+                    const event = await response.json();
+
+                    // Update title
+                    document.getElementById('eventTitle').textContent = event.event_name || '4H Event Hub';
+                    document.getElementById('eventSubtitle').textContent = event.organizer_club || 'Skautrollet 4H';
+
+                    // Update browser tab title
+                    if (event.event_name) {
+                        document.title = event.event_name;
+                    }
+
+                    // Show logo if exists
+                    if (event.logo_path) {
+                        const logoImg = document.getElementById('eventLogo');
+                        logoImg.src = event.logo_path + '?t=' + Date.now();
+                        logoImg.classList.remove('hidden');
+                    }
+
+                    // Show event info card if we have details
+                    if (event.event_description || event.location || event.start_date) {
+                        const eventInfo = document.getElementById('eventInfo');
+                        eventInfo.classList.remove('hidden');
+
+                        if (event.event_description) {
+                            document.getElementById('eventDescription').textContent = event.event_description;
+                        }
+
+                        if (event.location) {
+                            document.getElementById('eventLocation').innerHTML = '<strong>📍 Sted:</strong> ' + event.location;
+                        }
+
+                        if (event.start_date || event.end_date) {
+                            let dates = '<strong>📅 Dato:</strong> ';
+                            if (event.start_date && event.end_date) {
+                                dates += formatDate(event.start_date) + ' - ' + formatDate(event.end_date);
+                            } else if (event.start_date) {
+                                dates += formatDate(event.start_date);
+                            }
+                            document.getElementById('eventDates').innerHTML = dates;
+                        }
+
+                        if (event.organizer_club) {
+                            let org = '<strong>👥 Arrangør:</strong> ' + event.organizer_club;
+                            if (event.organizer_name) {
+                                org += ' (' + event.organizer_name + ')';
+                            }
+                            document.getElementById('eventOrganizer').innerHTML = org;
+                        }
+                    }
+                } else {
+                    // No event info, use defaults
+                    document.getElementById('eventSubtitle').textContent = 'Skautrollet 4H';
+                }
+            } catch (err) {
+                console.error('Error loading event info:', err);
+                document.getElementById('eventSubtitle').textContent = 'Skautrollet 4H';
+            }
+
+            // Load role statistics
+            loadRoleStats();
+        }
+
+        async function loadRoleStats() {
+            try {
+                const response = await fetch('/api/participants/stats/roles');
+                if (response.ok) {
+                    const stats = await response.json();
+
+                    // Check if we have any statistics
+                    if (Object.keys(stats).length > 0) {
+                        const roleStatsDiv = document.getElementById('roleStats');
+
+                        // Define role order and labels
+                        const roleConfig = {
+                            'Deltaker': '👥 Deltakere',
+                            'Frivillig': '🤝 Frivillige',
+                            'Arrangør': '🎪 Arrangører',
+                            'Leder': '⭐ Ledere'
+                        };
+
+                        let html = '';
+                        for (const [role, label] of Object.entries(roleConfig)) {
+                            if (stats[role]) {
+                                html += `
+                                    <div class="role-stat">
+                                        <div class="count">${stats[role]}</div>
+                                        <div class="label">${label}</div>
+                                    </div>
+                                `;
+                            }
+                        }
+
+                        if (html) {
+                            roleStatsDiv.innerHTML = html;
+                            roleStatsDiv.classList.remove('hidden');
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading role statistics:', err);
+            }
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', loadEventInfo);
+    </script>
+    <div class="home-container">
+        <div class="logo">
+            <img id="eventLogo" class="logo-image hidden" alt="Event logo">
+            <h1 id="eventTitle">4H Event Hub</h1>
+            <p id="eventSubtitle">Laster...</p>
+        </div>
+
+        <div id="eventInfo" class="event-info-card hidden">
+            <p id="eventDescription"></p>
+            <div class="event-details">
+                <p id="eventLocation"></p>
+                <p id="eventDates"></p>
+                <p id="eventOrganizer"></p>
+            </div>
+            <div id="roleStats" class="role-stats hidden"></div>
+        </div>
+
+        <div class="nav-buttons">
+            <a href="/profile.html" class="nav-button primary">
+                <span class="nav-button-icon">👤</span>
+                <span>Min Profil</span>
+            </a>
+
+            <a href="/participant-info.html" class="nav-button primary">
+                <span class="nav-button-icon">👥</span>
+                <span>Deltakere</span>
+            </a>
+
+            <a href="/team-challenge.html" class="nav-button primary">
+                <span class="nav-button-icon">📸</span>
+                <span>Lagbilde-utfordring</span>
+            </a>
+
+            <a href="/scavenger-hunt.html" class="nav-button primary">
+                <span class="nav-button-icon">🎯</span>
+                <span>QR Skattejakt</span>
+            </a>
+
+            <a href="/live-scoreboard.html" class="nav-button primary">
+                <span class="nav-button-icon">📊</span>
+                <span>Live Scoreboard</span>
+            </a>
+
+            <a href="/tic-tac-toe.html" class="nav-button primary">
+                <span class="nav-button-icon">🎮</span>
+                <span>Tripp-Trapp-Tresko</span>
+            </a>
+
+            <a href="/quiz.html" class="nav-button primary">
+                <span class="nav-button-icon">🧠</span>
+                <span>Quiz</span>
+            </a>
+
+            <a href="/program.html" class="nav-button primary">
+                <span class="nav-button-icon">📅</span>
+                <span>Program</span>
+            </a>
+
+            <a href="/admin.html" class="nav-button secondary">
+                <span class="nav-button-icon">⚙️</span>
+                <span>Admin Panel</span>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>De fire H-ene: Klart hode • Varmt hjerte • Flinke hender • God helse</p>
+        </div>
+    </div>
+</body>
+</html>

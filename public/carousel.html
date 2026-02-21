@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4H Event Hub - Info</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/main.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 1080px;
+            height: 1920px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .carousel-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .carousel-screen {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+        }
+
+        .carousel-screen.active {
+            opacity: 1;
+            z-index: 1;
+        }
+
+        .carousel-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .carousel-logo {
+            width: 200px;
+            height: 200px;
+            object-fit: contain;
+            margin: 0 auto 20px;
+            border-radius: 15px;
+        }
+
+        .carousel-title {
+            font-size: 72px;
+            color: #2c5f2d;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .carousel-subtitle {
+            font-size: 42px;
+            color: #666;
+        }
+
+        /* Calendar Display */
+        .calendar-display {
+            background: white;
+            border-radius: 30px;
+            padding: 60px;
+            margin: 80px 60px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 50px;
+            border-left: 15px solid var(--primary);
+        }
+
+        .calendar-icon {
+            font-size: 140px;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+        }
+
+        .calendar-content {
+            flex: 1;
+        }
+
+        .calendar-label {
+            font-size: 48px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .calendar-dates {
+            font-size: 64px;
+            font-weight: bold;
+            color: #2c3e50;
+            line-height: 1.5;
+        }
+
+        /* Welcome Message */
+        .welcome-message {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+            padding: 60px;
+        }
+
+        .welcome-icon {
+            font-size: 180px;
+            margin-bottom: 40px;
+            animation: wave 2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(20deg); }
+            75% { transform: rotate(-20deg); }
+        }
+
+        .welcome-text-large {
+            font-size: 96px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 30px;
+        }
+
+        .welcome-subtext {
+            font-size: 52px;
+            color: #666;
+        }
+
+        .screen-title {
+            font-size: 64px;
+            color: #2c5f2d;
+            text-align: center;
+            margin-bottom: 40px;
+            font-weight: bold;
+        }
+
+        /* Program Screen */
+        .program-days {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .program-day {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .program-day-header {
+            font-size: 48px;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), #2c5f2d);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .program-item {
+            padding: 20px;
+            border-left: 8px solid var(--primary);
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #f8f9fa, white);
+            border-radius: 10px;
+        }
+
+        .program-time {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .program-title {
+            font-size: 42px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .program-location {
+            font-size: 32px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        /* Scoreboard Screen */
+        .scoreboard-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .scoreboard-podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 20px;
+            margin-bottom: 40px;
+            padding: 0 40px;
+        }
+
+        .podium-item {
+            text-align: center;
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            min-width: 280px;
+        }
+
+        .podium-item.first {
+            order: 2;
+            transform: scale(1.1);
+        }
+
+        .podium-item.second {
+            order: 1;
+        }
+
+        .podium-item.third {
+            order: 3;
+        }
+
+        .podium-rank {
+            font-size: 80px;
+            margin-bottom: 15px;
+        }
+
+        .podium-team {
+            font-size: 42px;
+            font-weight: bold;
+            color: #2c5f2d;
+            margin-bottom: 10px;
+        }
+
+        .podium-score {
+            font-size: 56px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .scoreboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 15px;
+            padding: 25px 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .score-rank {
+            font-size: 48px;
+            font-weight: bold;
+            color: #666;
+            min-width: 100px;
+        }
+
+        .score-team {
+            font-size: 42px;
+            font-weight: bold;
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .score-points {
+            font-size: 52px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        /* Participant Stats Screen */
+        .stats-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            flex: 1;
+        }
+
+        .stats-big {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .stat-icon {
+            font-size: 120px;
+            margin-bottom: 20px;
+        }
+
+        .stat-number {
+            font-size: 120px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .stat-label {
+            font-size: 42px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .stat-roles {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+
+        .role-card {
+            background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+            color: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.4);
+        }
+
+        .role-number {
+            font-size: 96px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .role-label {
+            font-size: 36px;
+            opacity: 0.95;
+        }
+
+        /* Tap indicator */
+        .tap-indicator {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 20px 50px;
+            border-radius: 50px;
+            font-size: 32px;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+            z-index: 1000;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translateX(-50%) scale(1);
+            }
+            50% {
+                transform: translateX(-50%) scale(1.05);
+            }
+        }
+
+        /* Settings icon */
+        .settings-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.2s, background 0.2s;
+            z-index: 1001;
+            text-decoration: none;
+        }
+
+        .settings-icon:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 100px;
+            font-size: 48px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
+
+    <div class="carousel-container" id="carouselContainer">
+        <!-- Home Screen -->
+        <div class="carousel-screen active" id="homeScreen">
+            <div class="carousel-header">
+                <img id="eventLogo" class="carousel-logo hidden" alt="Event logo">
+                <h1 class="carousel-title" id="eventTitle">4H Event Hub</h1>
+                <p class="carousel-subtitle" id="eventSubtitle">Laster...</p>
+            </div>
+
+            <!-- Calendar Info -->
+            <div class="calendar-display" id="calendarDisplay">
+                <div class="calendar-icon">📅</div>
+                <div class="calendar-content">
+                    <div class="calendar-label">Når:</div>
+                    <div class="calendar-dates" id="calendarDates">Laster...</div>
+                </div>
+            </div>
+
+            <!-- Welcome message -->
+            <div class="welcome-message">
+                <div class="welcome-icon">👋</div>
+                <div class="welcome-text-large">Velkommen!</div>
+                <div class="welcome-subtext">Trykk på skjermen for å starte</div>
+            </div>
+        </div>
+
+        <!-- Program Screen -->
+        <div class="carousel-screen" id="programScreen">
+            <h2 class="screen-title">📅 Program</h2>
+            <div class="program-days" id="programContent">
+                <div class="loading">Laster program...</div>
+            </div>
+        </div>
+
+        <!-- Scoreboard Screen -->
+        <div class="carousel-screen" id="scoreboardScreen">
+            <h2 class="screen-title">🏆 Live Scoreboard</h2>
+            <div class="scoreboard-container" id="scoreboardContent">
+                <div class="loading">Laster scoreboard...</div>
+            </div>
+        </div>
+
+        <!-- Participant Stats Screen -->
+        <div class="carousel-screen" id="statsScreen">
+            <h2 class="screen-title">👥 Deltakere</h2>
+            <div class="stats-container" id="statsContent">
+                <div class="loading">Laster statistikk...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tap-indicator">👆 Trykk for å starte</div>
+
+    <script>
+        let currentScreen = 0;
+        const screens = ['homeScreen', 'programScreen', 'scoreboardScreen', 'statsScreen'];
+        let carouselInterval;
+        const SCREEN_DURATION = 20000; // 20 seconds per screen
+
+        // Load event info
+        async function loadEventInfo() {
+            try {
+                const response = await fetch('/api/event');
+                if (response.ok) {
+                    const event = await response.json();
+                    document.getElementById('eventTitle').textContent = event.event_name || '4H Event Hub';
+                    document.getElementById('eventSubtitle').textContent = event.organizer_club || 'Skautrollet 4H';
+
+                    if (event.event_name) {
+                        document.title = event.event_name;
+                    }
+
+                    if (event.logo_path) {
+                        const logoImg = document.getElementById('eventLogo');
+                        logoImg.src = event.logo_path + '?t=' + Date.now();
+                        logoImg.classList.remove('hidden');
+                    }
+
+                    // Populate calendar info
+                    if (event.start_date) {
+                        const startDate = new Date(event.start_date);
+                        const endDate = event.end_date ? new Date(event.end_date) : null;
+
+                        const daysOfWeek = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'];
+                        const months = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+
+                        let dateText = '';
+
+                        if (endDate && startDate.getTime() !== endDate.getTime()) {
+                            // Multi-day event - show in kid-friendly format
+                            const startDay = daysOfWeek[startDate.getDay()];
+                            const startDayNum = startDate.getDate();
+                            const endDay = daysOfWeek[endDate.getDay()];
+                            const endDayNum = endDate.getDate();
+                            const month = months[startDate.getMonth()];
+
+                            dateText = `${startDay} ${startDayNum}. - ${endDay} ${endDayNum}. ${month}`;
+                        } else {
+                            // Single day event
+                            const day = daysOfWeek[startDate.getDay()];
+                            const dayNum = startDate.getDate();
+                            const month = months[startDate.getMonth()];
+
+                            dateText = `${day} ${dayNum}. ${month}`;
+                        }
+
+                        document.getElementById('calendarDates').textContent = dateText;
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading event info:', err);
+            }
+        }
+
+        // Load program
+        async function loadProgram() {
+            try {
+                const response = await fetch('/api/program');
+                if (!response.ok) throw new Error('Failed to load program');
+
+                const programItems = await response.json();
+                const container = document.getElementById('programContent');
+
+                if (programItems.length === 0) {
+                    container.innerHTML = '<div class="loading">Ingen program tilgjengelig</div>';
+                    return;
+                }
+
+                // Group by day
+                const days = {};
+                programItems.forEach(item => {
+                    if (!days[item.day_number]) days[item.day_number] = [];
+                    days[item.day_number].push(item);
+                });
+
+                let html = '';
+                Object.keys(days).sort((a, b) => a - b).forEach(dayNum => {
+                    html += `
+                        <div class="program-day">
+                            <div class="program-day-header">Dag ${dayNum}</div>`;
+
+                    days[dayNum].forEach(item => {
+                        html += `
+                            <div class="program-item">
+                                <div class="program-time">${item.start_time} - ${item.end_time}</div>
+                                <div class="program-title">${item.title}</div>
+                                ${item.location ? `<div class="program-location">📍 ${item.location}</div>` : ''}
+                            </div>`;
+                    });
+
+                    html += '</div>';
+                });
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading program:', error);
+                document.getElementById('programContent').innerHTML = '<div class="loading">Kunne ikke laste program</div>';
+            }
+        }
+
+        // Load scoreboard
+        async function loadScoreboard() {
+            try {
+                const response = await fetch('/api/teams/scoreboard');
+                if (!response.ok) throw new Error('Failed to load scoreboard');
+
+                const teams = await response.json();
+                const container = document.getElementById('scoreboardContent');
+
+                if (teams.length === 0) {
+                    container.innerHTML = '<div class="loading">Ingen lag ennå</div>';
+                    return;
+                }
+
+                // Top 3 podium
+                let html = '<div class="scoreboard-podium">';
+                teams.slice(0, 3).forEach((team, index) => {
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const classes = ['first', 'second', 'third'];
+                    html += `
+                        <div class="podium-item ${classes[index]}">
+                            <div class="podium-rank">${medals[index]}</div>
+                            <div class="podium-team">${team.name}</div>
+                            <div class="podium-score">${team.total_points} poeng</div>
+                        </div>`;
+                });
+                html += '</div>';
+
+                // Rest of the teams
+                if (teams.length > 3) {
+                    html += '<div class="scoreboard-list">';
+                    teams.slice(3).forEach((team, index) => {
+                        html += `
+                            <div class="score-item">
+                                <div class="score-rank">#${index + 4}</div>
+                                <div class="score-team">${team.name}</div>
+                                <div class="score-points">${team.total_points} poeng</div>
+                            </div>`;
+                    });
+                    html += '</div>';
+                }
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading scoreboard:', error);
+                document.getElementById('scoreboardContent').innerHTML = '<div class="loading">Kunne ikke laste scoreboard</div>';
+            }
+        }
+
+        // Load participant stats
+        async function loadStats() {
+            try {
+                const [statsResponse, rolesResponse] = await Promise.all([
+                    fetch('/api/participants/stats'),
+                    fetch('/api/participants/stats/roles')
+                ]);
+
+                const stats = statsResponse.ok ? await statsResponse.json() : null;
+                const roles = rolesResponse.ok ? await rolesResponse.json() : null;
+
+                const container = document.getElementById('statsContent');
+
+                let html = '<div class="stats-big">';
+
+                // Total participants
+                if (stats) {
+                    html += `
+                        <div class="stat-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-number">${stats.total_participants || 0}</div>
+                            <div class="stat-label">Deltakere</div>
+                        </div>`;
+
+                    // Total teams
+                    html += `
+                        <div class="stat-card">
+                            <div class="stat-icon">🎯</div>
+                            <div class="stat-number">${stats.total_teams || 0}</div>
+                            <div class="stat-label">Lag</div>
+                        </div>`;
+                }
+
+                html += '</div>';
+
+                // Role breakdown
+                if (roles && Object.keys(roles).length > 0) {
+                    html += '<div class="stat-roles">';
+
+                    const roleConfig = {
+                        'Deltaker': '👥 Deltakere',
+                        'Frivillig': '🤝 Frivillige',
+                        'Arrangør': '🎪 Arrangører',
+                        'Leder': '⭐ Ledere'
+                    };
+
+                    for (const [role, label] of Object.entries(roleConfig)) {
+                        if (roles[role]) {
+                            html += `
+                                <div class="role-card">
+                                    <div class="role-number">${roles[role]}</div>
+                                    <div class="role-label">${label}</div>
+                                </div>`;
+                        }
+                    }
+
+                    html += '</div>';
+                }
+
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('statsContent').innerHTML = '<div class="loading">Kunne ikke laste statistikk</div>';
+            }
+        }
+
+        // Start carousel rotation
+        function startCarousel() {
+            carouselInterval = setInterval(() => {
+                // Hide current screen
+                document.getElementById(screens[currentScreen]).classList.remove('active');
+
+                // Move to next screen
+                currentScreen = (currentScreen + 1) % screens.length;
+
+                // Show next screen
+                document.getElementById(screens[currentScreen]).classList.add('active');
+
+                // Reload data for current screen
+                if (screens[currentScreen] === 'programScreen') {
+                    loadProgram();
+                } else if (screens[currentScreen] === 'scoreboardScreen') {
+                    loadScoreboard();
+                } else if (screens[currentScreen] === 'statsScreen') {
+                    loadStats();
+                }
+            }, SCREEN_DURATION);
+        }
+
+        // Stop carousel and go to participant mode
+        function stopCarousel() {
+            if (carouselInterval) {
+                clearInterval(carouselInterval);
+            }
+            window.location.href = '/participant.html';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadEventInfo();
+            await loadProgram();
+            await loadScoreboard();
+            await loadStats();
+
+            // Start carousel after 3 seconds
+            setTimeout(() => {
+                startCarousel();
+            }, 3000);
+
+            // Click anywhere to go to participant mode
+            document.querySelector('.tap-indicator').addEventListener('click', stopCarousel);
+            document.querySelector('.carousel-container').addEventListener('click', (e) => {
+                if (!e.target.classList.contains('settings-icon')) {
+                    stopCarousel();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

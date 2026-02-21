@@ -136,7 +136,7 @@ router.post('/load-dummy-data', async (req, res) => {
                     '2026-06-20T16:00',
                     'Espen Strømsnes',
                     'Skautrollet 4H',
-                    'espen@skautrollet4h.no'
+                    'estromsnes@gmail.com'
                 ],
                 (err) => {
                     if (err) reject(err);
@@ -144,6 +144,21 @@ router.post('/load-dummy-data', async (req, res) => {
                 }
             );
         });
+
+        // Create teams
+        for (const teamName of teamNames) {
+            await new Promise((resolve, reject) => {
+                db.run(
+                    `INSERT INTO teams (name, description, max_members)
+                     VALUES (?, ?, ?)`,
+                    [teamName, `${teamName} - Et fantastisk lag!`, 10],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        }
 
         // Generate 100 participants
         const participants = [];
@@ -320,23 +335,264 @@ router.post('/load-dummy-data', async (req, res) => {
             });
         }
 
+        // Create program schedule (Friday afternoon to Sunday morning)
+        const programItems = [
+            // Friday (Day 1)
+            {
+                title: 'Ankomst og innsjekking',
+                description: 'Finn ditt rom og pakk ut',
+                startTime: '16:00',
+                endTime: '17:30',
+                location: 'Folkvang',
+                dayNumber: 1,
+                order: 1
+            },
+            {
+                title: 'Middag',
+                description: 'Taco-buffet',
+                startTime: '17:30',
+                endTime: '18:30',
+                location: 'Storsalen',
+                dayNumber: 1,
+                order: 2
+            },
+            {
+                title: 'Velkomst og informasjon',
+                description: 'Oversikt over helgen og praktisk info',
+                startTime: '18:30',
+                endTime: '19:00',
+                location: 'Storsalen',
+                dayNumber: 1,
+                order: 3
+            },
+            {
+                title: 'Bli-kjent aktiviteter',
+                description: 'Morsomme leker og aktiviteter for å bli bedre kjent',
+                startTime: '19:00',
+                endTime: '20:30',
+                location: 'Storsalen',
+                dayNumber: 1,
+                order: 4
+            },
+            {
+                title: 'Kiosk åpen',
+                description: 'Snacks og godt til kjøps',
+                startTime: '20:30',
+                endTime: '21:30',
+                location: 'Gangen',
+                dayNumber: 1,
+                order: 5
+            },
+            {
+                title: 'Sosialt / Fritid',
+                description: 'Spill, prat og hygge',
+                startTime: '21:30',
+                endTime: '23:00',
+                location: 'Storsalen',
+                dayNumber: 1,
+                order: 6
+            },
+            {
+                title: 'Nattero',
+                description: 'Alle på rommet',
+                startTime: '23:00',
+                endTime: '23:30',
+                location: '',
+                dayNumber: 1,
+                order: 7
+            },
+
+            // Saturday (Day 2)
+            {
+                title: 'Frokost',
+                description: 'God start på dagen',
+                startTime: '08:00',
+                endTime: '09:00',
+                location: 'Storsalen',
+                dayNumber: 2,
+                order: 1
+            },
+            {
+                title: 'Morgensamling',
+                description: 'Informasjon om dagens program',
+                startTime: '09:00',
+                endTime: '09:15',
+                location: 'Storsalen',
+                dayNumber: 2,
+                order: 2
+            },
+            {
+                title: 'Quiz',
+                description: 'Test kunnskapen din i lagkonkurranse',
+                startTime: '09:15',
+                endTime: '10:00',
+                location: 'Storsalen',
+                dayNumber: 2,
+                order: 3
+            },
+            {
+                title: 'QR Skattejakt',
+                description: 'Finn alle sjekkpunktene rundt omkring',
+                startTime: '10:00',
+                endTime: '11:30',
+                location: 'Ute og inne',
+                dayNumber: 2,
+                order: 4
+            },
+            {
+                title: 'Lunsj',
+                description: 'Pannekaker med syltetøy',
+                startTime: '11:30',
+                endTime: '12:30',
+                location: 'Storsalen',
+                dayNumber: 2,
+                order: 5
+            },
+            {
+                title: 'Lagkonkurranse',
+                description: 'Skann QR-koder sammen og ta lagbilde',
+                startTime: '12:30',
+                endTime: '13:30',
+                location: 'Storsalen',
+                dayNumber: 2,
+                order: 6
+            },
+            {
+                title: 'Tripp-Trapp-Tresko turnering',
+                description: 'Hvem blir mester?',
+                startTime: '13:30',
+                endTime: '15:00',
+                location: 'Storsalen',
+                dayNumber: 2,
+                order: 7
+            },
+            {
+                title: 'Utendørsaktiviteter',
+                description: 'Lek og moro i friluft',
+                startTime: '15:00',
+                endTime: '17:00',
+                location: 'Uteområdet',
+                dayNumber: 2,
+                order: 8
+            },
+            {
+                title: 'Middag',
+                description: 'Kjøttboller med poteter',
+                startTime: '17:00',
+                endTime: '18:00',
+                location: 'Storsalen',
+                dayNumber: 2,
+                order: 9
+            },
+            {
+                title: 'Underholdning',
+                description: 'Talentshow - vis hva du kan!',
+                startTime: '18:00',
+                endTime: '20:00',
+                location: 'Storsalen',
+                dayNumber: 2,
+                order: 10
+            },
+            {
+                title: 'Kiosk åpen',
+                description: 'Siste sjanse for godteri',
+                startTime: '20:00',
+                endTime: '21:00',
+                location: 'Gangen',
+                dayNumber: 2,
+                order: 11
+            },
+            {
+                title: 'Film og popcorn',
+                description: 'Slapp av med god film',
+                startTime: '21:00',
+                endTime: '23:00',
+                location: 'Storsalen',
+                dayNumber: 2,
+                order: 12
+            },
+            {
+                title: 'Nattero',
+                description: 'God natt!',
+                startTime: '23:00',
+                endTime: '23:30',
+                location: '',
+                dayNumber: 2,
+                order: 13
+            },
+
+            // Sunday (Day 3)
+            {
+                title: 'Frokost',
+                description: 'Siste frokost sammen',
+                startTime: '08:00',
+                endTime: '09:00',
+                location: 'Storsalen',
+                dayNumber: 3,
+                order: 1
+            },
+            {
+                title: 'Pakking og rydding',
+                description: 'Rydd rommet og pakk sammen',
+                startTime: '09:00',
+                endTime: '09:45',
+                location: 'Rom',
+                dayNumber: 3,
+                order: 2
+            },
+            {
+                title: 'Avslutning og premieutdeling',
+                description: 'Oppsummering av helgen og premier til vinnere',
+                startTime: '09:45',
+                endTime: '10:30',
+                location: 'Storsalen',
+                dayNumber: 3,
+                order: 3
+            },
+            {
+                title: 'Hjemreise',
+                description: 'Takk for en fantastisk helg!',
+                startTime: '10:30',
+                endTime: '11:00',
+                location: 'Folkvang',
+                dayNumber: 3,
+                order: 4
+            }
+        ];
+
+        for (const item of programItems) {
+            await new Promise((resolve, reject) => {
+                db.run(
+                    `INSERT INTO program (title, description, start_time, end_time, location, day_number, order_number)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                    [item.title, item.description, item.startTime, item.endTime, item.location, item.dayNumber, item.order],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        }
+
         console.log('✅ Dummy data loaded successfully');
-        console.log(`   - Event: Høstleir 2024`);
+        console.log(`   - Event: Sommerleir 2026`);
         console.log(`   - Participants: ${participants.length}`);
         console.log(`   - Clubs: ${clubs.length}`);
         console.log(`   - Teams: ${teamNames.length}`);
         console.log(`   - Quiz questions: ${quizQuestions.length}`);
         console.log(`   - Scavenger checkpoints: ${checkpoints.length}`);
+        console.log(`   - Program items: ${programItems.length}`);
 
         res.json({
             message: 'Testdata lastet inn',
             stats: {
-                event: 'Høstleir 2024',
+                event: 'Sommerleir 2026',
                 participants: participants.length,
                 clubs: clubs.length,
                 teams: teamNames.length,
                 quizQuestions: quizQuestions.length,
-                checkpoints: checkpoints.length
+                checkpoints: checkpoints.length,
+                programItems: programItems.length
             }
         });
 

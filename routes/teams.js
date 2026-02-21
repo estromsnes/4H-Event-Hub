@@ -18,6 +18,93 @@ router.get('/', (req, res) => {
     );
 });
 
+// GET team scoreboard (aggregate from all activities)
+router.get('/scoreboard', async (req, res) => {
+    const db = req.app.locals.db;
+
+    try {
+        // Get all teams
+        const teams = await new Promise((resolve, reject) => {
+            db.all(
+                'SELECT * FROM teams WHERE active = 1',
+                [],
+                (err, rows) => {
+                    if (err) reject(err);
+                    else resolve(rows || []);
+                }
+            );
+        });
+
+        // Calculate points for each team
+        const teamScores = await Promise.all(teams.map(async (team) => {
+            // Quiz points
+            const quizPoints = await new Promise((resolve, reject) => {
+                db.get(
+                    `SELECT COALESCE(SUM(score), 0) as total
+                     FROM quiz_sessions
+                     WHERE team_name = ?`,
+                    [team.name],
+                    (err, row) => {
+                        if (err) reject(err);
+                        else resolve(row ? row.total : 0);
+                    }
+                );
+            });
+
+            // Scavenger hunt points (1 point per checkpoint scanned)
+            const scavengerPoints = await new Promise((resolve, reject) => {
+                db.get(
+                    `SELECT COUNT(*) as total
+                     FROM scavenger_scans ss
+                     JOIN scavenger_sessions ses ON ss.session_id = ses.id
+                     WHERE ses.team_name = ?`,
+                    [team.name],
+                    (err, row) => {
+                        if (err) reject(err);
+                        else resolve(row ? row.total : 0);
+                    }
+                );
+            });
+
+            // Tic-tac-toe wins (3 points per win)
+            const tttWins = await new Promise((resolve, reject) => {
+                db.get(
+                    `SELECT COUNT(*) as total
+                     FROM tic_tac_toe_games
+                     WHERE ((winner_code = player1_code AND player1_team = ?)
+                            OR (winner_code = player2_code AND player2_team = ?))
+                       AND status = 'completed'`,
+                    [team.name, team.name],
+                    (err, row) => {
+                        if (err) reject(err);
+                        else resolve(row ? row.total : 0);
+                    }
+                );
+            });
+
+            const totalPoints = quizPoints + scavengerPoints + (tttWins * 3);
+
+            return {
+                name: team.name,
+                description: team.description,
+                quiz_points: quizPoints,
+                scavenger_points: scavengerPoints,
+                ttt_wins: tttWins,
+                ttt_points: tttWins * 3,
+                total_points: totalPoints
+            };
+        }));
+
+        // Sort by total points descending
+        teamScores.sort((a, b) => b.total_points - a.total_points);
+
+        res.json(teamScores);
+    } catch (err) {
+        console.error('Error fetching scoreboard:', err);
+        res.status(500).json({ error: 'Failed to fetch scoreboard' });
+    }
+});
+
 // GET specific team by ID
 router.get('/:id', (req, res) => {
     const db = req.app.locals.db;
