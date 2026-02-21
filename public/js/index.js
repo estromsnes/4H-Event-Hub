@@ -311,22 +311,56 @@ class EventHub {
         const teamMembersSection = document.getElementById('detailTeamMembersSection');
         if (participant.team) {
             try {
-                const response = await fetch(`/api/teams/name/${encodeURIComponent(participant.team)}`);
-                if (response.ok) {
-                    const team = await response.json();
-                    const members = team.members.filter(m => m.participant_code !== code);
+                // Fetch all participants and filter by team name
+                const response = await fetch('/api/participants');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch participants');
+                }
 
-                    if (members.length > 0) {
-                        const membersList = document.getElementById('detailTeamMembersList');
-                        membersList.innerHTML = members.map(m => `
+                const allParticipants = await response.json();
+
+                // Filter to get team members (excluding current participant)
+                const teamMembers = allParticipants.filter(p =>
+                    p.team === participant.team && p.participant_code !== code
+                );
+
+                if (teamMembers.length > 0) {
+                    const membersList = document.getElementById('detailTeamMembersList');
+                    membersList.innerHTML = teamMembers.map(m => {
+                        // Build photo HTML
+                        let photoHtml = '';
+                        if (m.profile_photo_path) {
+                            photoHtml = `
+                                <div class="team-member-photo-container">
+                                    <img src="${m.profile_photo_path}?t=${Date.now()}"
+                                         alt="${m.first_name}"
+                                         class="team-member-photo">
+                                </div>`;
+                        } else {
+                            photoHtml = `
+                                <div class="team-member-photo-container">
+                                    <div class="team-member-photo-placeholder">👤</div>
+                                </div>`;
+                        }
+
+                        // Build details
+                        const details = [];
+                        if (m.age) details.push(`${m.age} år`);
+                        if (m.club) details.push(m.club);
+
+                        return `
                             <div class="team-member-card">
-                                <div class="team-member-name">${m.first_name} ${m.last_name}</div>
+                                ${photoHtml}
+                                <div class="team-member-info">
+                                    <div class="team-member-name">${m.first_name} ${m.last_name}</div>
+                                    ${details.length > 0 ? `<div class="team-member-details">${details.join(' • ')}</div>` : ''}
+                                </div>
                             </div>
-                        `).join('');
-                        teamMembersSection.classList.remove('hidden');
-                    } else {
-                        teamMembersSection.classList.add('hidden');
-                    }
+                        `;
+                    }).join('');
+                    teamMembersSection.classList.remove('hidden');
+                } else {
+                    teamMembersSection.classList.add('hidden');
                 }
             } catch (err) {
                 console.error('Error loading team members:', err);
@@ -336,8 +370,53 @@ class EventHub {
             teamMembersSection.classList.add('hidden');
         }
 
+        // Load and show courses
+        await this.loadCourses(participant.participant_code);
+
         // Show modal
         this.detailModal.classList.remove('hidden');
+    }
+
+    async loadCourses(participantCode) {
+        const coursesSection = document.getElementById('detailCoursesSection');
+        const coursesList = document.getElementById('detailCoursesList');
+
+        try {
+            // Fetch participant's courses
+            const response = await fetch(`/api/courses/participant/${participantCode}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch courses');
+            }
+
+            const courses = await response.json();
+
+            if (courses.length === 0) {
+                coursesList.innerHTML = '<div class="no-courses">Ikke påmeldt noen kurs</div>';
+                coursesSection.classList.remove('hidden');
+                return;
+            }
+
+            // Render courses
+            coursesList.innerHTML = courses.map(course => {
+                return `
+                    <div class="course-card">
+                        <div class="course-icon">${course.icon || '📚'}</div>
+                        <div class="course-info">
+                            <div class="course-name">${course.name}</div>
+                            ${course.description ? `<div class="course-description">${course.description}</div>` : ''}
+                            ${course.instructor ? `<div class="course-instructor">👨‍🏫 ${course.instructor}</div>` : ''}
+                            ${course.location ? `<div class="course-location">📍 ${course.location}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            coursesSection.classList.remove('hidden');
+
+        } catch (err) {
+            console.error('Error loading courses:', err);
+            coursesSection.classList.add('hidden');
+        }
     }
 
     closeModal() {
