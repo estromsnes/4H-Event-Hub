@@ -160,6 +160,7 @@ node database/migrate-add-tic-tac-toe.js
 node database/migrate-add-quiz.js
 node database/migrate-add-event-start-time.js
 node database/migrate-add-program.js
+node database/migrate-add-courses.js
 ```
 
 *Tips: Du kan kjøre alle migrasjonene på en gang uten feil - skript som allerede er kjørt vil bli hoppet over.*
@@ -178,6 +179,8 @@ Dette oppretter:
 - 100 testdeltakere
 - 20 klubber
 - 15 lag
+- 6 kurs (Melkeforedling, Styrketrening, Volleyball, Matlaging, Håndarbeid, Foto og film)
+- Deltakere påmeldes automatisk til 1-2 kurs hver
 - 5 quiz-spørsmål
 - 5 skattejakt-sjekkpunkter
 
@@ -194,6 +197,7 @@ For å slette ALL data og starte på nytt:
 **Advarsel**: Dette sletter PERMANENT:
 - Alle deltakere og profilbilder
 - Alle lag
+- Alle kurs og kurspåmeldinger
 - Alle quiz-svar og økter
 - Alle skattejakt-økter
 - Alle spill (tic-tac-toe)
@@ -444,6 +448,17 @@ For utskrift av QR-koder:
 - `GET /api/qr/:code` - Hent/generer QR-kode
 - `POST /api/qr/generate-batch` - Generer QR for alle deltakere
 
+### Kurs
+- `GET /api/courses` - Hent alle kurs
+- `GET /api/courses/:id` - Hent spesifikt kurs
+- `POST /api/courses` - Opprett nytt kurs
+- `PUT /api/courses/:id` - Oppdater kurs
+- `DELETE /api/courses/:id` - Slett kurs
+- `GET /api/courses/:id/participants` - Hent deltakere i et kurs
+- `GET /api/courses/participant/:participantCode` - Hent kurs for en deltaker
+- `POST /api/courses/enroll` - Meld deltaker på kurs
+- `DELETE /api/courses/unenroll` - Meld deltaker av kurs
+
 ### Quiz
 - `GET /api/quiz/questions` - Hent alle quiz-spørsmål
 - `POST /api/quiz/questions` - Opprett spørsmål
@@ -562,6 +577,7 @@ For utskrift av QR-koder:
 │   ├── qr.js                # QR-kode API
 │   ├── event.js             # Arrangement API
 │   ├── teams.js             # Lag API
+│   ├── courses.js           # Kurs API
 │   ├── quiz.js              # Quiz API
 │   ├── scavenger-hunt.js    # Skattejakt API
 │   ├── tic-tac-toe.js       # Tic-Tac-Toe API
