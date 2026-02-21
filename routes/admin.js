@@ -17,6 +17,8 @@ router.post('/reset', async (req, res) => {
             'quiz_questions',
             'tic_tac_toe_games',
             'program',
+            'participant_courses',
+            'courses',
             'teams',
             'participants'
         ];
@@ -160,6 +162,74 @@ router.post('/load-dummy-data', async (req, res) => {
             });
         }
 
+        // Create courses
+        const courses = [
+            {
+                name: 'Melkeforedling',
+                description: 'Lær å lage ost, yoghurt og smør',
+                instructor: 'Anne Karine',
+                location: 'Kjøkkenet',
+                maxParticipants: 12,
+                icon: '🧀'
+            },
+            {
+                name: 'Styrketrening',
+                description: 'Bli sterkere og få bedre kondisjon',
+                instructor: 'Lars Petter',
+                location: 'Gymsal',
+                maxParticipants: 20,
+                icon: '💪'
+            },
+            {
+                name: 'Volleyball',
+                description: 'Lær teknikk og spill volleyball',
+                instructor: 'Nina Berg',
+                location: 'Idrettshall',
+                maxParticipants: 16,
+                icon: '🏐'
+            },
+            {
+                name: 'Matlaging',
+                description: 'Lag deilig mat fra bunnen av',
+                instructor: 'Tom Hagen',
+                location: 'Storkjøkkenet',
+                maxParticipants: 15,
+                icon: '👨‍🍳'
+            },
+            {
+                name: 'Håndarbeid',
+                description: 'Strikking, hekling og søm',
+                instructor: 'Berit Holm',
+                location: 'Hobbyrommet',
+                maxParticipants: 12,
+                icon: '🧶'
+            },
+            {
+                name: 'Foto og film',
+                description: 'Ta bedre bilder og lag små filmer',
+                instructor: 'Martin Lie',
+                location: 'Mediarommet',
+                maxParticipants: 10,
+                icon: '📷'
+            }
+        ];
+
+        const courseIds = [];
+        for (const course of courses) {
+            const courseId = await new Promise((resolve, reject) => {
+                db.run(
+                    `INSERT INTO courses (name, description, instructor, location, max_participants, icon)
+                     VALUES (?, ?, ?, ?, ?, ?)`,
+                    [course.name, course.description, course.instructor, course.location, course.maxParticipants, course.icon],
+                    function(err) {
+                        if (err) reject(err);
+                        else resolve(this.lastID);
+                    }
+                );
+            });
+            courseIds.push(courseId);
+        }
+
         // Generate 100 participants
         const participants = [];
         for (let i = 1; i <= 100; i++) {
@@ -222,6 +292,38 @@ router.post('/load-dummy-data', async (req, res) => {
                     }
                 );
             });
+        }
+
+        // Enroll participants in courses (each participant in 1-2 courses)
+        for (const p of participants) {
+            // Skip enrolling non-participants (Arrangør, Leder, Frivillig)
+            if (p.role !== 'Deltaker') continue;
+
+            // Each participant enrolls in 1-2 courses
+            const numCourses = Math.random() < 0.6 ? 1 : 2;
+            const selectedCourses = [];
+
+            // Randomly select courses
+            for (let i = 0; i < numCourses; i++) {
+                let courseId;
+                do {
+                    courseId = courseIds[Math.floor(Math.random() * courseIds.length)];
+                } while (selectedCourses.includes(courseId));
+
+                selectedCourses.push(courseId);
+
+                await new Promise((resolve, reject) => {
+                    db.run(
+                        `INSERT INTO participant_courses (participant_code, course_id)
+                         VALUES (?, ?)`,
+                        [p.code, courseId],
+                        (err) => {
+                            if (err) reject(err);
+                            else resolve();
+                        }
+                    );
+                });
+            }
         }
 
         // Create quiz questions
@@ -579,6 +681,7 @@ router.post('/load-dummy-data', async (req, res) => {
         console.log(`   - Participants: ${participants.length}`);
         console.log(`   - Clubs: ${clubs.length}`);
         console.log(`   - Teams: ${teamNames.length}`);
+        console.log(`   - Courses: ${courses.length}`);
         console.log(`   - Quiz questions: ${quizQuestions.length}`);
         console.log(`   - Scavenger checkpoints: ${checkpoints.length}`);
         console.log(`   - Program items: ${programItems.length}`);
@@ -590,6 +693,7 @@ router.post('/load-dummy-data', async (req, res) => {
                 participants: participants.length,
                 clubs: clubs.length,
                 teams: teamNames.length,
+                courses: courses.length,
                 quizQuestions: quizQuestions.length,
                 checkpoints: checkpoints.length,
                 programItems: programItems.length

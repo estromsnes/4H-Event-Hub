@@ -356,6 +356,7 @@
             <button class="tab-button active" data-tab="event">📋 Arrangement</button>
             <button class="tab-button" data-tab="teams">🏆 Lag</button>
             <button class="tab-button" data-tab="participants">👥 Deltakere</button>
+            <button class="tab-button" data-tab="courses">📚 Kurs</button>
             <button class="tab-button" data-tab="scavenger">🎯 QR Skattejakt</button>
             <button class="tab-button" data-tab="tictactoe">🎮 Tripp-Trapp-Tresko</button>
             <button class="tab-button" data-tab="quiz">🧠 Quiz</button>
@@ -569,6 +570,65 @@
         </div>
         </div>
         <!-- End Participants Tab -->
+
+        <!-- Courses Tab -->
+        <div id="coursesTab" class="tab-content">
+            <!-- Course Management Section -->
+            <div class="section no-print">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Administrer Kurs</h2>
+                    <button id="addCourseBtn" class="button primary btn-small">
+                        ➕ Nytt Kurs
+                    </button>
+                </div>
+
+                <div id="coursesList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
+                    <p class="text-center" style="color: var(--text-light);">Laster kurs...</p>
+                </div>
+
+                <div id="courseStatus" class="hidden mt-2"></div>
+            </div>
+
+            <!-- Enrollment Management Section -->
+            <div class="section no-print" style="margin-top: 30px;">
+                <h2>Påmeldinger</h2>
+                <p style="color: var(--text-light); margin-bottom: 20px;">
+                    Se og administrer hvilke deltakere som er påmeldt hvert kurs
+                </p>
+
+                <div class="form-group" style="max-width: 400px;">
+                    <label for="enrollmentCourseSelect">Velg kurs</label>
+                    <select id="enrollmentCourseSelect">
+                        <option value="">-- Velg et kurs --</option>
+                    </select>
+                </div>
+
+                <div id="courseEnrollmentInfo" class="hidden" style="margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 id="enrollmentCourseTitle" style="margin: 0; font-size: 20px; color: var(--primary-dark);"></h3>
+                        <div style="color: var(--text-light);">
+                            <span id="enrollmentCount">0</span> / <span id="enrollmentMax">15</span> påmeldte
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                        <button id="addEnrollmentBtn" class="button primary btn-small">
+                            ➕ Legg til deltaker
+                        </button>
+                        <button id="bulkEnrollBtn" class="button secondary btn-small">
+                            📋 Masse-påmelding
+                        </button>
+                    </div>
+
+                    <div id="enrolledParticipantsList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <div id="enrollmentStatus" class="hidden mt-2"></div>
+            </div>
+        </div>
+        <!-- End Courses Tab -->
 
         <!-- Scavenger Hunt Tab -->
         <div id="scavengerTab" class="tab-content">
@@ -1096,6 +1156,145 @@
             </form>
 
             <div id="programModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Course Modal (Add/Edit) -->
+    <div id="courseModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="courseModalTitle">Legg til Kurs</h2>
+                <button id="closeCourseBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="courseForm">
+                <input type="hidden" id="courseId">
+
+                <div class="form-group">
+                    <label for="courseName">Kursnavn *</label>
+                    <input type="text" id="courseName" required placeholder="F.eks: Melkeforedling">
+                </div>
+
+                <div class="form-group">
+                    <label for="courseDescription">Beskrivelse</label>
+                    <textarea id="courseDescription" rows="3" placeholder="Kort beskrivelse av kurset..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="courseInstructor">Kursholder</label>
+                        <input type="text" id="courseInstructor" placeholder="Navn på kursholder">
+                    </div>
+                    <div class="form-group">
+                        <label for="courseLocation">Sted</label>
+                        <input type="text" id="courseLocation" placeholder="Rom/sted">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="courseMaxParticipants">Maks deltakere</label>
+                        <input type="number" id="courseMaxParticipants" min="1" max="100" value="15">
+                    </div>
+                    <div class="form-group">
+                        <label for="courseIcon">Emoji/ikon</label>
+                        <input type="text" id="courseIcon" placeholder="📚" maxlength="10">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="courseActive" checked>
+                        <span>Kurset er aktivt</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Lagre
+                    </button>
+                    <button type="button" id="cancelCourseBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="courseModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Add Enrollment Modal -->
+    <div id="addEnrollmentModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Legg til deltaker i kurs</h2>
+                <button id="closeAddEnrollmentBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="addEnrollmentForm">
+                <input type="hidden" id="addEnrollmentCourseId">
+
+                <div class="form-group">
+                    <label for="addEnrollmentParticipant">Velg deltaker *</label>
+                    <select id="addEnrollmentParticipant" required>
+                        <option value="">-- Velg deltaker --</option>
+                    </select>
+                    <small style="color: var(--text-light); font-size: 14px; display: block; margin-top: 5px;">
+                        Viser kun deltakere som ikke allerede er påmeldt
+                    </small>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Legg til
+                    </button>
+                    <button type="button" id="cancelAddEnrollmentBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="addEnrollmentModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Bulk Enrollment Modal -->
+    <div id="bulkEnrollModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Masse-påmelding</h2>
+                <button id="closeBulkEnrollBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="bulkEnrollForm">
+                <input type="hidden" id="bulkEnrollCourseId">
+
+                <p style="color: var(--text-light); margin-bottom: 20px;">
+                    Velg flere deltakere som skal meldes på kurset
+                </p>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="selectAllParticipants">
+                        <strong>Velg alle tilgjengelige deltakere</strong>
+                    </label>
+                </div>
+
+                <div id="bulkEnrollParticipantsList" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Meld på valgte
+                    </button>
+                    <button type="button" id="cancelBulkEnrollBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="bulkEnrollModalStatus" class="hidden mt-2"></div>
         </div>
     </div>
 

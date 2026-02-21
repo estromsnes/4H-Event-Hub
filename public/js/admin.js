@@ -222,6 +222,9 @@ async function initAdmin() {
     await loadQuizQuestions();
     await loadQuizLeaderboard();
 
+    // Load courses
+    await loadCourses();
+
     // Load program data
     await loadProgram();
 
@@ -2931,8 +2934,596 @@ async function resetDatabase() {
 // END DATABASE MANAGEMENT FUNCTIONS
 // ==============================================
 
+// ==============================================
+// COURSES MANAGEMENT FUNCTIONS
+// ==============================================
+
+// DOM Elements - Courses
+const coursesList = document.getElementById('coursesList');
+const addCourseBtn = document.getElementById('addCourseBtn');
+const courseModal = document.getElementById('courseModal');
+const courseModalTitle = document.getElementById('courseModalTitle');
+const courseForm = document.getElementById('courseForm');
+const courseIdInput = document.getElementById('courseId');
+const courseNameInput = document.getElementById('courseName');
+const courseDescriptionInput = document.getElementById('courseDescription');
+const courseInstructorInput = document.getElementById('courseInstructor');
+const courseLocationInput = document.getElementById('courseLocation');
+const courseMaxParticipantsInput = document.getElementById('courseMaxParticipants');
+const courseIconInput = document.getElementById('courseIcon');
+const courseActiveInput = document.getElementById('courseActive');
+const closeCourseBtn = document.getElementById('closeCourseBtn');
+const cancelCourseBtn = document.getElementById('cancelCourseBtn');
+const courseModalStatus = document.getElementById('courseModalStatus');
+const courseStatus = document.getElementById('courseStatus');
+
+// DOM Elements - Enrollments
+const enrollmentCourseSelect = document.getElementById('enrollmentCourseSelect');
+const courseEnrollmentInfo = document.getElementById('courseEnrollmentInfo');
+const enrollmentCourseTitle = document.getElementById('enrollmentCourseTitle');
+const enrollmentCount = document.getElementById('enrollmentCount');
+const enrollmentMax = document.getElementById('enrollmentMax');
+const enrolledParticipantsList = document.getElementById('enrolledParticipantsList');
+const addEnrollmentBtn = document.getElementById('addEnrollmentBtn');
+const bulkEnrollBtn = document.getElementById('bulkEnrollBtn');
+const enrollmentStatus = document.getElementById('enrollmentStatus');
+
+// DOM Elements - Add Enrollment Modal
+const addEnrollmentModal = document.getElementById('addEnrollmentModal');
+const addEnrollmentForm = document.getElementById('addEnrollmentForm');
+const addEnrollmentCourseIdInput = document.getElementById('addEnrollmentCourseId');
+const addEnrollmentParticipant = document.getElementById('addEnrollmentParticipant');
+const closeAddEnrollmentBtn = document.getElementById('closeAddEnrollmentBtn');
+const cancelAddEnrollmentBtn = document.getElementById('cancelAddEnrollmentBtn');
+const addEnrollmentModalStatus = document.getElementById('addEnrollmentModalStatus');
+
+// DOM Elements - Bulk Enrollment Modal
+const bulkEnrollModal = document.getElementById('bulkEnrollModal');
+const bulkEnrollForm = document.getElementById('bulkEnrollForm');
+const bulkEnrollCourseIdInput = document.getElementById('bulkEnrollCourseId');
+const bulkEnrollParticipantsList = document.getElementById('bulkEnrollParticipantsList');
+const selectAllParticipants = document.getElementById('selectAllParticipants');
+const closeBulkEnrollBtn = document.getElementById('closeBulkEnrollBtn');
+const cancelBulkEnrollBtn = document.getElementById('cancelBulkEnrollBtn');
+const bulkEnrollModalStatus = document.getElementById('bulkEnrollModalStatus');
+
+// Event Listeners - Courses
+addCourseBtn.addEventListener('click', () => openCourseModal());
+closeCourseBtn.addEventListener('click', closeCourseModal);
+cancelCourseBtn.addEventListener('click', closeCourseModal);
+courseForm.addEventListener('submit', saveCourse);
+
+// Event Listeners - Enrollments
+enrollmentCourseSelect.addEventListener('change', handleCourseSelectChange);
+addEnrollmentBtn.addEventListener('click', openAddEnrollmentModal);
+bulkEnrollBtn.addEventListener('click', openBulkEnrollModal);
+
+// Event Listeners - Add Enrollment Modal
+closeAddEnrollmentBtn.addEventListener('click', closeAddEnrollmentModal);
+cancelAddEnrollmentBtn.addEventListener('click', closeAddEnrollmentModal);
+addEnrollmentForm.addEventListener('submit', saveEnrollment);
+
+// Event Listeners - Bulk Enrollment Modal
+closeBulkEnrollBtn.addEventListener('click', closeBulkEnrollModal);
+cancelBulkEnrollBtn.addEventListener('click', closeBulkEnrollModal);
+bulkEnrollForm.addEventListener('submit', saveBulkEnrollment);
+selectAllParticipants.addEventListener('change', toggleAllParticipants);
+
+/**
+ * Load all courses
+ */
+async function loadCourses() {
+    try {
+        const response = await fetch('/api/courses');
+        const courses = await response.json();
+
+        if (courses.length === 0) {
+            coursesList.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 40px;">Ingen kurs opprettet ennå</p>';
+            return;
+        }
+
+        coursesList.innerHTML = courses.map(course => `
+            <div class="team-card" style="background: ${course.active ? '#f9f9f9' : '#ffe0e0'};">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 20px;">
+                        ${course.icon || '📚'} ${course.name}
+                    </h3>
+                    ${!course.active ? '<span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">INAKTIV</span>' : ''}
+                </div>
+
+                ${course.description ? `<p style="margin: 5px 0; color: var(--text-light); font-size: 14px;">${course.description}</p>` : ''}
+
+                ${course.instructor ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Kursholder:</strong> ${course.instructor}</p>` : ''}
+                ${course.location ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Sted:</strong> ${course.location}</p>` : ''}
+
+                <p style="margin: 5px 0; font-size: 14px;">
+                    <strong>Kapasitet:</strong> <span id="enrollment-count-${course.id}">0</span> / ${course.max_participants} påmeldte
+                </p>
+
+                <div class="team-card-actions">
+                    <button onclick="editCourse(${course.id})" class="button secondary btn-small">
+                        ✏️ Rediger
+                    </button>
+                    <button onclick="deleteCourse(${course.id}, '${course.name.replace(/'/g, "\\'")}')" class="button secondary btn-small">
+                        🗑️ Slett
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        // Load enrollment counts for each course
+        courses.forEach(course => loadEnrollmentCount(course.id));
+
+        // Populate enrollment course select
+        populateEnrollmentCourseSelect(courses);
+
+    } catch (error) {
+        console.error('Error loading courses:', error);
+        coursesList.innerHTML = '<p class="text-center" style="color: #f44336;">Kunne ikke laste kurs</p>';
+    }
+}
+
+/**
+ * Load enrollment count for a specific course
+ */
+async function loadEnrollmentCount(courseId) {
+    try {
+        const response = await fetch(`/api/courses/${courseId}/participants`);
+        const participants = await response.json();
+
+        const countElement = document.getElementById(`enrollment-count-${courseId}`);
+        if (countElement) {
+            countElement.textContent = participants.length;
+        }
+    } catch (error) {
+        console.error(`Error loading enrollment count for course ${courseId}:`, error);
+    }
+}
+
+/**
+ * Populate enrollment course select dropdown
+ */
+function populateEnrollmentCourseSelect(courses) {
+    enrollmentCourseSelect.innerHTML = '<option value="">-- Velg et kurs --</option>' +
+        courses.map(course => `
+            <option value="${course.id}">${course.icon || '📚'} ${course.name}</option>
+        `).join('');
+}
+
+/**
+ * Open course modal for adding/editing
+ */
+function openCourseModal(courseId = null) {
+    if (courseId) {
+        courseModalTitle.textContent = 'Rediger Kurs';
+        loadCourseForEdit(courseId);
+    } else {
+        courseModalTitle.textContent = 'Legg til Kurs';
+        courseForm.reset();
+        courseIdInput.value = '';
+        courseActiveInput.checked = true;
+    }
+    courseModal.classList.remove('hidden');
+}
+
+/**
+ * Close course modal
+ */
+function closeCourseModal() {
+    courseModal.classList.add('hidden');
+    courseForm.reset();
+    courseModalStatus.classList.add('hidden');
+}
+
+/**
+ * Load course data for editing
+ */
+async function loadCourseForEdit(courseId) {
+    try {
+        const response = await fetch(`/api/courses/${courseId}`);
+        const course = await response.json();
+
+        courseIdInput.value = course.id;
+        courseNameInput.value = course.name;
+        courseDescriptionInput.value = course.description || '';
+        courseInstructorInput.value = course.instructor || '';
+        courseLocationInput.value = course.location || '';
+        courseMaxParticipantsInput.value = course.max_participants;
+        courseIconInput.value = course.icon || '';
+        courseActiveInput.checked = course.active === 1;
+
+    } catch (error) {
+        console.error('Error loading course:', error);
+        alert('Kunne ikke laste kurs');
+    }
+}
+
+/**
+ * Save course (create or update)
+ */
+async function saveCourse(e) {
+    e.preventDefault();
+
+    const courseId = courseIdInput.value;
+    const courseData = {
+        name: courseNameInput.value.trim(),
+        description: courseDescriptionInput.value.trim(),
+        instructor: courseInstructorInput.value.trim(),
+        location: courseLocationInput.value.trim(),
+        max_participants: parseInt(courseMaxParticipantsInput.value),
+        icon: courseIconInput.value.trim() || '📚',
+        active: courseActiveInput.checked ? 1 : 0
+    };
+
+    const url = courseId ? `/api/courses/${courseId}` : '/api/courses';
+    const method = courseId ? 'PUT' : 'POST';
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(courseData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save course');
+        }
+
+        const result = await response.json();
+
+        courseModalStatus.textContent = courseId ? '✅ Kurset ble oppdatert!' : '✅ Kurset ble opprettet!';
+        courseModalStatus.style.background = '#c8e6c9';
+        courseModalStatus.style.color = '#2e7d32';
+        courseModalStatus.classList.remove('hidden');
+
+        setTimeout(() => {
+            closeCourseModal();
+            loadCourses();
+        }, 1500);
+
+    } catch (error) {
+        console.error('Error saving course:', error);
+        courseModalStatus.textContent = `❌ ${error.message}`;
+        courseModalStatus.style.background = '#ffcdd2';
+        courseModalStatus.style.color = '#c62828';
+        courseModalStatus.classList.remove('hidden');
+    }
+}
+
+/**
+ * Edit course
+ */
+function editCourse(courseId) {
+    openCourseModal(courseId);
+}
+
+/**
+ * Delete course
+ */
+async function deleteCourse(courseId, courseName) {
+    const confirmation = confirm(`Er du sikker på at du vil slette kurset "${courseName}"?\n\nAlle påmeldinger til kurset vil også bli slettet.`);
+    if (!confirmation) return;
+
+    try {
+        const response = await fetch(`/api/courses/${courseId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete course');
+        }
+
+        showStatus(courseStatus, '✅ Kurset ble slettet', 'success');
+        loadCourses();
+
+    } catch (error) {
+        console.error('Error deleting course:', error);
+        showStatus(courseStatus, '❌ Kunne ikke slette kurset', 'error');
+    }
+}
+
+/**
+ * Handle course select change in enrollment section
+ */
+async function handleCourseSelectChange() {
+    const courseId = enrollmentCourseSelect.value;
+
+    if (!courseId) {
+        courseEnrollmentInfo.classList.add('hidden');
+        return;
+    }
+
+    try {
+        // Load course details
+        const courseResponse = await fetch(`/api/courses/${courseId}`);
+        const course = await courseResponse.json();
+
+        // Load enrolled participants
+        const participantsResponse = await fetch(`/api/courses/${courseId}/participants`);
+        const participants = await participantsResponse.json();
+
+        enrollmentCourseTitle.textContent = `${course.icon || '📚'} ${course.name}`;
+        enrollmentCount.textContent = participants.length;
+        enrollmentMax.textContent = course.max_participants;
+
+        // Store current course ID
+        addEnrollmentCourseIdInput.value = courseId;
+        bulkEnrollCourseIdInput.value = courseId;
+
+        // Display enrolled participants
+        if (participants.length === 0) {
+            enrolledParticipantsList.innerHTML = '<p style="color: var(--text-light); text-align: center; padding: 20px;">Ingen deltakere påmeldt ennå</p>';
+        } else {
+            enrolledParticipantsList.innerHTML = participants.map(p => `
+                <div class="participant-item">
+                    <div class="participant-info">
+                        <h3>${p.first_name} ${p.last_name}</h3>
+                        <p>${p.age ? p.age + ' år' : ''} ${p.home_location ? '• ' + p.home_location : ''}</p>
+                    </div>
+                    <button onclick="removeEnrollment(${courseId}, '${p.participant_code}')" class="button secondary btn-small">
+                        🗑️ Fjern
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        courseEnrollmentInfo.classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error loading course enrollment:', error);
+        showStatus(enrollmentStatus, '❌ Kunne ikke laste påmeldinger', 'error');
+    }
+}
+
+/**
+ * Open add enrollment modal
+ */
+async function openAddEnrollmentModal() {
+    const courseId = enrollmentCourseSelect.value;
+    if (!courseId) {
+        alert('Velg et kurs først');
+        return;
+    }
+
+    try {
+        // Get all participants
+        const allParticipantsResponse = await fetch('/api/participants');
+        const allParticipants = await allParticipantsResponse.json();
+
+        // Get enrolled participants
+        const enrolledResponse = await fetch(`/api/courses/${courseId}/participants`);
+        const enrolledParticipants = await enrolledResponse.json();
+        const enrolledCodes = new Set(enrolledParticipants.map(p => p.participant_code));
+
+        // Filter out already enrolled participants
+        const availableParticipants = allParticipants.filter(p => !enrolledCodes.has(p.participant_code));
+
+        if (availableParticipants.length === 0) {
+            alert('Alle deltakere er allerede påmeldt dette kurset');
+            return;
+        }
+
+        addEnrollmentParticipant.innerHTML = '<option value="">-- Velg deltaker --</option>' +
+            availableParticipants.map(p => `
+                <option value="${p.participant_code}">
+                    ${p.first_name} ${p.last_name} ${p.age ? '(' + p.age + ' år)' : ''}
+                </option>
+            `).join('');
+
+        addEnrollmentModal.classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error opening add enrollment modal:', error);
+        alert('Kunne ikke laste deltakere');
+    }
+}
+
+/**
+ * Close add enrollment modal
+ */
+function closeAddEnrollmentModal() {
+    addEnrollmentModal.classList.add('hidden');
+    addEnrollmentForm.reset();
+    addEnrollmentModalStatus.classList.add('hidden');
+}
+
+/**
+ * Save enrollment
+ */
+async function saveEnrollment(e) {
+    e.preventDefault();
+
+    const courseId = addEnrollmentCourseIdInput.value;
+    const participantCode = addEnrollmentParticipant.value;
+
+    try {
+        const response = await fetch('/api/courses/enroll', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseId, participantCode })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to enroll participant');
+        }
+
+        addEnrollmentModalStatus.textContent = '✅ Deltaker ble påmeldt!';
+        addEnrollmentModalStatus.style.background = '#c8e6c9';
+        addEnrollmentModalStatus.style.color = '#2e7d32';
+        addEnrollmentModalStatus.classList.remove('hidden');
+
+        setTimeout(() => {
+            closeAddEnrollmentModal();
+            handleCourseSelectChange(); // Reload enrollments
+            loadCourses(); // Reload to update counts
+        }, 1500);
+
+    } catch (error) {
+        console.error('Error saving enrollment:', error);
+        addEnrollmentModalStatus.textContent = `❌ ${error.message}`;
+        addEnrollmentModalStatus.style.background = '#ffcdd2';
+        addEnrollmentModalStatus.style.color = '#c62828';
+        addEnrollmentModalStatus.classList.remove('hidden');
+    }
+}
+
+/**
+ * Remove enrollment
+ */
+async function removeEnrollment(courseId, participantCode) {
+    const confirmation = confirm('Er du sikker på at du vil fjerne denne deltakeren fra kurset?');
+    if (!confirmation) return;
+
+    try {
+        const response = await fetch('/api/courses/unenroll', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ courseId, participantCode })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to remove enrollment');
+        }
+
+        showStatus(enrollmentStatus, '✅ Deltaker ble fjernet fra kurset', 'success');
+        handleCourseSelectChange(); // Reload enrollments
+        loadCourses(); // Reload to update counts
+
+    } catch (error) {
+        console.error('Error removing enrollment:', error);
+        showStatus(enrollmentStatus, '❌ Kunne ikke fjerne deltaker', 'error');
+    }
+}
+
+/**
+ * Open bulk enrollment modal
+ */
+async function openBulkEnrollModal() {
+    const courseId = enrollmentCourseSelect.value;
+    if (!courseId) {
+        alert('Velg et kurs først');
+        return;
+    }
+
+    try {
+        // Get all participants
+        const allParticipantsResponse = await fetch('/api/participants');
+        const allParticipants = await allParticipantsResponse.json();
+
+        // Get enrolled participants
+        const enrolledResponse = await fetch(`/api/courses/${courseId}/participants`);
+        const enrolledParticipants = await enrolledResponse.json();
+        const enrolledCodes = new Set(enrolledParticipants.map(p => p.participant_code));
+
+        // Filter out already enrolled participants
+        const availableParticipants = allParticipants.filter(p => !enrolledCodes.has(p.participant_code));
+
+        if (availableParticipants.length === 0) {
+            alert('Alle deltakere er allerede påmeldt dette kurset');
+            return;
+        }
+
+        bulkEnrollParticipantsList.innerHTML = availableParticipants.map(p => `
+            <label style="display: flex; align-items: center; gap: 10px; padding: 8px; cursor: pointer; border-radius: 5px; transition: background 0.2s;">
+                <input type="checkbox" class="bulk-enroll-checkbox" value="${p.participant_code}">
+                <span style="flex: 1;">${p.first_name} ${p.last_name} ${p.age ? '(' + p.age + ' år)' : ''} ${p.home_location ? '• ' + p.home_location : ''}</span>
+            </label>
+        `).join('');
+
+        selectAllParticipants.checked = false;
+        bulkEnrollModal.classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error opening bulk enrollment modal:', error);
+        alert('Kunne ikke laste deltakere');
+    }
+}
+
+/**
+ * Close bulk enrollment modal
+ */
+function closeBulkEnrollModal() {
+    bulkEnrollModal.classList.add('hidden');
+    bulkEnrollForm.reset();
+    bulkEnrollModalStatus.classList.add('hidden');
+}
+
+/**
+ * Toggle all participants in bulk enrollment
+ */
+function toggleAllParticipants() {
+    const checkboxes = document.querySelectorAll('.bulk-enroll-checkbox');
+    checkboxes.forEach(cb => cb.checked = selectAllParticipants.checked);
+}
+
+/**
+ * Save bulk enrollment
+ */
+async function saveBulkEnrollment(e) {
+    e.preventDefault();
+
+    const courseId = bulkEnrollCourseIdInput.value;
+    const checkboxes = document.querySelectorAll('.bulk-enroll-checkbox:checked');
+    const participantCodes = Array.from(checkboxes).map(cb => cb.value);
+
+    if (participantCodes.length === 0) {
+        alert('Velg minst én deltaker');
+        return;
+    }
+
+    try {
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const participantCode of participantCodes) {
+            try {
+                const response = await fetch('/api/courses/enroll', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ courseId, participantCode })
+                });
+
+                if (response.ok) {
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            } catch (error) {
+                failCount++;
+            }
+        }
+
+        bulkEnrollModalStatus.textContent = `✅ ${successCount} deltakere påmeldt${failCount > 0 ? `, ${failCount} feilet` : ''}`;
+        bulkEnrollModalStatus.style.background = '#c8e6c9';
+        bulkEnrollModalStatus.style.color = '#2e7d32';
+        bulkEnrollModalStatus.classList.remove('hidden');
+
+        setTimeout(() => {
+            closeBulkEnrollModal();
+            handleCourseSelectChange(); // Reload enrollments
+            loadCourses(); // Reload to update counts
+        }, 2000);
+
+    } catch (error) {
+        console.error('Error bulk enrolling:', error);
+        bulkEnrollModalStatus.textContent = '❌ Kunne ikke melde på deltakere';
+        bulkEnrollModalStatus.style.background = '#ffcdd2';
+        bulkEnrollModalStatus.style.color = '#c62828';
+        bulkEnrollModalStatus.classList.remove('hidden');
+    }
+}
+
+// ==============================================
+// END COURSES MANAGEMENT FUNCTIONS
+// ==============================================
+
 // Make functions globally available
 window.editParticipant = editParticipant;
 window.viewPhoto = function(participantCode, photoPath) {
     openPhotoModal(participantCode, photoPath);
 };
+window.editCourse = editCourse;
+window.deleteCourse = deleteCourse;
+window.removeEnrollment = removeEnrollment;

@@ -442,6 +442,9 @@ function showProfileView() {
         document.getElementById('teamMembersSection').classList.add('hidden');
     }
 
+    // Load and show courses
+    loadCourses(currentParticipant.participant_code);
+
     // Switch views
     scannerView.classList.add('hidden');
     profileView.classList.remove('hidden');
@@ -512,6 +515,59 @@ async function loadTeamMembers(teamName, currentParticipantCode) {
     } catch (err) {
         console.error('Error loading team members:', err);
         teamMembersSection.classList.add('hidden');
+    }
+}
+
+// Load and display courses for participant
+async function loadCourses(participantCode) {
+    const coursesSection = document.getElementById('coursesSection');
+    const coursesList = document.getElementById('coursesList');
+
+    try {
+        // Fetch participant's courses
+        const response = await fetch(`/api/courses/participant/${participantCode}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch courses');
+        }
+
+        const courses = await response.json();
+
+        if (courses.length === 0) {
+            coursesList.innerHTML = '<div class="no-courses">Du er ikke påmeldt noen kurs ennå</div>';
+            coursesSection.classList.remove('hidden');
+            return;
+        }
+
+        // Render courses
+        coursesList.innerHTML = courses.map(course => {
+            return `
+                <div class="course-card">
+                    <div class="course-icon">${course.icon || '📚'}</div>
+                    <div class="course-name">${course.name}</div>
+                    <div class="course-description">${course.description || ''}</div>
+                    <div class="course-details">
+                        ${course.instructor ? `
+                            <div class="course-instructor">
+                                <span>👨‍🏫</span>
+                                <span><strong>Instruktør:</strong> ${course.instructor}</span>
+                            </div>
+                        ` : ''}
+                        ${course.location ? `
+                            <div class="course-location">
+                                <span>📍</span>
+                                <span><strong>Sted:</strong> ${course.location}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        coursesSection.classList.remove('hidden');
+
+    } catch (err) {
+        console.error('Error loading courses:', err);
+        coursesSection.classList.add('hidden');
     }
 }
 
