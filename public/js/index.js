@@ -31,6 +31,7 @@ class EventHub {
         await this.loadProgram();
         await this.loadParticipants();
         this.renderParticipants();
+        this.updateKeyboardState(); // Initialize keyboard with correct active/inactive keys
     }
 
     setupEventListeners() {
@@ -74,8 +75,31 @@ class EventHub {
     }
 
     toggleParticipantSection() {
+        const isCurrentlyCollapsed = this.participantContent.classList.contains('collapsed');
+
         this.participantContent.classList.toggle('collapsed');
         this.sectionToggle.classList.toggle('collapsed');
+
+        // Smart autoscrolling
+        if (isCurrentlyCollapsed) {
+            // Section is being opened - scroll so toggle button is at top
+            // Wait for CSS transition to complete, then scroll
+            setTimeout(() => {
+                // Calculate the position to scroll to
+                const elementTop = this.sectionToggle.offsetTop;
+
+                window.scrollTo({
+                    top: elementTop,
+                    behavior: 'smooth'
+                });
+            }, 400);
+        } else {
+            // Section is being closed - scroll to top of page
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
     }
 
     async loadEventInfo() {
