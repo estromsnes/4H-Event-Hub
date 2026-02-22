@@ -87,7 +87,6 @@ class QuizManager {
 
         // Debug: Log if critical elements are missing
         if (!this.retakeQuizBtn) console.error('retakeQuizBtn not found');
-        if (!this.viewLeaderboardBtn2) console.error('viewLeaderboardBtn2 not found');
     }
 
     initScanners() {

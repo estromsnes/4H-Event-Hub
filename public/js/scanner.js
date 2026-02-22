@@ -18,10 +18,22 @@ class QRScanner {
      * @param {function} onSuccess - Callback when QR code is successfully scanned
      * @param {function} onError - Callback when scanning fails
      */
-    init(elementId, onSuccess, onError) {
+    async init(elementId, onSuccess, onError) {
         this.onScanSuccess = onSuccess;
         this.onScanError = onError;
+
+        // If there's an existing instance, clear it first
+        if (this.html5QrCode) {
+            try {
+                await this.clear();
+            } catch (err) {
+                console.warn('Error clearing existing scanner:', err);
+            }
+        }
+
+        // Create new scanner instance
         this.html5QrCode = new Html5Qrcode(elementId);
+        console.log('QR Scanner initialized for element:', elementId);
     }
 
     /**

@@ -132,24 +132,27 @@ async function loadEventInfo() {
                 document.title = `${event.event_name} - Min Profil`;
             }
 
-            // Show event banner with dates/location
+            // Show event banner with dates/location (if banner elements exist)
             if (event.start_date || event.location) {
                 const banner = document.getElementById('eventBanner');
                 const bannerInfo = document.getElementById('bannerEventInfo');
 
-                let info = [];
-                if (event.start_date && event.end_date) {
-                    info.push(formatDate(event.start_date) + ' - ' + formatDate(event.end_date));
-                } else if (event.start_date) {
-                    info.push(formatDate(event.start_date));
-                }
-                if (event.location) {
-                    info.push('📍 ' + event.location);
-                }
+                // Only update banner if elements exist
+                if (banner && bannerInfo) {
+                    let info = [];
+                    if (event.start_date && event.end_date) {
+                        info.push(formatDate(event.start_date) + ' - ' + formatDate(event.end_date));
+                    } else if (event.start_date) {
+                        info.push(formatDate(event.start_date));
+                    }
+                    if (event.location) {
+                        info.push('📍 ' + event.location);
+                    }
 
-                if (info.length > 0) {
-                    bannerInfo.textContent = info.join(' • ');
-                    banner.classList.remove('hidden');
+                    if (info.length > 0) {
+                        bannerInfo.textContent = info.join(' • ');
+                        banner.classList.remove('hidden');
+                    }
                 }
             }
         }

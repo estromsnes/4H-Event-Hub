@@ -154,14 +154,43 @@
             });
     }
 
+    // Decode barcode input from Norwegian keyboard layout
+    function decodeBarcodeInput(input) {
+        // Map Norwegian keyboard chars back to JSON chars
+        const charMap = {
+            'Å': '{',
+            'Æ': '"',
+            'Ø': ':',
+            '^': '}',
+            '¨': '[',
+            '\'': ']',
+            '§': ','
+        };
+
+        // Try to detect if this is garbled JSON
+        if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
+            let decoded = input;
+            for (const [garbled, correct] of Object.entries(charMap)) {
+                decoded = decoded.split(garbled).join(correct);
+            }
+            return decoded;
+        }
+
+        // Also replace + with - for participant codes (SK+2026+004 → SK-2026-004)
+        return input.replace(/\+/g, '-');
+    }
+
     // Lookup Participant
     async function lookupParticipant(qrData) {
         showStatus('info', 'Søker etter deltaker...');
 
+        // Decode barcode input (fixes Norwegian keyboard layout issues)
+        const decodedData = decodeBarcodeInput(qrData);
+
         // Parse QR code - try JSON first
         let participantCode;
         try {
-            const parsed = JSON.parse(qrData);
+            const parsed = JSON.parse(decodedData);
             if (parsed.type === 'participant' && parsed.code) {
                 participantCode = parsed.code;
             } else {
@@ -169,7 +198,7 @@
             }
         } catch (e) {
             // Not JSON, use as-is
-            participantCode = qrData;
+            participantCode = decodedData;
         }
 
         try {

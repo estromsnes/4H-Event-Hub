@@ -66,9 +66,9 @@ class TicTacToeGame {
         this.isPlayer2ScannerActive = false;
     }
 
-    initScanners() {
+    async initScanners() {
         // Player 1 scanner
-        this.player1Scanner.init('player1QrReader',
+        await this.player1Scanner.init('player1QrReader',
             (data) => this.handlePlayer1Scan(data),
             (error) => {
                 console.error('Player 1 scan error:', error);
@@ -77,7 +77,7 @@ class TicTacToeGame {
         );
 
         // Player 2 scanner
-        this.player2Scanner.init('player2QrReader',
+        await this.player2Scanner.init('player2QrReader',
             (data) => this.handlePlayer2Scan(data),
             (error) => {
                 console.error('Player 2 scan error:', error);
@@ -163,8 +163,8 @@ class TicTacToeGame {
         });
 
         // Buttons
-        this.cancelWaitBtn.addEventListener('click', () => this.reset());
-        this.playAgainBtn.addEventListener('click', () => this.reset());
+        this.cancelWaitBtn.addEventListener('click', async () => await this.reset());
+        this.playAgainBtn.addEventListener('click', async () => await this.reset());
     }
 
     async togglePlayer1Scanner() {
@@ -575,7 +575,7 @@ class TicTacToeGame {
         this.isPlayer2ScannerActive = false;
 
         // Reinitialize scanners for next game
-        this.initScanners();
+        await this.initScanners();
 
         // Reset button states
         this.startPlayer1ScanBtn.textContent = '📷 Start Kamera-Skanning';
@@ -612,6 +612,11 @@ class TicTacToeGame {
             cell.className = 'game-cell';
             cell.disabled = false;
         });
+
+        // Set focus to player 1 barcode input so scanner works immediately
+        setTimeout(() => {
+            this.player1BarcodeInput.focus();
+        }, 100);
     }
 
     showPlayer1ScanFeedback(message, type) {
