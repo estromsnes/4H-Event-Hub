@@ -20,6 +20,7 @@ router.post('/reset', async (req, res) => {
             'tic_tac_toe_games',
             'photo_submissions',
             'photo_challenges',
+            'feedback',
             'program',
             'participant_courses',
             'courses',

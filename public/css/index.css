@@ -212,6 +212,14 @@ body {
     background: linear-gradient(135deg, #FF7043 0%, #F4511E 100%);
 }
 
+.feedback-btn {
+    background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+}
+
+.feedback-btn:hover {
+    background: linear-gradient(135deg, #7b1fa2, #6a1b9a);
+}
+
 .btn-icon {
     font-size: 56px;
     margin-bottom: 12px;

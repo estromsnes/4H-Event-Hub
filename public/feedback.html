@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tilbakemeldinger - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/feedback.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+    <!-- Back Button -->
+    <a href="/index.html" class="back-btn" title="Tilbake">← Tilbake</a>
+
+    <!-- Settings Icon -->
+    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
+
+    <div class="container">
+        <div class="header">
+            <h1>💬 Send tilbakemelding</h1>
+            <p class="subtitle">Din tilbakemelding er viktig for oss. Du kan velge å være anonym eller identifisere deg.</p>
+        </div>
+
+        <!-- Step 1: Choose Anonymous or Identify -->
+        <div id="step1" class="step-section">
+            <h2>Steg 1: Velg hvordan du vil sende inn</h2>
+            <div class="choice-buttons">
+                <button id="anonymousBtn" class="choice-btn">
+                    <span class="btn-icon">🕵️</span>
+                    <span class="btn-text">Anonym</span>
+                    <span class="btn-description">Send tilbakemelding uten å oppgi navn</span>
+                </button>
+                <button id="identifyBtn" class="choice-btn">
+                    <span class="btn-icon">👤</span>
+                    <span class="btn-text">Med navn</span>
+                    <span class="btn-description">Skann QR-koden din for å identifisere deg</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- QR Scanner Section (Hidden initially) -->
+        <div id="scannerSection" class="step-section hidden">
+            <h2>Skann din QR-kode</h2>
+            <p class="section-description">Hold QR-koden foran kameraet for å identifisere deg</p>
+
+            <div id="scannerContainer" class="scanner-container">
+                <div id="qr-reader"></div>
+            </div>
+
+            <div id="participantInfo" class="participant-info hidden">
+                <div class="participant-card">
+                    <span class="participant-icon">✅</span>
+                    <div>
+                        <div class="participant-name" id="participantName">-</div>
+                        <div class="participant-details" id="participantDetails">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="cancelScanBtn" class="button secondary">Avbryt</button>
+                <button id="continueScanBtn" class="button primary hidden">Fortsett</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Enter Message -->
+        <div id="step2" class="step-section hidden">
+            <h2>Steg 2: Skriv din tilbakemelding</h2>
+
+            <div class="identity-badge" id="identityBadge">
+                <span id="identityText">Anonym tilbakemelding</span>
+            </div>
+
+            <!-- Title Input -->
+            <div class="form-group">
+                <label for="titleDisplay">Tittel (valgfritt)</label>
+                <div class="input-display" id="titleDisplay" contenteditable="true">Klikk for å skrive tittel</div>
+                <div id="titleKeyboard" class="keyboard-container hidden"></div>
+            </div>
+
+            <!-- Message Input -->
+            <div class="form-group">
+                <label for="messageDisplay">Melding *</label>
+                <div class="input-display message-display" id="messageDisplay" contenteditable="true">Klikk for å skrive melding</div>
+                <div id="messageKeyboard" class="keyboard-container hidden"></div>
+            </div>
+
+            <div class="character-count">
+                <span id="messageCount">0</span> / 5000 tegn
+            </div>
+
+            <div class="action-buttons">
+                <button id="backBtn" class="button secondary">← Tilbake</button>
+                <button id="submitBtn" class="button primary">Send inn</button>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div id="successSection" class="step-section hidden">
+            <div class="success-card">
+                <span class="success-icon">✅</span>
+                <h2>Takk for din tilbakemelding!</h2>
+                <p>Din tilbakemelding er mottatt og vil bli behandlet av arrangørene.</p>
+                <button id="newFeedbackBtn" class="button primary">Send ny tilbakemelding</button>
+                <a href="/index.html" class="button secondary">Tilbake til forsiden</a>
+            </div>
+        </div>
+
+        <!-- Error/Status Messages -->
+        <div id="statusMessage" class="status-message hidden"></div>
+    </div>
+
+    <script src="/js/scanner.js"></script>
+    <script src="/js/barcode-scanner-global.js"></script>
+    <script src="/js/feedback.js"></script>
+</body>
+</html>

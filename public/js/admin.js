@@ -173,6 +173,9 @@ let currentQuestion = null;
 document.addEventListener('DOMContentLoaded', () => {
     initAdmin();
     initTabs();
+
+    // Auto-refresh feedback badge every 30 seconds
+    setInterval(updateFeedbackBadge, 30000);
 });
 
 /**
@@ -234,6 +237,9 @@ async function initAdmin() {
     await loadPhotoChallenges();
     await loadPhotoSubmissions();
     await loadPhotoChallengeLeaderboard();
+
+    // Load feedback
+    await loadFeedback();
 
     // Setup event listeners
     eventInfoForm.addEventListener('submit', handleSaveEventInfo);
@@ -3568,6 +3574,25 @@ const quickApproveBtn = document.getElementById('quickApproveBtn');
 const quickRejectBtn = document.getElementById('quickRejectBtn');
 const reviewSubmissionForm = document.getElementById('reviewSubmissionForm');
 const reviewSubmissionIdInput = document.getElementById('reviewSubmissionId');
+
+// DOM Elements - Feedback
+const feedbackList = document.getElementById('feedbackList');
+const feedbackCount = document.getElementById('feedbackCount');
+const feedbackBadge = document.getElementById('feedbackBadge');
+const feedbackFilter = document.getElementById('feedbackFilter');
+const refreshFeedbackBtn = document.getElementById('refreshFeedbackBtn');
+const feedbackModal = document.getElementById('feedbackModal');
+const feedbackModalBody = document.getElementById('feedbackModalBody');
+const feedbackModalTitle = document.getElementById('feedbackModalTitle');
+const feedbackModalMessage = document.getElementById('feedbackModalMessage');
+const feedbackModalFrom = document.getElementById('feedbackModalFrom');
+const feedbackModalSubmitted = document.getElementById('feedbackModalSubmitted');
+const feedbackModalStatus = document.getElementById('feedbackModalStatus');
+const feedbackModalRead = document.getElementById('feedbackModalRead');
+const toggleReadBtn = document.getElementById('toggleReadBtn');
+const deleteFeedbackBtn = document.getElementById('deleteFeedbackBtn');
+const closeFeedbackBtn = document.getElementById('closeFeedbackBtn');
+const closeFeedbackModal2Btn = document.getElementById('closeFeedbackModal2Btn');
 const reviewSubmissionMaxPointsInput = document.getElementById('reviewSubmissionMaxPoints');
 const reviewSubmissionImage = document.getElementById('reviewSubmissionImage');
 const reviewSubmissionChallenge = document.getElementById('reviewSubmissionChallenge');
@@ -3626,6 +3651,10 @@ window.addEventListener('load', () => {
 let currentSubmissions = [];
 let currentSubmissionIndex = -1;
 
+// State for feedback
+let allFeedback = [];
+let currentFeedbackItem = null;
+
 // Event Listeners - Submissions
 submissionsFilter.addEventListener('change', loadPhotoSubmissions);
 submissionsSort.addEventListener('change', loadPhotoSubmissions);
@@ -3652,6 +3681,14 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+// Event Listeners - Feedback
+feedbackFilter.addEventListener('change', renderFeedback);
+refreshFeedbackBtn.addEventListener('click', loadFeedback);
+closeFeedbackBtn.addEventListener('click', closeFeedbackModal);
+closeFeedbackModal2Btn.addEventListener('click', closeFeedbackModal);
+toggleReadBtn.addEventListener('click', toggleFeedbackReadStatus);
+deleteFeedbackBtn.addEventListener('click', deleteFeedback);
 
 /**
  * Load all photo challenges
@@ -4247,6 +4284,289 @@ async function loadPhotoChallengeLeaderboard() {
 // ==============================================
 
 // ==============================================
+// FEEDBACK MANAGEMENT FUNCTIONS
+// ==============================================
+
+/**
+ * Load all feedback from API
+ */
+async function loadFeedback() {
+    try {
+        const response = await fetch('/api/feedback');
+        if (!response.ok) {
+            throw new Error('Failed to load feedback');
+        }
+
+        allFeedback = await response.json();
+        renderFeedback();
+        updateFeedbackBadge();
+
+    } catch (error) {
+        console.error('Error loading feedback:', error);
+        feedbackList.innerHTML = '<p class="text-center" style="color: #f44336;">Kunne ikke laste tilbakemeldinger</p>';
+    }
+}
+
+/**
+ * Render feedback list based on current filter
+ */
+function renderFeedback() {
+    let filteredFeedback = [...allFeedback];
+
+    // Apply filter
+    const filterValue = feedbackFilter.value;
+    if (filterValue === 'new') {
+        filteredFeedback = filteredFeedback.filter(f => f.status === 'new');
+    } else if (filterValue === 'read') {
+        filteredFeedback = filteredFeedback.filter(f => f.status === 'read');
+    } else if (filterValue === 'anonymous') {
+        filteredFeedback = filteredFeedback.filter(f => f.is_anonymous === 1);
+    } else if (filterValue === 'identified') {
+        filteredFeedback = filteredFeedback.filter(f => f.is_anonymous === 0);
+    }
+
+    // Update count
+    feedbackCount.textContent = filteredFeedback.length;
+
+    // Render list
+    if (filteredFeedback.length === 0) {
+        feedbackList.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 40px;">Ingen tilbakemeldinger funnet</p>';
+        return;
+    }
+
+    feedbackList.innerHTML = filteredFeedback.map(fb => renderFeedbackCard(fb)).join('');
+}
+
+/**
+ * Escape HTML special characters to prevent XSS
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Render a single feedback card
+ */
+function renderFeedbackCard(fb) {
+    const statusBadge = fb.status === 'new'
+        ? '<span style="background: #4CAF50; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">✨ NY</span>'
+        : '<span style="background: #9e9e9e; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">✓ LEST</span>';
+
+    const fromBadge = fb.is_anonymous === 1
+        ? '<span style="background: #9c27b0; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">🕵️ ANONYM</span>'
+        : `<span style="background: #2196F3; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">👤 ${escapeHtml(fb.first_name)} ${escapeHtml(fb.last_name)}</span>`;
+
+    const submittedTime = new Date(fb.submitted_at).toLocaleString('no-NO', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    const messagePreview = fb.message.length > 150
+        ? escapeHtml(fb.message.substring(0, 150)) + '...'
+        : escapeHtml(fb.message);
+
+    return `
+        <div class="team-card" style="cursor: pointer; ${fb.status === 'new' ? 'border-left: 5px solid #4CAF50;' : ''}" onclick="showFeedbackDetail(${fb.id})">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                ${fb.title ? `<h3 style="margin: 0; font-size: 18px; color: var(--primary-dark);">${escapeHtml(fb.title)}</h3>` : '<h3 style="margin: 0; font-size: 16px; color: var(--text-light); font-style: italic;">Ingen tittel</h3>'}
+                <div style="display: flex; gap: 8px;">
+                    ${statusBadge}
+                </div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                ${fromBadge}
+            </div>
+
+            <p style="margin: 10px 0; color: var(--text-dark); line-height: 1.5; font-size: 14px;">${messagePreview}</p>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #e0e0e0;">
+                <p style="margin: 0; font-size: 13px; color: var(--text-light);">📅 ${submittedTime}</p>
+                <p style="margin: 0; font-size: 13px; color: var(--primary-color); font-weight: 600;">Klikk for å se detaljer →</p>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Show feedback detail modal
+ */
+async function showFeedbackDetail(feedbackId) {
+    try {
+        const feedback = allFeedback.find(f => f.id === feedbackId);
+
+        if (!feedback) {
+            alert('Kunne ikke finne tilbakemelding');
+            return;
+        }
+
+        currentFeedbackItem = feedback;
+
+        // Populate modal
+        if (feedback.title) {
+            feedbackModalTitle.innerHTML = `<h3 style="margin: 0 0 15px 0; color: var(--primary-dark);">${escapeHtml(feedback.title)}</h3>`;
+        } else {
+            feedbackModalTitle.innerHTML = '';
+        }
+
+        feedbackModalMessage.textContent = feedback.message;
+
+        // From (participant or anonymous)
+        if (feedback.is_anonymous === 1) {
+            feedbackModalFrom.textContent = '🕵️ Anonym';
+        } else {
+            feedbackModalFrom.textContent = `👤 ${feedback.first_name} ${feedback.last_name}`;
+        }
+
+        // Submitted date/time
+        const submittedTime = new Date(feedback.submitted_at).toLocaleString('no-NO', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        feedbackModalSubmitted.textContent = submittedTime;
+
+        // Status
+        feedbackModalStatus.textContent = feedback.status === 'new' ? 'Ny (ulest)' : 'Lest';
+        feedbackModalStatus.style.color = feedback.status === 'new' ? '#4CAF50' : '#9e9e9e';
+        feedbackModalStatus.style.fontWeight = 'bold';
+
+        // Read at
+        if (feedback.read_at) {
+            const readTime = new Date(feedback.read_at).toLocaleString('no-NO', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            feedbackModalRead.textContent = readTime;
+        } else {
+            feedbackModalRead.textContent = '-';
+        }
+
+        // Update toggle button text
+        toggleReadBtn.textContent = feedback.status === 'new' ? '✓ Merk som lest' : '✗ Merk som ulest';
+        toggleReadBtn.className = feedback.status === 'new' ? 'button primary' : 'button secondary';
+
+        // Show modal
+        feedbackModal.classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error showing feedback detail:', error);
+        alert('Kunne ikke vise tilbakemelding');
+    }
+}
+
+/**
+ * Close feedback modal
+ */
+function closeFeedbackModal() {
+    feedbackModal.classList.add('hidden');
+    currentFeedbackItem = null;
+}
+
+/**
+ * Toggle feedback read/unread status
+ */
+async function toggleFeedbackReadStatus() {
+    if (!currentFeedbackItem) return;
+
+    try {
+        const newStatus = currentFeedbackItem.status === 'new' ? 'read' : 'new';
+        const endpoint = newStatus === 'read' ? 'read' : 'unread';
+
+        const response = await fetch(`/api/feedback/${currentFeedbackItem.id}/${endpoint}`, {
+            method: 'PUT'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update status');
+        }
+
+        // Reload feedback
+        await loadFeedback();
+
+        // Re-show modal with updated data
+        showFeedbackDetail(currentFeedbackItem.id);
+
+    } catch (error) {
+        console.error('Error toggling read status:', error);
+        alert('Kunne ikke oppdatere status');
+    }
+}
+
+/**
+ * Delete feedback
+ */
+async function deleteFeedback() {
+    if (!currentFeedbackItem) return;
+
+    const confirmed = confirm('Er du sikker på at du vil slette denne tilbakemeldingen?\n\nDenne handlingen kan ikke angres.');
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/api/feedback/${currentFeedbackItem.id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete feedback');
+        }
+
+        // Close modal
+        closeFeedbackModal();
+
+        // Reload feedback
+        await loadFeedback();
+
+        alert('Tilbakemelding slettet');
+
+    } catch (error) {
+        console.error('Error deleting feedback:', error);
+        alert('Kunne ikke slette tilbakemelding');
+    }
+}
+
+/**
+ * Update feedback badge with count of new messages
+ */
+async function updateFeedbackBadge() {
+    try {
+        const response = await fetch('/api/feedback/count/new');
+        if (!response.ok) {
+            throw new Error('Failed to get count');
+        }
+
+        const data = await response.json();
+        const count = data.count || 0;
+
+        if (count > 0) {
+            feedbackBadge.textContent = count;
+            feedbackBadge.classList.remove('hidden');
+        } else {
+            feedbackBadge.classList.add('hidden');
+        }
+
+    } catch (error) {
+        console.error('Error updating feedback badge:', error);
+        // Don't show error to user, just log it
+    }
+}
+
+// ==============================================
+// END FEEDBACK MANAGEMENT FUNCTIONS
+// ==============================================
+
+// ==============================================
 // PARTICIPANT CONNECTION FUNCTIONS
 // ==============================================
 
@@ -4408,3 +4728,4 @@ window.removeEnrollment = removeEnrollment;
 window.editPhotoChallenge = editPhotoChallenge;
 window.deletePhotoChallenge = deletePhotoChallenge;
 window.openReviewSubmissionModal = openReviewSubmissionModal;
+window.showFeedbackDetail = showFeedbackDetail;
