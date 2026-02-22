@@ -568,15 +568,14 @@ class TicTacToeGame {
     }
 
     async reset() {
-        // Stop scanners
-        if (this.isPlayer1ScannerActive) {
-            await this.player1Scanner.stop();
-            this.isPlayer1ScannerActive = false;
-        }
-        if (this.isPlayer2ScannerActive) {
-            await this.player2Scanner.stop();
-            this.isPlayer2ScannerActive = false;
-        }
+        // Clear scanners completely (stop and remove)
+        await this.player1Scanner.clear();
+        await this.player2Scanner.clear();
+        this.isPlayer1ScannerActive = false;
+        this.isPlayer2ScannerActive = false;
+
+        // Reinitialize scanners for next game
+        this.initScanners();
 
         // Reset button states
         this.startPlayer1ScanBtn.textContent = '📷 Start Kamera-Skanning';

@@ -112,23 +112,47 @@
 /* Selection instruction */
 .selection-instruction {
     text-align: center;
-    padding: 12px 20px;
-    margin: 20px 0 10px 0;
+    padding: 18px 24px;
+    margin: 20px 0 20px 0;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 15px;
+    font-size: 22px;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 .selection-instruction.multiple {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    animation: pulse-multiple 2s ease-in-out infinite;
+}
+
+@keyframes pulse-multiple {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    50% {
+        box-shadow: 0 6px 20px rgba(245, 87, 108, 0.5);
+    }
 }
 
 .selection-instruction .icon {
-    font-size: 20px;
-    margin-right: 8px;
+    font-size: 28px;
+    margin-right: 10px;
+    display: inline-block;
+    animation: bounce-icon 1s ease infinite;
+}
+
+@keyframes bounce-icon {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-3px);
+    }
 }
 
 /* Option Buttons - Kahoot Style */

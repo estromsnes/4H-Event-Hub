@@ -96,6 +96,25 @@ class QRScanner {
     }
 
     /**
+     * Clear the scanner completely (stops and removes all UI)
+     */
+    async clear() {
+        try {
+            if (this.isScanning && this.html5QrCode) {
+                await this.html5QrCode.stop();
+            }
+            if (this.html5QrCode) {
+                await this.html5QrCode.clear();
+            }
+            this.isScanning = false;
+            this.html5QrCode = null;
+            console.log('QR Scanner cleared');
+        } catch (err) {
+            console.error('Error clearing scanner:', err);
+        }
+    }
+
+    /**
      * Scan QR code from an image file
      * @param {File} file - The image file to scan
      */

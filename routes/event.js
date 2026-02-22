@@ -78,7 +78,8 @@ router.post('/', (req, res) => {
         organizer_name,
         organizer_club,
         organizer_contact,
-        allow_qr_upload
+        allow_qr_upload,
+        enable_quiz_music
     } = req.body;
 
     // Validate required fields
@@ -99,8 +100,8 @@ router.post('/', (req, res) => {
         db.run(
             `INSERT INTO event_info (
                 event_name, event_description, location, start_date, end_date, start_datetime,
-                organizer_name, organizer_club, organizer_contact, allow_qr_upload, active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                organizer_name, organizer_club, organizer_contact, allow_qr_upload, enable_quiz_music, active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
             [
                 event_name,
                 event_description,
@@ -111,7 +112,8 @@ router.post('/', (req, res) => {
                 organizer_name,
                 organizer_club,
                 organizer_contact,
-                allow_qr_upload || 0
+                allow_qr_upload || 0,
+                enable_quiz_music !== undefined ? enable_quiz_music : 1
             ],
             function(err) {
                 if (err) {
@@ -150,7 +152,8 @@ router.put('/:id', (req, res) => {
         organizer_name,
         organizer_club,
         organizer_contact,
-        allow_qr_upload
+        allow_qr_upload,
+        enable_quiz_music
     } = req.body;
 
     db.run(
@@ -165,6 +168,7 @@ router.put('/:id', (req, res) => {
              organizer_club = COALESCE(?, organizer_club),
              organizer_contact = COALESCE(?, organizer_contact),
              allow_qr_upload = COALESCE(?, allow_qr_upload),
+             enable_quiz_music = COALESCE(?, enable_quiz_music),
              updated_date = datetime('now')
          WHERE id = ?`,
         [
@@ -178,6 +182,7 @@ router.put('/:id', (req, res) => {
             organizer_club,
             organizer_contact,
             allow_qr_upload,
+            enable_quiz_music,
             id
         ],
         function(err) {

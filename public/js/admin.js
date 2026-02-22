@@ -15,6 +15,7 @@ const organizerNameInput = document.getElementById('organizerName');
 const organizerClubInput = document.getElementById('organizerClub');
 const organizerContactInput = document.getElementById('organizerContact');
 const allowQrUploadInput = document.getElementById('allowQrUpload');
+const enableQuizMusicInput = document.getElementById('enableQuizMusic');
 const eventStatus = document.getElementById('eventStatus');
 
 // DOM Elements - Add Form
@@ -321,6 +322,7 @@ async function loadEventInfo() {
         organizerClubInput.value = currentEvent.organizer_club || '';
         organizerContactInput.value = currentEvent.organizer_contact || '';
         allowQrUploadInput.checked = currentEvent.allow_qr_upload === 1;
+        enableQuizMusicInput.checked = currentEvent.enable_quiz_music !== 0; // Default to true if undefined
 
         // Show logo preview if exists
         if (currentEvent.logo_path) {
@@ -378,7 +380,8 @@ async function handleSaveEventInfo(e) {
         organizer_name: organizerNameInput.value.trim() || null,
         organizer_club: organizerClubInput.value.trim() || null,
         organizer_contact: organizerContactInput.value.trim() || null,
-        allow_qr_upload: allowQrUploadInput.checked ? 1 : 0
+        allow_qr_upload: allowQrUploadInput.checked ? 1 : 0,
+        enable_quiz_music: enableQuizMusicInput.checked ? 1 : 0
     };
 
     // Validate

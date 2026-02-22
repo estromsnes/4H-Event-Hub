@@ -50,11 +50,35 @@
             transform: scale(1.05);
         }
 
+        /* Subtabs styling - prevent overflow */
+        #team-challenge .tabs-container {
+            overflow-x: visible;
+            overflow-y: visible;
+        }
+
+        #team-challenge .tab-button {
+            flex: 1;
+            min-width: auto;
+            padding: 12px 16px;
+        }
+
+        #team-challenge .tab-button.active {
+            transform: scale(1.02);
+        }
+
         .tab-content {
             display: none;
         }
 
         .tab-content.active {
+            display: block;
+        }
+
+        .subtab-content {
+            display: none;
+        }
+
+        .subtab-content.active {
             display: block;
         }
 
@@ -301,26 +325,36 @@
 
         <!-- Tab Contents -->
         <div id="team-challenge" class="tab-content active">
-            <div class="loading">
-                <div class="spinner"></div>
-                <p>Laster...</p>
-            </div>
-            <div class="no-data" style="display: none;">
-                <h2>Ingen lag har fullført denne utfordringen ennå</h2>
+            <!-- Sub-tabs for Team Challenge -->
+            <div class="tabs-container" style="margin-bottom: 20px;">
+                <button class="tab-button active" data-subtab="fastest">⚡ Kjappeste gjennomføring</button>
+                <button class="tab-button" data-subtab="first">🏁 Først til mål</button>
             </div>
 
-            <!-- Section 1: Fastest completion -->
-            <div class="scoreboard-section" id="fastest-section" style="display: none;">
-                <h2 style="color: #2c5f2d; margin-bottom: 20px; text-align: center; font-size: 32px;">⚡ Kjappeste gjennomføring</h2>
-                <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 18px;">Rangert etter tid fra første til siste scan</p>
-                <div class="scoreboard-grid"></div>
+            <!-- Fastest completion subtab -->
+            <div id="fastest-subtab" class="subtab-content active">
+                <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 16px;">Rangert etter tid fra første til siste scan</p>
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Laster...</p>
+                </div>
+                <div class="scoreboard-grid" style="display: none;"></div>
+                <div class="no-data" style="display: none;">
+                    <h2>Ingen lag har fullført denne utfordringen ennå</h2>
+                </div>
             </div>
 
-            <!-- Section 2: First to complete -->
-            <div class="scoreboard-section" id="first-section" style="display: none; margin-top: 40px;">
-                <h2 style="color: #2c5f2d; margin-bottom: 20px; text-align: center; font-size: 32px;">🏁 Først til mål</h2>
-                <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 18px;">Rangert etter hvem som fullførte først etter arrangement start</p>
-                <div class="scoreboard-grid"></div>
+            <!-- First to complete subtab -->
+            <div id="first-subtab" class="subtab-content">
+                <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 16px;">Rangert etter hvem som fullførte først etter arrangement start</p>
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Laster...</p>
+                </div>
+                <div class="scoreboard-grid" style="display: none;"></div>
+                <div class="no-data" style="display: none;">
+                    <h2>Ingen lag har fullført denne utfordringen ennå</h2>
+                </div>
             </div>
         </div>
 
@@ -372,6 +406,7 @@
     <script>
         let refreshInterval;
         let currentTab = 'team-challenge';
+        let currentSubtab = 'fastest';
 
         // Load event info and update header
         async function loadEventInfo() {
@@ -398,10 +433,10 @@
         }
 
         // Tab switching
-        document.querySelectorAll('.tab-button').forEach(button => {
+        document.querySelectorAll('.tab-button[data-tab]').forEach(button => {
             button.addEventListener('click', () => {
                 // Update active tab button
-                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-button[data-tab]').forEach(btn => btn.classList.remove('active'));
                 button.classList.add('active');
 
                 // Update active tab content
@@ -411,6 +446,27 @@
 
                 currentTab = tabId;
                 loadScoreboard(tabId);
+            });
+        });
+
+        // Subtab switching (for team challenge)
+        document.querySelectorAll('.tab-button[data-subtab]').forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active subtab button
+                document.querySelectorAll('.tab-button[data-subtab]').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                // Update active subtab content
+                document.querySelectorAll('.subtab-content').forEach(content => content.classList.remove('active'));
+                const subtabId = button.getAttribute('data-subtab') + '-subtab';
+                document.getElementById(subtabId).classList.add('active');
+
+                currentSubtab = button.getAttribute('data-subtab');
+
+                // Reload team challenge data
+                if (currentTab === 'team-challenge') {
+                    loadScoreboard('team-challenge');
+                }
             });
         });
 
@@ -507,26 +563,25 @@
 
         // Render Team Challenge
         function renderTeamChallenge(data, container) {
-            const loading = container.querySelector('.loading');
-            const noData = container.querySelector('.no-data');
-            const fastestSection = container.querySelector('#fastest-section');
-            const firstSection = container.querySelector('#first-section');
+            // Get subtab containers
+            const fastestSubtab = document.getElementById('fastest-subtab');
+            const firstSubtab = document.getElementById('first-subtab');
 
-            loading.style.display = 'none';
+            // Fastest completion subtab
+            const fastestLoading = fastestSubtab.querySelector('.loading');
+            const fastestGrid = fastestSubtab.querySelector('.scoreboard-grid');
+            const fastestNoData = fastestSubtab.querySelector('.no-data');
 
-            // Check if we have any data
+            fastestLoading.style.display = 'none';
+
             const hasFastestData = data.fastest?.completed_teams?.length > 0;
-            const hasFirstData = data.first?.completed_teams?.length > 0;
 
-            if (!hasFastestData && !hasFirstData) {
-                noData.style.display = 'block';
-                return;
-            }
-
-            // Render fastest completion section
-            if (hasFastestData) {
-                fastestSection.style.display = 'block';
-                const fastestGrid = fastestSection.querySelector('.scoreboard-grid');
+            if (!hasFastestData) {
+                fastestNoData.style.display = 'block';
+                fastestGrid.style.display = 'none';
+            } else {
+                fastestNoData.style.display = 'none';
+                fastestGrid.style.display = 'grid';
                 fastestGrid.innerHTML = data.fastest.completed_teams.map((team, index) => {
                     const rank = index + 1;
                     const isTop3 = rank <= 3;
@@ -550,10 +605,21 @@
                 }).join('');
             }
 
-            // Render first to complete section
-            if (hasFirstData) {
-                firstSection.style.display = 'block';
-                const firstGrid = firstSection.querySelector('.scoreboard-grid');
+            // First to complete subtab
+            const firstLoading = firstSubtab.querySelector('.loading');
+            const firstGrid = firstSubtab.querySelector('.scoreboard-grid');
+            const firstNoData = firstSubtab.querySelector('.no-data');
+
+            firstLoading.style.display = 'none';
+
+            const hasFirstData = data.first?.completed_teams?.length > 0;
+
+            if (!hasFirstData) {
+                firstNoData.style.display = 'block';
+                firstGrid.style.display = 'none';
+            } else {
+                firstNoData.style.display = 'none';
+                firstGrid.style.display = 'grid';
                 firstGrid.innerHTML = data.first.completed_teams.map((team, index) => {
                     const rank = index + 1;
                     const isTop3 = rank <= 3;

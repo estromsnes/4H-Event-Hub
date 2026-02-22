@@ -11,10 +11,12 @@ class QuizManager {
         this.timerInterval = null;
         this.timeRemaining = 0;
         this.questionStartTime = null;
+        this.musicEnabled = true; // Default to enabled, will be loaded from event settings
 
         this.initElements();
         this.initScanners();
         this.initEventListeners();
+        this.loadEventSettings();
     }
 
     initElements() {
@@ -65,6 +67,23 @@ class QuizManager {
         this.closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
         this.viewLeaderboardBtn1 = document.getElementById('viewLeaderboardBtn1');
         this.viewLeaderboardBtn2 = document.getElementById('viewLeaderboardBtn2');
+
+        // Background music - different tracks for different time limits
+        this.quizMusic = {
+            5: document.getElementById('quizMusic5'),
+            10: document.getElementById('quizMusic10'),
+            20: document.getElementById('quizMusic20'),
+            30: document.getElementById('quizMusic30')
+        };
+
+        // Set volume for all tracks
+        Object.values(this.quizMusic).forEach(audio => {
+            if (audio) {
+                audio.volume = 0.3; // Set volume to 30%
+            }
+        });
+
+        this.currentMusic = null; // Track which audio is currently playing
 
         // Debug: Log if critical elements are missing
         if (!this.retakeQuizBtn) console.error('retakeQuizBtn not found');
@@ -194,6 +213,19 @@ class QuizManager {
             this.startParticipantScanBtn.textContent = '⏹️ Stopp Kamera';
             this.startParticipantScanBtn.classList.remove('primary');
             this.startParticipantScanBtn.classList.add('secondary');
+        }
+    }
+
+    async loadEventSettings() {
+        try {
+            const response = await fetch('/api/event');
+            if (response.ok) {
+                const event = await response.json();
+                this.musicEnabled = event.enable_quiz_music !== 0; // Default to true if undefined
+            }
+        } catch (err) {
+            console.error('Error loading event settings:', err);
+            // Keep default value (true) if loading fails
         }
     }
 
@@ -392,6 +424,38 @@ class QuizManager {
     }
 
     displayQuestion(question) {
+        // Stop any currently playing music
+        if (this.currentMusic) {
+            this.currentMusic.pause();
+            this.currentMusic.currentTime = 0;
+        }
+
+        // Get time limit for this question
+        const timeLimit = question.time_limit_seconds || 30;
+
+        // Only play music if enabled in settings
+        if (this.musicEnabled) {
+            // Select the correct music based on time limit
+            let selectedMusic = this.quizMusic[timeLimit];
+
+            // If exact time limit doesn't exist, find the closest match
+            if (!selectedMusic) {
+                const availableTimes = [5, 10, 20, 30];
+                const closestTime = availableTimes.reduce((prev, curr) => {
+                    return Math.abs(curr - timeLimit) < Math.abs(prev - timeLimit) ? curr : prev;
+                });
+                selectedMusic = this.quizMusic[closestTime];
+            }
+
+            // Play the selected music
+            if (selectedMusic) {
+                this.currentMusic = selectedMusic;
+                selectedMusic.play().catch(err => {
+                    console.log('Audio playback prevented by browser:', err);
+                });
+            }
+        }
+
         // Update progress
         this.progressText.textContent = `Spørsmål ${question.question_number} av ${question.total_questions}`;
 
@@ -403,12 +467,15 @@ class QuizManager {
         });
 
         // Update instruction based on single/multiple choice
+        const icon = this.selectionInstruction.querySelector('.icon');
         if (question.is_multiple_choice) {
             this.instructionText.textContent = 'Velg ALLE riktige alternativ';
             this.selectionInstruction.classList.add('multiple');
+            icon.textContent = '☑️';
         } else {
             this.instructionText.textContent = 'Velg ETT alternativ';
             this.selectionInstruction.classList.remove('multiple');
+            icon.textContent = '👆';
         }
 
         // Display image if exists
@@ -434,8 +501,7 @@ class QuizManager {
             btn.disabled = false;
         });
 
-        // Start timer for this question
-        const timeLimit = question.time_limit_seconds || 30;
+        // Start timer for this question (using timeLimit already declared above)
         this.startTimer(timeLimit);
     }
 
@@ -542,6 +608,13 @@ class QuizManager {
 
     async showResults() {
         try {
+            // Stop background music
+            if (this.currentMusic) {
+                this.currentMusic.pause();
+                this.currentMusic.currentTime = 0;
+                this.currentMusic = null;
+            }
+
             const response = await fetch(`/api/quiz/session/${this.sessionId}/results`);
 
             if (!response.ok) {
@@ -598,9 +671,39 @@ class QuizManager {
                 `;
             }).join('');
 
-            // Confetti if score is good
-            if (results.correct_answers / results.total_questions >= 0.7) {
-                if (typeof confetti !== 'undefined') {
+            // Confetti based on score
+            if (typeof confetti !== 'undefined') {
+                const scorePercentage = results.correct_answers / results.total_questions;
+
+                if (scorePercentage === 1.0) {
+                    // Perfect score - spectacular confetti!
+                    const duration = 3000;
+                    const end = Date.now() + duration;
+
+                    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+
+                    (function frame() {
+                        confetti({
+                            particleCount: 7,
+                            angle: 60,
+                            spread: 55,
+                            origin: { x: 0 },
+                            colors: colors
+                        });
+                        confetti({
+                            particleCount: 7,
+                            angle: 120,
+                            spread: 55,
+                            origin: { x: 1 },
+                            colors: colors
+                        });
+
+                        if (Date.now() < end) {
+                            requestAnimationFrame(frame);
+                        }
+                    }());
+                } else if (scorePercentage >= 0.7) {
+                    // Good score - standard confetti
                     confetti({
                         particleCount: 100,
                         spread: 70,

@@ -436,6 +436,16 @@
                     </small>
                 </div>
 
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="enableQuizMusic" style="width: auto; margin: 0;" checked>
+                        <span>Spill bakgrunnsmusikk i quiz</span>
+                    </label>
+                    <small style="color: var(--text-light); font-size: 14px; margin-left: 30px;">
+                        Når aktivert spilles tidsspesifikke lydspor under quiz-spørsmål. Lydfilene må legges i /public/audio/ mappen.
+                    </small>
+                </div>
+
                 <button type="submit" class="button primary">
                     💾 Lagre Arrangement-info
                 </button>
@@ -1224,9 +1234,14 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="questionTimeLimit">Tidsbegrensning (sekunder)</label>
-                        <input type="number" id="questionTimeLimit" min="5" max="300" value="30" placeholder="30">
-                        <small style="color: var(--text-light); font-size: 14px;">Standard: 30 sekunder</small>
+                        <label for="questionTimeLimit">Tidsbegrensning</label>
+                        <select id="questionTimeLimit">
+                            <option value="5">5 sekunder</option>
+                            <option value="10">10 sekunder</option>
+                            <option value="20">20 sekunder</option>
+                            <option value="30" selected>30 sekunder</option>
+                        </select>
+                        <small style="color: var(--text-light); font-size: 14px;">Hver lengde har egen bakgrunnsmusikk</small>
                     </div>
                     <div class="form-group">
                         <label for="questionOrder">Rekkefølge</label>
