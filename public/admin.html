@@ -16,9 +16,16 @@
             padding: 20px;
         }
 
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 10px;
+            }
+        }
+
         /* Tabs */
         .tabs {
             display: flex;
+            flex-wrap: wrap;
             gap: 5px;
             border-bottom: 2px solid var(--primary-color);
             margin-bottom: 25px;
@@ -34,6 +41,7 @@
             font-weight: 600;
             color: var(--text-light);
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .tab-button:hover {
@@ -44,6 +52,29 @@
         .tab-button.active {
             color: var(--primary-color);
             border-bottom-color: var(--primary-color);
+        }
+
+        /* Responsive tabs for mobile */
+        @media (max-width: 768px) {
+            .tabs {
+                gap: 3px;
+            }
+
+            .tab-button {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tabs {
+                gap: 2px;
+            }
+
+            .tab-button {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
         }
 
         .tab-content {
@@ -2152,6 +2183,20 @@
                 if (tabName !== 'qr' && isCameraScanningAuth && html5QrCodeAuth) {
                     html5QrCodeAuth.stop().catch(err => console.error('Error stopping camera:', err));
                     isCameraScanningAuth = false;
+                }
+
+                // Auto-focus PIN input when switching to PIN tab
+                if (tabName === 'pin') {
+                    setTimeout(() => {
+                        pinInput.focus();
+                    }, 100);
+                }
+
+                // Auto-focus QR scanner input when switching to QR tab
+                if (tabName === 'qr') {
+                    setTimeout(() => {
+                        qrScannerInputAuth.focus();
+                    }, 100);
                 }
             });
         });
