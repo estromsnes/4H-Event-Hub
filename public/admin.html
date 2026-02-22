@@ -6,6 +6,7 @@
     <title>Admin Panel - 4H Event Hub</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
     <link rel="stylesheet" href="/css/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         .admin-container {
             max-width: 1200px;
@@ -724,6 +725,62 @@
 
         <!-- Photo Challenges Tab -->
         <div id="photo-challengesTab" class="tab-content">
+            <!-- Participant Connection Section -->
+            <div class="section no-print" style="background: linear-gradient(135deg, #e3f2fd, #f3e5f5); border: 2px solid #2196F3;">
+                <h2 style="color: #1565C0; margin-bottom: 20px;">📱 Deltakertilkobling for Bildeoppgaver</h2>
+
+                <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="wifiSSID">WiFi-navn (SSID)</label>
+                            <input type="text" id="wifiSSID" placeholder="Mitt WiFi">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="wifiPassword">WiFi-passord</label>
+                            <input type="text" id="wifiPassword" placeholder="passord123">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label>Server URL</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="serverURL" readonly style="flex: 1; background: #f5f5f5;">
+                            <button id="detectIPBtn" class="button secondary btn-small">🔍 Finn IP</button>
+                        </div>
+                        <small style="color: #666;">URL oppdateres automatisk basert på serverens IP-adresse</small>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button id="generateQRBtn" class="button primary" style="flex: 1;">
+                            ✨ Generer QR-koder
+                        </button>
+                        <button id="showConnectionScreenBtn" class="button secondary" style="flex: 1;" disabled>
+                            📺 Vis på skjerm
+                        </button>
+                        <button id="printConnectionBtn" class="button secondary" style="flex: 1;" disabled>
+                            🖨️ Skriv ut
+                        </button>
+                    </div>
+                </div>
+
+                <!-- QR Code Preview -->
+                <div id="qrPreview" class="hidden" style="background: white; padding: 20px; border-radius: 12px;">
+                    <h3 style="text-align: center; margin-bottom: 15px;">Forhåndsvisning</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div style="text-align: center; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                            <h4 style="margin-bottom: 10px;">Steg 1: WiFi</h4>
+                            <div id="wifiQRPreview" style="display: inline-block; padding: 10px; background: white;"></div>
+                            <p style="margin-top: 10px; font-size: 14px;"><strong>Navn:</strong> <span id="previewSSID">-</span></p>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                            <h4 style="margin-bottom: 10px;">Steg 2: Åpne side</h4>
+                            <div id="urlQRPreview" style="display: inline-block; padding: 10px; background: white;"></div>
+                            <p style="margin-top: 10px; font-size: 14px; word-break: break-all;"><span id="previewURL">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Challenge Management Section -->
             <div class="section no-print">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">

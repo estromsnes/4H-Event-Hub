@@ -3580,11 +3580,41 @@ const reviewSubmissionModalStatus = document.getElementById('reviewSubmissionMod
 // DOM Elements - Leaderboard
 const photoChallengeLeaderboard = document.getElementById('photoChallengeLeaderboard');
 
+// DOM Elements - Participant Connection
+const wifiSSID = document.getElementById('wifiSSID');
+const wifiPassword = document.getElementById('wifiPassword');
+const serverURL = document.getElementById('serverURL');
+const detectIPBtn = document.getElementById('detectIPBtn');
+const generateQRBtn = document.getElementById('generateQRBtn');
+const showConnectionScreenBtn = document.getElementById('showConnectionScreenBtn');
+const printConnectionBtn = document.getElementById('printConnectionBtn');
+const qrPreview = document.getElementById('qrPreview');
+const wifiQRPreview = document.getElementById('wifiQRPreview');
+const urlQRPreview = document.getElementById('urlQRPreview');
+const previewSSID = document.getElementById('previewSSID');
+const previewURL = document.getElementById('previewURL');
+
+// State for connection
+let currentConnectionURL = '';
+
 // Event Listeners - Photo Challenges
 addPhotoChallengeBtn.addEventListener('click', () => openPhotoChallengeModal());
 closePhotoChallengeBtn.addEventListener('click', closePhotoChallengeModal);
 cancelPhotoChallengeBtn.addEventListener('click', closePhotoChallengeModal);
 photoChallengeForm.addEventListener('submit', savePhotoChallenge);
+
+// Event Listeners - Participant Connection
+detectIPBtn.addEventListener('click', detectLocalIP);
+generateQRBtn.addEventListener('click', generateConnectionQR);
+showConnectionScreenBtn.addEventListener('click', showConnectionScreen);
+printConnectionBtn.addEventListener('click', printConnectionScreen);
+
+// Auto-detect IP on page load
+window.addEventListener('load', () => {
+    if (document.getElementById('photo-challengesTab').classList.contains('active')) {
+        detectLocalIP();
+    }
+});
 
 // State for navigation
 let currentSubmissions = [];
@@ -4208,6 +4238,157 @@ async function loadPhotoChallengeLeaderboard() {
 
 // ==============================================
 // END PHOTO CHALLENGES MANAGEMENT FUNCTIONS
+// ==============================================
+
+// ==============================================
+// PARTICIPANT CONNECTION FUNCTIONS
+// ==============================================
+
+/**
+ * Detect local IP address and populate server URL
+ */
+async function detectLocalIP() {
+    try {
+        // Use the current hostname (will be local IP if accessed via IP)
+        const hostname = window.location.hostname;
+        const port = window.location.port;
+        const protocol = window.location.protocol;
+
+        // Construct URL to photo-challenges.html
+        let baseURL = `${protocol}//${hostname}`;
+        if (port) {
+            baseURL += `:${port}`;
+        }
+        const fullURL = `${baseURL}/photo-challenges.html`;
+
+        serverURL.value = fullURL;
+        currentConnectionURL = fullURL;
+
+        console.log('Detected server URL:', fullURL);
+    } catch (error) {
+        console.error('Error detecting IP:', error);
+        alert('Kunne ikke finne IP-adresse. Vennligst skriv inn manuelt.');
+    }
+}
+
+/**
+ * Generate QR codes for WiFi and URL
+ */
+function generateConnectionQR() {
+    const ssid = wifiSSID.value.trim();
+    const password = wifiPassword.value.trim();
+    const url = serverURL.value.trim();
+
+    // Validate inputs
+    if (!ssid) {
+        alert('Vennligst skriv inn WiFi-navn (SSID)');
+        wifiSSID.focus();
+        return;
+    }
+
+    if (!password) {
+        alert('Vennligst skriv inn WiFi-passord');
+        wifiPassword.focus();
+        return;
+    }
+
+    if (!url) {
+        alert('Vennligst generer server URL først');
+        detectIPBtn.click();
+        return;
+    }
+
+    // Clear previous QR codes
+    wifiQRPreview.innerHTML = '';
+    urlQRPreview.innerHTML = '';
+
+    // Generate WiFi QR code
+    // Format: WIFI:T:WPA;S:ssid;P:password;;
+    const wifiString = `WIFI:T:WPA;S:${ssid};P:${password};;`;
+    new QRCode(wifiQRPreview, {
+        text: wifiString,
+        width: 200,
+        height: 200,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Generate URL QR code
+    new QRCode(urlQRPreview, {
+        text: url,
+        width: 200,
+        height: 200,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Update preview text
+    previewSSID.textContent = ssid;
+    previewURL.textContent = url;
+
+    // Show preview section
+    qrPreview.classList.remove('hidden');
+
+    // Enable buttons
+    showConnectionScreenBtn.disabled = false;
+    printConnectionBtn.disabled = false;
+
+    console.log('QR codes generated successfully');
+}
+
+/**
+ * Show connection screen in fullscreen/new window
+ */
+function showConnectionScreen() {
+    const ssid = wifiSSID.value.trim();
+    const password = wifiPassword.value.trim();
+    const url = serverURL.value.trim();
+
+    if (!ssid || !password || !url) {
+        alert('Vennligst generer QR-koder først');
+        return;
+    }
+
+    // Build URL with parameters
+    const screenURL = `/connection-screen.html?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}&url=${encodeURIComponent(url)}`;
+
+    // Open in new window (fullscreen)
+    window.open(screenURL, '_blank', 'width=1920,height=1080,toolbar=0,menubar=0,location=0');
+}
+
+/**
+ * Print connection screen
+ */
+function printConnectionScreen() {
+    const ssid = wifiSSID.value.trim();
+    const password = wifiPassword.value.trim();
+    const url = serverURL.value.trim();
+
+    if (!ssid || !password || !url) {
+        alert('Vennligst generer QR-koder først');
+        return;
+    }
+
+    // Build URL with parameters
+    const screenURL = `/connection-screen.html?ssid=${encodeURIComponent(ssid)}&password=${encodeURIComponent(password)}&url=${encodeURIComponent(url)}`;
+
+    // Open in new window and trigger print
+    const printWindow = window.open(screenURL, '_blank', 'width=1920,height=1080');
+
+    // Wait for page to load, then print
+    if (printWindow) {
+        printWindow.addEventListener('load', () => {
+            setTimeout(() => {
+                printWindow.print();
+            }, 500);
+        });
+    }
+}
+
+// ==============================================
+// END PARTICIPANT CONNECTION FUNCTIONS
 // ==============================================
 
 // Make functions globally available

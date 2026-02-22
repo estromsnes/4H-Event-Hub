@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bildeoppgaver - Kom i gang!</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1565C0;
+            font-size: 48px;
+            margin-bottom: 40px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .steps-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .step {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f9f9f9, #ffffff);
+            border-radius: 20px;
+            border: 3px solid #2196F3;
+        }
+
+        .step h2 {
+            color: #1565C0;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        .qr-code {
+            display: inline-block;
+            padding: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+
+        .info-text {
+            font-size: 24px;
+            color: #333;
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+
+        .wifi-details {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .wifi-details p {
+            font-size: 20px;
+            margin: 8px 0;
+        }
+
+        .wifi-details strong {
+            color: #1565C0;
+        }
+
+        .instructions {
+            background: #fff9e6;
+            border-left: 5px solid #FFC107;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+
+        .instructions h3 {
+            color: #F57C00;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .instructions ol {
+            font-size: 22px;
+            line-height: 1.8;
+            padding-left: 30px;
+        }
+
+        .instructions li {
+            margin-bottom: 10px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+
+            @page {
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Bildeoppgaver - Kom i gang!</h1>
+
+        <div class="steps-container">
+            <!-- Step 1: WiFi -->
+            <div class="step">
+                <h2>Steg 1: Koble til WiFi</h2>
+                <div class="qr-code" id="wifiQR"></div>
+                <div class="wifi-details">
+                    <p><strong>Nettverk:</strong> <span id="displaySSID">-</span></p>
+                    <p><strong>Passord:</strong> <span id="displayPassword">-</span></p>
+                </div>
+                <p class="info-text">Skann QR-koden med telefonen din for å koble til WiFi automatisk</p>
+            </div>
+
+            <!-- Step 2: URL -->
+            <div class="step">
+                <h2>Steg 2: Åpne bildeoppgaver</h2>
+                <div class="qr-code" id="urlQR"></div>
+                <p class="info-text" style="word-break: break-all;"><span id="displayURL">-</span></p>
+                <p class="info-text">Skann QR-koden for å åpne bildeoppgavesiden</p>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>💡 Slik gjør du:</h3>
+            <ol>
+                <li>Åpne kamera-appen på telefonen din</li>
+                <li>Skann WiFi QR-koden (steg 1) og trykk på meldingen for å koble til</li>
+                <li>Når du er koblet til WiFi, skann URL QR-koden (steg 2)</li>
+                <li>Siden åpnes automatisk - skann din deltaker-QR for å starte!</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Get parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const ssid = urlParams.get('ssid') || '';
+        const password = urlParams.get('password') || '';
+        const url = urlParams.get('url') || '';
+
+        // Display text
+        document.getElementById('displaySSID').textContent = ssid;
+        document.getElementById('displayPassword').textContent = password;
+        document.getElementById('displayURL').textContent = url;
+
+        // Generate WiFi QR code
+        const wifiString = `WIFI:T:WPA;S:${ssid};P:${password};;`;
+        new QRCode(document.getElementById('wifiQR'), {
+            text: wifiString,
+            width: 300,
+            height: 300,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        // Generate URL QR code
+        new QRCode(document.getElementById('urlQR'), {
+            text: url,
+            width: 300,
+            height: 300,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+    </script>
+</body>
+</html>
