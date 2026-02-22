@@ -94,19 +94,65 @@ class TicTacToeGame {
     }
 
     initEventListeners() {
-        // Player 1 barcode input
+        // Player 1 barcode input - use buffer approach for better barcode scanner support
+        let player1ScanBuffer = '';
+        let player1ScanTimeout;
+
+        this.player1BarcodeInput.addEventListener('input', (e) => {
+            clearTimeout(player1ScanTimeout);
+            player1ScanBuffer += e.target.value;
+            e.target.value = '';
+
+            player1ScanTimeout = setTimeout(() => {
+                if (player1ScanBuffer.trim()) {
+                    this.handlePlayer1Scan(player1ScanBuffer.trim());
+                }
+                player1ScanBuffer = '';
+            }, 100);
+        });
+
+        // Also listen for Enter key (most barcode scanners send Enter after scan)
         this.player1BarcodeInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                this.handlePlayer1Scan(e.target.value);
-                e.target.value = '';
+                e.preventDefault();
+                if (player1ScanTimeout) {
+                    clearTimeout(player1ScanTimeout);
+                }
+                if (player1ScanBuffer.trim()) {
+                    this.handlePlayer1Scan(player1ScanBuffer.trim());
+                }
+                player1ScanBuffer = '';
             }
         });
 
-        // Player 2 barcode input
+        // Player 2 barcode input - use buffer approach for better barcode scanner support
+        let player2ScanBuffer = '';
+        let player2ScanTimeout;
+
+        this.player2BarcodeInput.addEventListener('input', (e) => {
+            clearTimeout(player2ScanTimeout);
+            player2ScanBuffer += e.target.value;
+            e.target.value = '';
+
+            player2ScanTimeout = setTimeout(() => {
+                if (player2ScanBuffer.trim()) {
+                    this.handlePlayer2Scan(player2ScanBuffer.trim());
+                }
+                player2ScanBuffer = '';
+            }, 100);
+        });
+
+        // Also listen for Enter key for player 2
         this.player2BarcodeInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                this.handlePlayer2Scan(e.target.value);
-                e.target.value = '';
+                e.preventDefault();
+                if (player2ScanTimeout) {
+                    clearTimeout(player2ScanTimeout);
+                }
+                if (player2ScanBuffer.trim()) {
+                    this.handlePlayer2Scan(player2ScanBuffer.trim());
+                }
+                player2ScanBuffer = '';
             }
         });
 

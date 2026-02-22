@@ -45,8 +45,36 @@
 
     // Event Listeners
     function setupEventListeners() {
-        // Barcode scanner input
-        barcodeInput.addEventListener('keypress', handleBarcodeInput);
+        // Barcode scanner input - use buffer approach for better barcode scanner support
+        let scanBuffer = '';
+        let scanTimeout;
+
+        barcodeInput.addEventListener('input', (e) => {
+            clearTimeout(scanTimeout);
+            scanBuffer += e.target.value;
+            e.target.value = '';
+
+            scanTimeout = setTimeout(() => {
+                if (scanBuffer.trim()) {
+                    lookupParticipant(scanBuffer.trim());
+                }
+                scanBuffer = '';
+            }, 100);
+        });
+
+        // Also listen for Enter key (most barcode scanners send Enter after scan)
+        barcodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (scanTimeout) {
+                    clearTimeout(scanTimeout);
+                }
+                if (scanBuffer.trim()) {
+                    lookupParticipant(scanBuffer.trim());
+                }
+                scanBuffer = '';
+            }
+        });
 
         // QR Code scanner
         startScanBtn.addEventListener('click', startQRScanner);
@@ -57,16 +85,6 @@
         captureBtn.addEventListener('click', capturePhoto);
         retakeBtn.addEventListener('click', retakePhoto);
         uploadBtn.addEventListener('click', uploadPhoto);
-    }
-
-    // Barcode Input Handler
-    function handleBarcodeInput(e) {
-        if (e.key === 'Enter') {
-            const code = barcodeInput.value.trim();
-            if (code) {
-                lookupParticipant(code);
-            }
-        }
     }
 
     // QR Scanner
