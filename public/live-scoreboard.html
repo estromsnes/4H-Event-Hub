@@ -305,9 +305,22 @@
                 <div class="spinner"></div>
                 <p>Laster...</p>
             </div>
-            <div class="scoreboard-grid" style="display: none;"></div>
             <div class="no-data" style="display: none;">
                 <h2>Ingen lag har fullført denne utfordringen ennå</h2>
+            </div>
+
+            <!-- Section 1: Fastest completion -->
+            <div class="scoreboard-section" id="fastest-section" style="display: none;">
+                <h2 style="color: #2c5f2d; margin-bottom: 20px; text-align: center; font-size: 32px;">⚡ Kjappeste gjennomføring</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 18px;">Rangert etter tid fra første til siste scan</p>
+                <div class="scoreboard-grid"></div>
+            </div>
+
+            <!-- Section 2: First to complete -->
+            <div class="scoreboard-section" id="first-section" style="display: none; margin-top: 40px;">
+                <h2 style="color: #2c5f2d; margin-bottom: 20px; text-align: center; font-size: 32px;">🏁 Først til mål</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 18px;">Rangert etter hvem som fullførte først etter arrangement start</p>
+                <div class="scoreboard-grid"></div>
             </div>
         </div>
 
@@ -450,9 +463,18 @@
 
         // Load Team Challenge data
         async function loadTeamChallenge() {
-            const response = await fetch('/api/team-challenge/leaderboard');
-            if (!response.ok) throw new Error('Failed to load');
-            return await response.json();
+            // Load both rankings
+            const [fastestResponse, firstResponse] = await Promise.all([
+                fetch('/api/team-challenge/leaderboard?sortBy=fastest'),
+                fetch('/api/team-challenge/leaderboard?sortBy=first')
+            ]);
+
+            if (!fastestResponse.ok || !firstResponse.ok) throw new Error('Failed to load');
+
+            const fastest = await fastestResponse.json();
+            const first = await firstResponse.json();
+
+            return { fastest, first };
         }
 
         // Load Photo Challenges data
@@ -486,38 +508,79 @@
         // Render Team Challenge
         function renderTeamChallenge(data, container) {
             const loading = container.querySelector('.loading');
-            const scoreboard = container.querySelector('.scoreboard-grid');
             const noData = container.querySelector('.no-data');
+            const fastestSection = container.querySelector('#fastest-section');
+            const firstSection = container.querySelector('#first-section');
 
             loading.style.display = 'none';
 
-            if (!data.completed_teams || data.completed_teams.length === 0) {
+            // Check if we have any data
+            const hasFastestData = data.fastest?.completed_teams?.length > 0;
+            const hasFirstData = data.first?.completed_teams?.length > 0;
+
+            if (!hasFastestData && !hasFirstData) {
                 noData.style.display = 'block';
                 return;
             }
 
-            scoreboard.style.display = 'grid';
-            scoreboard.innerHTML = data.completed_teams.map((team, index) => {
-                const rank = index + 1;
-                const isTop3 = rank <= 3;
-                const photoHtml = team.team_photo_path
-                    ? `<img src="${team.team_photo_path}?t=${Date.now()}" alt="${team.team_name}" class="team-photo">`
-                    : `<div class="team-photo-placeholder">📸</div>`;
+            // Render fastest completion section
+            if (hasFastestData) {
+                fastestSection.style.display = 'block';
+                const fastestGrid = fastestSection.querySelector('.scoreboard-grid');
+                fastestGrid.innerHTML = data.fastest.completed_teams.map((team, index) => {
+                    const rank = index + 1;
+                    const isTop3 = rank <= 3;
+                    const photoHtml = team.team_photo_path
+                        ? `<img src="${team.team_photo_path}?t=${Date.now()}" alt="${team.team_name}" class="team-photo">`
+                        : `<div class="team-photo-placeholder">📸</div>`;
 
-                return `
-                    <div class="team-card">
-                        ${photoHtml}
-                        <div class="team-rank ${isTop3 ? 'top3' : ''}">
-                            ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                    return `
+                        <div class="team-card">
+                            ${photoHtml}
+                            <div class="team-rank ${isTop3 ? 'top3' : ''}">
+                                ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                            </div>
+                            <div class="team-name">${team.team_name}</div>
+                            <div>
+                                <div class="stats-badge">${formatTime(team.elapsed_time_seconds)}</div>
+                                <div class="stats-label">tid</div>
+                            </div>
                         </div>
-                        <div class="team-name">${team.team_name}</div>
-                        <div>
-                            <div class="stats-badge">${formatTime(team.elapsed_time_seconds)}</div>
-                            <div class="stats-label">tid</div>
+                    `;
+                }).join('');
+            }
+
+            // Render first to complete section
+            if (hasFirstData) {
+                firstSection.style.display = 'block';
+                const firstGrid = firstSection.querySelector('.scoreboard-grid');
+                firstGrid.innerHTML = data.first.completed_teams.map((team, index) => {
+                    const rank = index + 1;
+                    const isTop3 = rank <= 3;
+                    const photoHtml = team.team_photo_path
+                        ? `<img src="${team.team_photo_path}?t=${Date.now()}" alt="${team.team_name}" class="team-photo">`
+                        : `<div class="team-photo-placeholder">📸</div>`;
+
+                    // Format minutes after start
+                    const minutesText = team.minutes_after_start !== null
+                        ? `${Math.floor(team.minutes_after_start)} min`
+                        : '-';
+
+                    return `
+                        <div class="team-card">
+                            ${photoHtml}
+                            <div class="team-rank ${isTop3 ? 'top3' : ''}">
+                                ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                            </div>
+                            <div class="team-name">${team.team_name}</div>
+                            <div>
+                                <div class="stats-badge">${minutesText}</div>
+                                <div class="stats-label">etter start</div>
+                            </div>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            }
         }
 
         // Render Photo Challenges
