@@ -9,8 +9,12 @@ class FeedbackForm {
         this.message = '';
         this.activeInput = null; // 'title' or 'message'
         this.scanner = null;
+        this.isScannerActive = false;
 
         // DOM elements
+        this.eventSubtitle = document.getElementById('eventSubtitle');
+        this.eventLogo = document.getElementById('eventLogo');
+
         this.step1 = document.getElementById('step1');
         this.scannerSection = document.getElementById('scannerSection');
         this.step2 = document.getElementById('step2');
@@ -19,6 +23,7 @@ class FeedbackForm {
         this.anonymousBtn = document.getElementById('anonymousBtn');
         this.identifyBtn = document.getElementById('identifyBtn');
 
+        this.startCameraScanBtn = document.getElementById('startCameraScanBtn');
         this.participantInfo = document.getElementById('participantInfo');
         this.participantName = document.getElementById('participantName');
         this.participantDetails = document.getElementById('participantDetails');
@@ -42,8 +47,35 @@ class FeedbackForm {
     }
 
     init() {
+        this.loadEventInfo();
         this.setupEventListeners();
         this.buildKeyboards();
+    }
+
+    async loadEventInfo() {
+        try {
+            const response = await fetch('/api/event');
+            if (response.ok) {
+                const event = await response.json();
+
+                // Update subtitle
+                if (event.event_name) {
+                    this.eventSubtitle.textContent = event.event_name;
+                    document.title = `${event.event_name} - Tilbakemelding`;
+                } else {
+                    this.eventSubtitle.textContent = 'Din tilbakemelding er viktig for oss';
+                }
+
+                // Update logo if exists
+                if (event.logo_path) {
+                    this.eventLogo.src = event.logo_path + '?t=' + Date.now();
+                    this.eventLogo.classList.remove('hidden');
+                }
+            }
+        } catch (err) {
+            console.error('Error loading event info:', err);
+            this.eventSubtitle.textContent = 'Din tilbakemelding er viktig for oss';
+        }
     }
 
     setupEventListeners() {
@@ -52,6 +84,7 @@ class FeedbackForm {
         this.identifyBtn.addEventListener('click', () => this.chooseIdentify());
 
         // Scanner controls
+        this.startCameraScanBtn.addEventListener('click', () => this.startScanning());
         this.cancelScanBtn.addEventListener('click', () => this.cancelScan());
         this.continueScanBtn.addEventListener('click', () => this.proceedToStep2());
 
@@ -288,24 +321,46 @@ class FeedbackForm {
         this.proceedToStep2();
     }
 
-    async chooseIdentify() {
+    chooseIdentify() {
         this.isAnonymous = false;
         this.showSection(this.scannerSection);
-        await this.startScanner();
+
+        // Activate global barcode scanner
+        if (typeof globalBarcodeScanner !== 'undefined') {
+            this.isScannerActive = true;
+            globalBarcodeScanner.activate((qrData) => {
+                if (this.isScannerActive) {
+                    this.handleScan(qrData);
+                }
+            });
+        }
     }
 
-    async startScanner() {
+    async startScanning() {
+        console.log('Starting camera scan...');
+        this.startCameraScanBtn.disabled = true;
+        this.startCameraScanBtn.textContent = '📷 Starter...';
+
         try {
-            this.scanner = new QRScanner();
-            await this.scanner.init(
-                'qr-reader',
-                (decodedText) => this.handleScan(decodedText),
-                (error) => this.showStatus(error, 'error')
-            );
-            await this.scanner.start();
+            // Only start camera scanner if QRScanner is supported
+            if (typeof QRScanner !== 'undefined' && QRScanner.isSupported && QRScanner.isSupported()) {
+                this.scanner = new QRScanner();
+                await this.scanner.init(
+                    'qr-reader',
+                    (decodedText) => this.handleScan(decodedText),
+                    (error) => console.error('Scanner error:', error)
+                );
+                await this.scanner.start();
+                this.startCameraScanBtn.textContent = '🔍 Skanner...';
+                console.log('Camera scanner started successfully');
+            } else {
+                throw new Error('QR Scanner er ikke støttet i denne nettleseren');
+            }
         } catch (err) {
             console.error('Scanner error:', err);
-            this.showStatus('Kunne ikke starte kamera', 'error');
+            this.showStatus(err.message || 'Kunne ikke starte kamera', 'error');
+            this.startCameraScanBtn.disabled = false;
+            this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
         }
     }
 
@@ -344,9 +399,18 @@ class FeedbackForm {
                 this.participantInfo.classList.remove('hidden');
                 this.continueScanBtn.classList.remove('hidden');
 
-                // Stop scanner
+                // Hide camera scan button and reset it
+                this.startCameraScanBtn.style.display = 'none';
+
+                // Stop camera scanner
                 if (this.scanner) {
                     await this.scanner.stop();
+                }
+
+                // Deactivate global barcode scanner
+                this.isScannerActive = false;
+                if (typeof globalBarcodeScanner !== 'undefined') {
+                    globalBarcodeScanner.deactivate();
                 }
 
                 this.showStatus('Deltaker identifisert!', 'success');
@@ -360,16 +424,35 @@ class FeedbackForm {
     }
 
     async cancelScan() {
+        // Deactivate global barcode scanner
+        this.isScannerActive = false;
+        if (typeof globalBarcodeScanner !== 'undefined') {
+            globalBarcodeScanner.deactivate();
+        }
+
+        // Stop camera scanner
         if (this.scanner) {
             await this.scanner.clear();
             this.scanner = null;
         }
+
+        // Reset camera scan button
+        this.startCameraScanBtn.style.display = 'block';
+        this.startCameraScanBtn.disabled = false;
+        this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
+
         this.showSection(this.step1);
         this.participantInfo.classList.add('hidden');
         this.continueScanBtn.classList.add('hidden');
     }
 
     proceedToStep2() {
+        // Deactivate global barcode scanner when moving to step 2
+        this.isScannerActive = false;
+        if (typeof globalBarcodeScanner !== 'undefined') {
+            globalBarcodeScanner.deactivate();
+        }
+
         // Update identity badge
         if (this.isAnonymous) {
             this.identityText.innerHTML = '🕵️ Anonym tilbakemelding';
@@ -386,6 +469,12 @@ class FeedbackForm {
     }
 
     goBackToStep1() {
+        // Deactivate global barcode scanner
+        this.isScannerActive = false;
+        if (typeof globalBarcodeScanner !== 'undefined') {
+            globalBarcodeScanner.deactivate();
+        }
+
         this.showSection(this.step1);
         // Keep data in case user wants to continue
     }
@@ -451,11 +540,22 @@ class FeedbackForm {
     }
 
     reset() {
+        // Deactivate global barcode scanner
+        this.isScannerActive = false;
+        if (typeof globalBarcodeScanner !== 'undefined') {
+            globalBarcodeScanner.deactivate();
+        }
+
         // Clear scanner if active
         if (this.scanner) {
             this.scanner.clear();
             this.scanner = null;
         }
+
+        // Reset camera scan button
+        this.startCameraScanBtn.style.display = 'block';
+        this.startCameraScanBtn.disabled = false;
+        this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
 
         // Reset state
         this.currentStep = 1;

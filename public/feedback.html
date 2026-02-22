@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/index.css">
     <link rel="stylesheet" href="/css/feedback.css">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
@@ -17,11 +18,14 @@
     <!-- Settings Icon -->
     <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
 
+    <!-- Event Header -->
+    <header class="event-header">
+        <img id="eventLogo" class="event-logo hidden" alt="Event logo">
+        <h1 class="event-title">💬 Send Tilbakemelding</h1>
+        <p class="event-subtitle" id="eventSubtitle">Laster...</p>
+    </header>
+
     <div class="container">
-        <div class="header">
-            <h1>💬 Send tilbakemelding</h1>
-            <p class="subtitle">Din tilbakemelding er viktig for oss. Du kan velge å være anonym eller identifisere deg.</p>
-        </div>
 
         <!-- Step 1: Choose Anonymous or Identify -->
         <div id="step1" class="step-section">
@@ -43,11 +47,15 @@
         <!-- QR Scanner Section (Hidden initially) -->
         <div id="scannerSection" class="step-section hidden">
             <h2>Skann din QR-kode</h2>
-            <p class="section-description">Hold QR-koden foran kameraet for å identifisere deg</p>
+            <p class="section-description">Hold QR-koden foran strekkodeskanneren eller bruk kamera</p>
 
             <div id="scannerContainer" class="scanner-container">
                 <div id="qr-reader"></div>
             </div>
+
+            <button id="startCameraScanBtn" class="button primary" style="width: 100%; margin-bottom: 20px;">
+                📷 Start Kamera-Skanning
+            </button>
 
             <div id="participantInfo" class="participant-info hidden">
                 <div class="participant-card">
