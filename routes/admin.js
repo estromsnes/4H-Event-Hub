@@ -129,8 +129,8 @@ router.post('/load-dummy-data', async (req, res) => {
         // Create dummy event
         await new Promise((resolve, reject) => {
             db.run(
-                `INSERT OR REPLACE INTO event_info (id, event_name, event_description, location, start_date, end_date, start_datetime, organizer_name, organizer_club, organizer_contact, active)
-                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                `INSERT OR REPLACE INTO event_info (id, event_name, event_description, location, start_date, end_date, start_datetime, organizer_name, organizer_club, organizer_contact, active, allow_qr_upload)
+                VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)`,
                 [
                     'Sommerleir 2026',
                     'En fantastisk helg med aktiviteter, konkurranser og moro for alle 4H-medlemmer!',

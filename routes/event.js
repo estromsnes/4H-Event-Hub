@@ -77,7 +77,8 @@ router.post('/', (req, res) => {
         start_datetime,
         organizer_name,
         organizer_club,
-        organizer_contact
+        organizer_contact,
+        allow_qr_upload
     } = req.body;
 
     // Validate required fields
@@ -98,8 +99,8 @@ router.post('/', (req, res) => {
         db.run(
             `INSERT INTO event_info (
                 event_name, event_description, location, start_date, end_date, start_datetime,
-                organizer_name, organizer_club, organizer_contact, active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                organizer_name, organizer_club, organizer_contact, allow_qr_upload, active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
             [
                 event_name,
                 event_description,
@@ -109,7 +110,8 @@ router.post('/', (req, res) => {
                 start_datetime,
                 organizer_name,
                 organizer_club,
-                organizer_contact
+                organizer_contact,
+                allow_qr_upload || 0
             ],
             function(err) {
                 if (err) {
@@ -147,7 +149,8 @@ router.put('/:id', (req, res) => {
         start_datetime,
         organizer_name,
         organizer_club,
-        organizer_contact
+        organizer_contact,
+        allow_qr_upload
     } = req.body;
 
     db.run(
@@ -161,6 +164,7 @@ router.put('/:id', (req, res) => {
              organizer_name = COALESCE(?, organizer_name),
              organizer_club = COALESCE(?, organizer_club),
              organizer_contact = COALESCE(?, organizer_contact),
+             allow_qr_upload = COALESCE(?, allow_qr_upload),
              updated_date = datetime('now')
          WHERE id = ?`,
         [
@@ -173,6 +177,7 @@ router.put('/:id', (req, res) => {
             organizer_name,
             organizer_club,
             organizer_contact,
+            allow_qr_upload,
             id
         ],
         function(err) {
