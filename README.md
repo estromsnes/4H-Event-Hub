@@ -42,6 +42,12 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 - Filtrer på lag, klubb og rolle
 - Se profilbilder og informasjon
 
+#### 💬 Tilbakemeldinger
+- Send anonyme eller identifiserte tilbakemeldinger til arrangørene
+- Skann QR-kode for å identifisere deg (valgfritt)
+- Skriv tittel og melding med virtuelt tastatur eller fysisk tastatur
+- Støtte for både touchskjerm og vanlig tastatur
+
 ### For Arrangører (Admin)
 
 #### 📋 Arrangement
@@ -93,6 +99,14 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 - Opprett programpunkter med tid, tittel, sted og beskrivelse
 - Organiser program per dag
 - Rediger og slett programpunkter
+
+#### 💬 Tilbakemeldinger
+- Motta tilbakemeldinger fra deltakere
+- Se hvem som sendte tilbakemelding (eller anonym)
+- Filtrer på nye/leste meldinger
+- Marker som lest/ulest
+- Slett tilbakemeldinger
+- Se deltakers navn og klubb på identifiserte meldinger
 
 #### 🗄️ Database Management
 - **Last inn testdata**: Genererer 100 deltakere, 5 quiz-spørsmål, 5 skattejakt-poster, lag og arrangement
@@ -170,6 +184,7 @@ node database/migrate-add-event-start-time.js
 node database/migrate-add-program.js
 node database/migrate-add-courses.js
 node database/migrate-add-photo-challenges.js
+node database/migrate-add-feedback.js
 ```
 
 *Tips: Du kan kjøre alle migrasjonene på en gang uten feil - skript som allerede er kjørt vil bli hoppet over.*
@@ -212,6 +227,7 @@ For å slette ALL data og starte på nytt:
 - Alle skattejakt-økter
 - Alle spill (tic-tac-toe)
 - Alle lagutfordring-svar
+- Alle tilbakemeldinger
 - Arrangement-informasjon
 - Alle program-poster
 
@@ -238,6 +254,7 @@ Server running on port 3000
 - **Admin Panel**: http://localhost:3000/admin.html
 - **Quiz**: http://localhost:3000/quiz.html
 - **Program**: http://localhost:3000/program.html
+- **Tilbakemeldinger**: http://localhost:3000/feedback.html
 
 ## 👨‍💼 Admin Panel
 
@@ -256,8 +273,9 @@ Server running on port 3000
 5. **🎮 Tripp-Trapp-Tresko** - Se spill, nullstill
 6. **🧠 Quiz** - Administrer spørsmål, se leaderboard
 7. **📅 Program** - Opprett program for arrangementet
-8. **📊 Statistikk** - Oversikt og analyse
-9. **🗄️ Database** - Last testdata, nullstill database
+8. **💬 Tilbakemeldinger** - Se og administrer tilbakemeldinger fra deltakere
+9. **📊 Statistikk** - Oversikt og analyse
+10. **🗄️ Database** - Last testdata, nullstill database
 
 ## 📖 Bruksanvisning
 
@@ -304,6 +322,22 @@ Server running on port 3000
 5. Finn stedet og skann QR-koden
 6. Fortsett til alle sjekkpunkter er funnet
 7. Se tid og plassering
+
+#### Send Tilbakemelding
+
+1. Åpne Tilbakemeldinger: http://localhost:3000/feedback.html
+2. Velg **Anonym** eller **Med navn**
+   - **Anonym**: Send tilbakemelding uten å identifisere deg
+   - **Med navn**: Skann din deltaker-QR for å identifisere deg
+3. Hvis du valgte **Med navn**:
+   - Skann QR-koden med strekkodeskanner eller
+   - Klikk **"Start Kamera-Skanning"** for å bruke webkamera
+4. Skriv tilbakemelding:
+   - Tittel (valgfritt)
+   - Melding (påkrevd)
+   - Bruk virtuelt tastatur eller fysisk tastatur
+5. Klikk **"Send inn"**
+6. Du får bekreftelse når tilbakemeldingen er sendt
 
 ### For Arrangører
 
@@ -387,6 +421,26 @@ Server running on port 3000
    - Sted (valgfritt)
    - Dag-nummer
 4. Klikk **"Lagre"**
+
+#### Administrere Tilbakemeldinger
+
+1. Gå til **Tilbakemeldinger** fanen
+2. Se oversikt over alle tilbakemeldinger:
+   - **✨ NY** - Uleste tilbakemeldinger (grønn markering)
+   - **✓ LEST** - Leste tilbakemeldinger
+3. Filtrer tilbakemeldinger:
+   - Alle / Nye / Leste
+4. Se hvem som sendte:
+   - **🕵️ ANONYM** - Anonym tilbakemelding
+   - **👤 Navn (Klubb)** - Identifisert deltaker med klubb
+5. Klikk på tilbakemelding for å se detaljer:
+   - Tittel og fullstendig melding
+   - Avsender (navn og klubb eller anonym)
+   - Sendt inn dato/tid
+   - Lest dato/tid (hvis lest)
+6. Handlinger:
+   - **Merk som lest/ulest** - Endre status
+   - **Slett** - Fjern tilbakemelding (permanent)
 
 ## 💻 Hardware Setup
 
@@ -491,6 +545,14 @@ For utskrift av QR-koder:
 - `PUT /api/program/:id` - Oppdater programpunkt
 - `DELETE /api/program/:id` - Slett programpunkt
 
+### Tilbakemeldinger
+- `GET /api/feedback` - Hent alle tilbakemeldinger
+- `GET /api/feedback/count/new` - Hent antall nye/uleste meldinger
+- `POST /api/feedback` - Send inn tilbakemelding
+- `PUT /api/feedback/:id/read` - Marker som lest
+- `PUT /api/feedback/:id/unread` - Marker som ulest
+- `DELETE /api/feedback/:id` - Slett tilbakemelding (soft delete)
+
 ### Arrangement
 - `GET /api/event` - Hent arrangementinfo
 - `PUT /api/event` - Oppdater arrangementinfo
@@ -593,6 +655,7 @@ For utskrift av QR-koder:
 │   ├── tic-tac-toe.js       # Tic-Tac-Toe API
 │   ├── team-challenge.js    # Lagutfordring API
 │   ├── program.js           # Program API
+│   ├── feedback.js          # Tilbakemeldinger API
 │   └── admin.js             # Admin API
 ├── public/
 │   ├── index.html           # Hovedside med navigasjon
@@ -605,6 +668,7 @@ For utskrift av QR-koder:
 │   ├── program.html         # Program oversikt
 │   ├── participant-info.html # Deltakeroversikt
 │   ├── live-scoreboard.html # Live scoreboard
+│   ├── feedback.html        # Tilbakemeldinger
 │   ├── css/                 # Stylesheets
 │   └── js/                  # Client-side JavaScript
 ├── uploads/
