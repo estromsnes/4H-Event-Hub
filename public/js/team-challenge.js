@@ -239,8 +239,11 @@ class TeamChallengeManager {
         document.getElementById('teamHeader').classList.remove('hidden');
         document.getElementById('progressSection').classList.remove('hidden');
 
+        // Start timer immediately after first scan
+        this.startTimer();
+
         this.updateTeamMemberList(data.team_members);
-        this.showScanFeedback('✅ Første skanning! Neste person starter tidtakeren.', 'success');
+        this.showScanFeedback('✅ Første skanning! Tidtaker er startet - dere har 2 minutter!', 'success');
     }
 
     async recordScan(participantCode) {
@@ -259,11 +262,6 @@ class TeamChallengeManager {
         }
 
         const data = await response.json();
-
-        // Start timer if this is second scan
-        if (data.scans_completed === 2 && !this.timerInterval) {
-            this.startTimer();
-        }
 
         // Update UI
         this.updateTeamMemberList(data.team_members);
