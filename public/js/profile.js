@@ -53,6 +53,20 @@ function initApp() {
     // Load event info first
     loadEventInfo();
 
+    // Check if coming from welcome page with participant code
+    const welcomeCode = sessionStorage.getItem('welcomeParticipantCode');
+    const fromWelcome = sessionStorage.getItem('fromWelcome');
+
+    if (welcomeCode && fromWelcome === 'true') {
+        console.log('Loading participant from welcome page:', welcomeCode);
+        // Clear the session storage
+        sessionStorage.removeItem('welcomeParticipantCode');
+        sessionStorage.removeItem('fromWelcome');
+        // Load participant directly
+        loadParticipantByCode(welcomeCode);
+        return; // Skip scanner initialization
+    }
+
     // Check browser support
     if (!QRScanner.isSupported()) {
         console.warn('Browser does not support camera access');
@@ -249,6 +263,52 @@ function onScanError(errorMessage) {
     showStatus(errorMessage, 'error');
     startScanBtn.disabled = false;
     startScanBtn.textContent = '📷 Prøv Igjen';
+}
+
+// Load participant directly by code (used when coming from welcome page)
+async function loadParticipantByCode(participantCode) {
+    console.log('Loading participant by code:', participantCode);
+
+    try {
+        const response = await fetch(`/api/participants/${participantCode}`);
+
+        if (!response.ok) {
+            throw new Error('Deltaker ikke funnet');
+        }
+
+        currentParticipant = await response.json();
+
+        // Change back button to go to welcome page
+        const backBtn = document.querySelector('.back-btn');
+        if (backBtn) {
+            backBtn.href = '/welcome.html';
+        }
+
+        // Initialize camera after loading participant
+        if (Camera.isSupported()) {
+            camera = new Camera(cameraVideo, cameraCanvas);
+            console.log('Camera initialized');
+        }
+
+        // Setup event listeners
+        scanAgainBtn.addEventListener('click', () => {
+            window.location.href = '/welcome.html';
+        });
+        takeSelfieBtn.addEventListener('click', openCameraModal);
+        closeCameraBtn.addEventListener('click', closeCameraModal);
+        captureBtn.addEventListener('click', capturePhoto);
+        retakeBtn.addEventListener('click', retakePhoto);
+        uploadBtn.addEventListener('click', uploadPhoto);
+
+        showProfileView();
+        console.log('Participant loaded from welcome page');
+
+    } catch (err) {
+        console.error('Error loading participant:', err);
+        alert('Kunne ikke laste deltakerprofil. Vennligst prøv igjen.');
+        // Redirect back to welcome or show scanner
+        window.location.href = '/welcome.html';
+    }
 }
 
 function showStatus(message, type) {

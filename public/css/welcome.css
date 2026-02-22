@@ -1,0 +1,607 @@
+/* Welcome Page Styles */
+
+.view {
+    display: none;
+    min-height: calc(100vh - 140px);
+    padding: 20px;
+}
+
+.view.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Scanner View */
+.welcome-container {
+    max-width: 700px;
+    width: 100%;
+    text-align: center;
+}
+
+.welcome-header h1 {
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: var(--primary-dark);
+}
+
+.welcome-subtitle {
+    font-size: 24px;
+    color: var(--text-light);
+    margin-bottom: 40px;
+}
+
+.scanner-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.barcode-input {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.scanner-mode-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 30px;
+    background-color: #e8f5e9;
+    border: 3px solid var(--primary-color);
+    border-radius: 15px;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+
+.keyboard-icon {
+    font-size: 32px;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    margin: 10px 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 2px solid #ddd;
+}
+
+.divider span {
+    padding: 0 15px;
+    color: var(--text-light);
+    font-size: 18px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.qr-reader {
+    width: 100%;
+    max-width: 500px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.scan-status {
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+}
+
+.scan-status.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.scan-status.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.scan-status.info {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+/* Profile Confirmation View */
+.profile-container {
+    max-width: 700px;
+    width: 100%;
+    position: relative;
+}
+
+/* Confetti Animation */
+.confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: var(--primary-color);
+    top: -10px;
+    opacity: 1;
+    animation: confetti-fall 3s linear forwards;
+}
+
+@keyframes confetti-fall {
+    to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+.welcome-message {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: welcome-fade-in 0.8s ease-out;
+}
+
+@keyframes welcome-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.big-welcome {
+    font-size: 56px;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+}
+
+.participant-name {
+    font-size: 42px;
+    color: var(--primary-dark);
+    margin: 0;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    animation: card-slide-up 0.5s ease-out 0.3s both;
+}
+
+@keyframes card-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profile-card h3 {
+    font-size: 28px;
+    color: var(--primary-dark);
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.info-section {
+    margin-bottom: 30px;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--background);
+    font-size: 20px;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.info-value {
+    font-weight: 700;
+    color: var(--text-dark);
+    text-align: right;
+}
+
+.confirmation-section {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 2px solid var(--background);
+}
+
+.confirmation-question {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 20px;
+}
+
+.confirmation-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.btn-large {
+    padding: 20px 40px;
+    font-size: 22px;
+}
+
+/* Selfie View */
+.selfie-container {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+}
+
+.selfie-container h1 {
+    font-size: 42px;
+    margin-bottom: 10px;
+    color: var(--primary-dark);
+}
+
+.selfie-instruction {
+    font-size: 20px;
+    color: var(--text-light);
+    margin-bottom: 30px;
+}
+
+.photo-preview {
+    width: 300px;
+    height: 300px;
+    margin: 0 auto 30px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 5px solid var(--primary-color);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0f0;
+    color: var(--text-light);
+}
+
+.placeholder-icon {
+    font-size: 100px;
+    margin-bottom: 10px;
+}
+
+.photo-placeholder p {
+    font-size: 20px;
+}
+
+.selfie-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Success View */
+.success-container {
+    max-width: 800px;
+    width: 100%;
+    text-align: center;
+}
+
+.success-icon {
+    font-size: 120px;
+    margin-bottom: 20px;
+    animation: success-bounce 0.6s ease-out;
+}
+
+@keyframes success-bounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+}
+
+.success-container h1 {
+    font-size: 48px;
+    color: var(--primary-dark);
+    margin-bottom: 40px;
+}
+
+.next-steps {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.next-steps h2 {
+    font-size: 32px;
+    color: var(--primary-dark);
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.step-card {
+    display: flex;
+    gap: 20px;
+    padding: 25px;
+    background: var(--background);
+    border-radius: 15px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+}
+
+.step-card:last-child {
+    margin-bottom: 0;
+}
+
+.step-number {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-content h3 {
+    font-size: 24px;
+    color: var(--primary-dark);
+    margin-bottom: 10px;
+}
+
+.step-content p {
+    font-size: 18px;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.step-content ul {
+    margin: 10px 0 0 20px;
+    font-size: 18px;
+    color: var(--text);
+}
+
+.step-content li {
+    margin-bottom: 5px;
+}
+
+/* Camera Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background-color: var(--white);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.close-btn {
+    width: 50px;
+    height: 50px;
+    border: none;
+    background-color: transparent;
+    font-size: 30px;
+    cursor: pointer;
+    color: var(--text-light);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.close-btn:active {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.camera-container {
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    background-color: #000;
+}
+
+.camera-video,
+.camera-canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.camera-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.camera-status {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.camera-status.success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.camera-status.error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .welcome-header h1 {
+        font-size: 36px;
+    }
+
+    .welcome-subtitle {
+        font-size: 20px;
+    }
+
+    .big-welcome {
+        font-size: 42px;
+    }
+
+    .participant-name {
+        font-size: 32px;
+    }
+
+    .profile-card {
+        padding: 25px;
+    }
+
+    .profile-card h3 {
+        font-size: 24px;
+    }
+
+    .info-row {
+        font-size: 18px;
+    }
+
+    .confirmation-question {
+        font-size: 20px;
+    }
+
+    .btn-large {
+        padding: 18px 30px;
+        font-size: 20px;
+    }
+
+    .selfie-container h1 {
+        font-size: 32px;
+    }
+
+    .photo-preview {
+        width: 250px;
+        height: 250px;
+    }
+
+    .success-icon {
+        font-size: 80px;
+    }
+
+    .success-container h1 {
+        font-size: 36px;
+    }
+
+    .next-steps {
+        padding: 25px;
+    }
+
+    .next-steps h2 {
+        font-size: 26px;
+    }
+
+    .step-card {
+        padding: 20px;
+        gap: 15px;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        font-size: 22px;
+    }
+
+    .step-content h3 {
+        font-size: 20px;
+    }
+
+    .step-content p,
+    .step-content ul {
+        font-size: 16px;
+    }
+}

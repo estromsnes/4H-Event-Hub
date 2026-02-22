@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velkommen! - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/welcome.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+    <!-- Settings Icon -->
+    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
+
+    <!-- Event Header -->
+    <header class="event-header">
+        <img src="/images/4H-logo-O2.png" class="header-4h-logo" alt="4H Logo">
+        <img id="eventLogo" class="event-logo hidden" alt="Event logo">
+        <h1 class="event-title" id="eventTitle">4H Event Hub</h1>
+        <p class="event-subtitle" id="eventSubtitle">Laster...</p>
+    </header>
+
+    <!-- Scanner View -->
+    <div id="scanner-view" class="view active">
+        <div class="welcome-container">
+            <div class="welcome-header">
+                <h1>🎉 Velkommen! 🎉</h1>
+                <p class="welcome-subtitle">Skann QR-koden din for å komme i gang</p>
+            </div>
+
+            <div class="scanner-section">
+                <!-- Hidden barcode input for scanner -->
+                <input type="text" id="barcode-input" class="barcode-input" autocomplete="off">
+
+                <div class="scanner-mode-indicator">
+                    <span class="keyboard-icon">⌨️</span>
+                    <span>Skanner klar - skann QR-koden din!</span>
+                </div>
+
+                <div class="divider">
+                    <span>eller</span>
+                </div>
+
+                <div id="qr-reader" class="qr-reader"></div>
+
+                <label for="qr-file-input" class="btn btn-secondary" style="width: 100%; max-width: 400px; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-top: 20px;">
+                    🖼️ Last opp bilde av QR
+                </label>
+                <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+
+                <div class="scan-status" id="scan-status" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="/js/barcode-scanner-global.js"></script>
+    <script src="/js/qr-upload-visibility.js"></script>
+    <script src="/js/welcome.js"></script>
+</body>
+</html>
