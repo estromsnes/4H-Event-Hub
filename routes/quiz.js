@@ -394,10 +394,6 @@ router.post('/start', async (req, res) => {
             return res.status(400).json({ error: 'Du må være tildelt et lag for å ta quizen' });
         }
 
-        if (participant.role !== 'Deltaker' && participant.role !== 'Frivillig') {
-            return res.status(400).json({ error: 'Kun deltakere og frivillige kan ta quizen' });
-        }
-
         const teamName = participant.team;
 
         // Check for existing active session

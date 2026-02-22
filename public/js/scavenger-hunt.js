@@ -227,6 +227,11 @@ class ScavengerHunt {
 
             this.hideView(this.loadingView);
             this.showView(this.participantScanView);
+
+            // Focus on participant barcode input for scanning
+            setTimeout(() => {
+                this.participantBarcodeInput.focus();
+            }, 100);
         } catch (err) {
             console.error('Initialization error:', err);
             alert('Kunne ikke laste data. Prøv igjen.');
@@ -313,13 +318,7 @@ class ScavengerHunt {
 
             // Check if participant has a team
             if (!participant.team || participant.team === '') {
-                this.showParticipantScanFeedback('Du er ikke tildelt et lag ennå. Snakk med en arrangør.', 'error');
-                return;
-            }
-
-            // Check if participant role is "Deltaker"
-            if (participant.role !== 'Deltaker') {
-                this.showParticipantScanFeedback('Kun deltakere med rolle "Deltaker" kan delta i skattejakt.', 'error');
+                this.showParticipantScanFeedback('Du må være tildelt et lag for å delta i skattejakt.', 'error');
                 return;
             }
 
@@ -634,6 +633,11 @@ class ScavengerHunt {
         this.barcodeInput.value = '';
         this.scanFeedback.classList.add('hidden');
         this.foundCheckpoints.classList.add('hidden');
+
+        // Focus on participant barcode input for scanning
+        setTimeout(() => {
+            this.participantBarcodeInput.focus();
+        }, 100);
     }
 
     showView(element) {

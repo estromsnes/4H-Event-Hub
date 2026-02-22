@@ -689,6 +689,11 @@ class QuizManager {
 
         this.participantBarcodeInput.value = '';
         this.participantScanFeedback.classList.add('hidden');
+
+        // Focus on participant barcode input for scanning
+        setTimeout(() => {
+            this.participantBarcodeInput.focus();
+        }, 100);
     }
 
     showView(element) {

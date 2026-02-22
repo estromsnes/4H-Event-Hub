@@ -5,45 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Scoreboard - 4H Event Hub</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
-    <link rel="stylesheet" href="/css/common.css">
-    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/participant.css">
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
         .scoreboard-container {
             max-width: 1200px;
             margin: 0 auto;
-        }
-
-        .scoreboard-header {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            text-align: center;
-        }
-
-        .scoreboard-header h1 {
-            margin: 0 0 10px 0;
-            color: #2c5f2d;
-            font-size: 48px;
-        }
-
-        .scoreboard-header p {
-            margin: 0;
-            color: #666;
-            font-size: 20px;
-        }
-
-        .last-updated {
-            font-size: 14px;
-            color: #999;
-            margin-top: 10px;
+            padding: 0 20px 30px;
         }
 
         /* Tabs */
@@ -313,12 +280,15 @@
     <!-- Settings Icon -->
     <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
 
+    <!-- Header -->
+    <header class="page-header">
+        <img id="eventLogo" class="page-logo hidden" alt="Event logo">
+        <h1 class="page-title">🏆 Live Scoreboard</h1>
+        <p class="page-subtitle">Alle aktiviteter</p>
+    </header>
+
     <div class="scoreboard-container">
-        <div class="scoreboard-header">
-            <h1>🏆 Live Scoreboard</h1>
-            <p>Alle aktiviteter</p>
-            <p class="last-updated" id="lastUpdated">Laster...</p>
-        </div>
+        <p class="last-updated" id="lastUpdated" style="text-align: center; color: #666; margin-bottom: 20px; font-size: 18px;">Laster...</p>
 
         <!-- Tabs -->
         <div class="tabs-container">
@@ -389,6 +359,30 @@
     <script>
         let refreshInterval;
         let currentTab = 'team-challenge';
+
+        // Load event info and update header
+        async function loadEventInfo() {
+            try {
+                const response = await fetch('/api/event');
+                if (response.ok) {
+                    const event = await response.json();
+
+                    // Update page title
+                    if (event.event_name) {
+                        document.title = `${event.event_name} - Live Scoreboard`;
+                    }
+
+                    // Update logo if available
+                    if (event.logo_path) {
+                        const logoImg = document.getElementById('eventLogo');
+                        logoImg.src = event.logo_path + '?t=' + Date.now();
+                        logoImg.classList.remove('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading event info:', err);
+            }
+        }
 
         // Tab switching
         document.querySelectorAll('.tab-button').forEach(button => {
@@ -705,6 +699,9 @@
                 document.getElementById(hash).classList.add('active');
             }
         }
+
+        // Load event info on page load
+        loadEventInfo();
 
         // Initialize from URL hash
         initializeFromHash();

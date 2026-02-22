@@ -387,6 +387,11 @@ class TicTacToeGame {
 
         this.player1Name.textContent = player1.name;
         this.player1Team.textContent = player1.team || 'Ikke tildelt lag';
+
+        // Focus on player 2 barcode input for scanning
+        setTimeout(() => {
+            this.player2BarcodeInput.focus();
+        }, 100);
     }
 
     startGame(gameData) {
