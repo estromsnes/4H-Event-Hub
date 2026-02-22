@@ -370,7 +370,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.98);
+            backdrop-filter: blur(10px);
             z-index: 10000;
             justify-content: center;
             align-items: center;
@@ -378,6 +379,12 @@
 
         #authModal.show {
             display: flex;
+        }
+
+        /* Hide admin content when not authenticated */
+        body.not-authenticated .admin-container,
+        body.not-authenticated .navbar {
+            display: none;
         }
 
         .auth-modal-content {
@@ -494,14 +501,22 @@
         .auth-scanner-toggle button {
             margin: 0 5px;
         }
+
+        #closeAuthBtn:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            color: #333;
+        }
     </style>
 </head>
-<body>
+<body class="not-authenticated">
     <!-- Authentication Modal -->
     <div id="authModal" class="show">
         <div class="auth-modal-content">
-            <h2>🔐 Admin Innlogging</h2>
-            <p>Du må logge inn for å få tilgang til admin-panelet</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">🔐 Admin Innlogging</h2>
+                <button id="closeAuthBtn" style="background: transparent; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 5px 10px; border-radius: 5px;">✕</button>
+            </div>
+            <p style="margin-top: 0;">Du må logge inn for å få tilgang til admin-panelet</p>
 
             <div class="auth-tabs">
                 <button class="auth-tab-button active" data-auth-tab="qr">📷 Skann QR</button>
@@ -523,7 +538,7 @@
 
             <div id="pinAuthTab" class="auth-tab-content">
                 <div class="auth-input-group">
-                    <label for="pinInput">Tast inn backup PIN-kode:</label>
+                    <label for="pinInput">Tast inn PIN-kode:</label>
                     <input type="text" id="pinInput" placeholder="****" maxlength="10" autocomplete="off">
                 </div>
                 <button class="button primary" id="verifyPinBtn">Logg inn</button>
@@ -533,8 +548,8 @@
 
             <div class="auth-help">
                 💡 <strong>Trenger du tilgang?</strong><br>
-                Be arrangør om admin QR-kode eller backup PIN.<br>
-                Arrangør kan skrive ut QR-koden fra serveren: <a href="/admin-qr.html" target="_blank">admin-qr.html</a>
+                PIN-koden vises i konsollen når serveren startes.<br>
+                Be arrangør om admin QR-kode eller se PIN i server-konsollen.
             </div>
         </div>
     </div>
@@ -2019,9 +2034,15 @@
         const qrScannerInputContainerAuth = document.getElementById('qrScannerInputContainerAuth');
         const scanPhysicalBtnAuth = document.getElementById('scanPhysicalBtnAuth');
         const useCameraBtnAuth = document.getElementById('useCameraBtnAuth');
+        const closeAuthBtn = document.getElementById('closeAuthBtn');
 
         let html5QrCodeAuth = null;
         let isCameraScanningAuth = false;
+
+        // Close auth modal - redirect to home
+        closeAuthBtn.addEventListener('click', () => {
+            window.location.href = '/index.html';
+        });
 
         // Get admin token from storage
         function getAdminToken() {
@@ -2034,6 +2055,7 @@
 
             if (!token) {
                 authModal.classList.add('show');
+                document.body.classList.add('not-authenticated');
                 return false;
             }
 
@@ -2051,17 +2073,20 @@
 
                 if (data.success) {
                     authModal.classList.remove('show');
+                    document.body.classList.remove('not-authenticated');
                     return true;
                 } else {
                     // Token invalid, clear and show login
                     sessionStorage.removeItem('adminToken');
                     authModal.classList.add('show');
+                    document.body.classList.add('not-authenticated');
                     return false;
                 }
             } catch (error) {
                 console.error('Auth check error:', error);
                 sessionStorage.removeItem('adminToken');
                 authModal.classList.add('show');
+                document.body.classList.add('not-authenticated');
                 return false;
             }
         }
@@ -2083,6 +2108,7 @@
                     // Store token instead of boolean
                     sessionStorage.setItem('adminToken', data.token);
                     authModal.classList.remove('show');
+                    document.body.classList.remove('not-authenticated');
                     showAuthError('✅ Innlogget!', 'success');
                     setTimeout(() => {
                         authError.style.display = 'none';
