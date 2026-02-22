@@ -9,6 +9,8 @@ router.post('/reset', async (req, res) => {
         // List of tables to clear
         const tablesToClear = [
             'scan_log',
+            'team_challenge_scans',
+            'team_challenge_sessions',
             'scavenger_scans',
             'scavenger_sessions',
             'scavenger_checkpoints',

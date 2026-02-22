@@ -491,17 +491,17 @@
 
             loading.style.display = 'none';
 
-            if (!data.rankedTeams || data.rankedTeams.length === 0) {
+            if (!data.completed_teams || data.completed_teams.length === 0) {
                 noData.style.display = 'block';
                 return;
             }
 
             scoreboard.style.display = 'grid';
-            scoreboard.innerHTML = data.rankedTeams.map((team, index) => {
+            scoreboard.innerHTML = data.completed_teams.map((team, index) => {
                 const rank = index + 1;
                 const isTop3 = rank <= 3;
-                const photoHtml = team.photo_path
-                    ? `<img src="${team.photo_path}?t=${Date.now()}" alt="${team.team_name}" class="team-photo">`
+                const photoHtml = team.team_photo_path
+                    ? `<img src="${team.team_photo_path}?t=${Date.now()}" alt="${team.team_name}" class="team-photo">`
                     : `<div class="team-photo-placeholder">📸</div>`;
 
                 return `
@@ -512,7 +512,7 @@
                         </div>
                         <div class="team-name">${team.team_name}</div>
                         <div>
-                            <div class="stats-badge">${formatTime(team.elapsed_seconds)}</div>
+                            <div class="stats-badge">${formatTime(team.elapsed_time_seconds)}</div>
                             <div class="stats-label">tid</div>
                         </div>
                     </div>
