@@ -683,14 +683,44 @@ For utskrift av QR-koder:
 
 ## 🔒 Sikkerhet og Personvern
 
+### Personvern ✅
 - ✅ Alle bilder lagres lokalt på serveren
 - ✅ Ingen data sendes til eksterne tjenester
 - ✅ Applikasjonen fungerer helt offline
 - ✅ EXIF-metadata fjernes automatisk fra bilder
 - ✅ Bilder komprimeres automatisk (maks 800px bredde)
-- ⚠️ **OBS**: Admin panel har ingen passord-beskyttelse
-  - For produksjon: Legg til autentisering
-  - Eller kjør kun på lukket nettverk
+- ✅ SQL injection beskyttelse med parameteriserte spørringer
+- ✅ Soft delete for alle data (active-flagg i stedet for permanent sletting)
+
+### ⚠️ VIKTIG SIKKERHETSVARSEL
+
+**Admin-panelet har INGEN passord-beskyttelse!**
+
+Dette er bevisst for enkelhetens skyld ved lokale arrangementer, men betyr at:
+- ❌ Hvem som helst med tilgang til nettverket kan åpne admin-panelet
+- ❌ All data kan slettes, endres eller eksporteres uten autentisering
+- ❌ IKKE egnet for åpen internett-tilgang uten tilleggsbeskyttelse
+
+**Anbefalte sikkerhetstiltak:**
+
+1. **For lokale arrangementer** (anbefalt bruk):
+   - Kjør kun på lukket/privat nettverk
+   - Gi IKKE deltakere tilgang til admin-URL
+   - Begrens tilgang til arrangør-PC/iPad
+
+2. **For produksjon på internett** (krever ekstra arbeid):
+   - Legg til HTTP Basic Authentication foran admin-panelet
+   - Bruk reverse proxy (nginx) med passord-beskyttelse
+   - Alternativt: Implementer session-basert autentisering
+   - Bruk HTTPS (Let's Encrypt)
+   - Sett opp brannmur-regler
+
+3. **Database-sikkerhet**:
+   - Ta regelmessige backups av `database/data.db`
+   - Ikke commit `database/data.db` til Git (allerede i .gitignore)
+   - Beskyt deltaker-data i henhold til GDPR
+
+**Se SECURITY.md for mer detaljert sikkerhetsinformasjon og sårbarhetshåndtering.**
 
 ## 🚀 Production Deployment
 
@@ -743,7 +773,8 @@ MIT License - Fri programvare for 4H-klubber
 
 For spørsmål eller problemer:
 - Opprett en issue på GitHub
-- Kontakt klubbrådgiver: Espen Strømsnes
+- Se [CONTRIBUTING.md](CONTRIBUTING.md) for bidragsinformasjon
+- Kontakt din lokale 4H-klubb for teknisk støtte
 
 ---
 

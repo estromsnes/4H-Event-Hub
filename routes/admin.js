@@ -146,9 +146,9 @@ router.post('/load-dummy-data', async (req, res) => {
                     '2026-06-20',
                     '2026-06-22',
                     '2026-06-20T16:00',
-                    'Espen Strømsnes',
-                    'Skautrollet 4H',
-                    'estromsnes@gmail.com'
+                    'Arrangør Navn',
+                    'Din 4H-klubb',
+                    'kontakt@4h-klubb.no'
                 ],
                 (err) => {
                     if (err) reject(err);
