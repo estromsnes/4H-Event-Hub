@@ -738,20 +738,26 @@ Ved oppstart av serveren genereres en unik admin QR-kode som arrangører kan ska
 
 **Sikkerhetsfunksjoner:**
 
+- ✅ **Token-basert autentisering**: Kryptografisk sikker 64-tegns token genereres ved innlogging
+- ✅ **Backend-validering**: Alle admin API-kall verifiseres mot server-side token-liste
+- ✅ **Session expiry**: Token utløper automatisk etter 4 timer inaktivitet
+- ✅ **Sliding expiry**: Token fornyes ved hver aktivitet (fortsatt innlogget hvis aktiv)
 - ✅ Unik QR-kode genereres ved hver server-oppstart
 - ✅ Backup PIN-kode for enkel tilgang hvis QR-kode mistes
-- ✅ Autentisering lagres kun for nettleser-økten (sessionStorage)
+- ✅ Token lagres kun for nettleser-økten (sessionStorage)
+- ✅ Automatisk cleanup av utløpte tokens
 - ✅ Når nettleseren lukkes, må admin logge inn på nytt
-- ✅ Egnet for intern bruk på lukket nettverk
 
 ### ⚠️ VIKTIG SIKKERHETSVARSEL
 
 **Admin-autentisering er designet for intern bruk på lukkede nettverk.**
 
-Dette betyr at:
-- ⚠️ Autentisering er kun på frontend-nivå (sessionStorage)
+Sikkerhetsnivå:
+- ✅ **Backend token-validering**: API-endepunkter er beskyttet med token-autentisering
+- ✅ **Server-side session tracking**: Tokens lagres og valideres på serveren
+- ⚠️ **Token i sessionStorage**: Noen med fysisk tilgang kan se token i developer tools
+- ⚠️ **Ingen HTTPS**: Kommunikasjon er ukryptert på lokalt nettverk
 - ⚠️ IKKE egnet for åpen internett-tilgang uten tilleggsbeskyttelse
-- ⚠️ Backend API-endepunkter er ikke beskyttet med autentisering
 
 **Anbefalte sikkerhetstiltak:**
 
@@ -762,12 +768,13 @@ Dette betyr at:
    - Endre PIN i `.env` for hvert arrangement
 
 2. **For produksjon på internett** (krever ekstra arbeid):
-   - Implementer backend autentisering-middleware
-   - Legg til HTTP Basic Authentication foran admin-panelet
-   - Bruk reverse proxy (nginx) med passord-beskyttelse
-   - Bruk HTTPS (Let's Encrypt)
+   - **Bruk HTTPS** (Let's Encrypt) - KRITISK for å kryptere tokens
+   - Bytt fra sessionStorage til **HttpOnly cookies** for bedre token-sikkerhet
+   - Implementer **refresh tokens** for lengre sesjoner
+   - Legg til **rate limiting** på /api/auth/verify-admin endepunktet
+   - Bruk reverse proxy (nginx) for ekstra lag med sikkerhet
    - Sett opp brannmur-regler
-   - Implementer rate limiting
+   - Vurder **2-faktor autentisering** for ekstra sikkerhet
 
 3. **Database-sikkerhet**:
    - Ta regelmessige backups av `database/data.db`

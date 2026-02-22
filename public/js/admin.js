@@ -1,5 +1,37 @@
 // Admin Panel Logic
 
+// Helper function to get admin token
+function getAdminToken() {
+    return sessionStorage.getItem('adminToken');
+}
+
+// Authenticated fetch wrapper
+async function authenticatedFetch(url, options = {}) {
+    const token = getAdminToken();
+
+    if (!token) {
+        // Redirect to login if no token
+        window.location.href = '/admin.html';
+        throw new Error('No authentication token');
+    }
+
+    // Add token to headers
+    options.headers = options.headers || {};
+    options.headers['X-Admin-Token'] = token;
+
+    const response = await fetch(url, options);
+
+    // If unauthorized, clear token and redirect
+    if (response.status === 401) {
+        sessionStorage.removeItem('adminToken');
+        alert('Session utløpt. Vennligst logg inn på nytt.');
+        window.location.reload();
+        throw new Error('Unauthorized');
+    }
+
+    return response;
+}
+
 // DOM Elements - Event Info
 const eventInfoForm = document.getElementById('eventInfoForm');
 const eventNameInput = document.getElementById('eventName');
@@ -605,7 +637,7 @@ async function bulkCreateTeams() {
     teamStatus.classList.remove('hidden');
 
     try {
-        const response = await fetch('/api/admin/bulk-create-teams', {
+        const response = await authenticatedFetch('/api/admin/bulk-create-teams', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ count: numTeams })
@@ -2817,7 +2849,7 @@ async function loadDummyData() {
     statusDiv.classList.remove('hidden');
 
     try {
-        const response = await fetch('/api/admin/load-dummy-data', {
+        const response = await authenticatedFetch('/api/admin/load-dummy-data', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -2908,7 +2940,7 @@ async function resetDatabase() {
     statusDiv.classList.remove('hidden');
 
     try {
-        const response = await fetch('/api/admin/reset', {
+        const response = await authenticatedFetch('/api/admin/reset', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });

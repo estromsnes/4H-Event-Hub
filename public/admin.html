@@ -2023,15 +2023,47 @@
         let html5QrCodeAuth = null;
         let isCameraScanningAuth = false;
 
+        // Get admin token from storage
+        function getAdminToken() {
+            return sessionStorage.getItem('adminToken');
+        }
+
         // Check if already authenticated
-        function checkAuthentication() {
-            const isAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true';
-            if (isAuthenticated) {
-                authModal.classList.remove('show');
-            } else {
+        async function checkAuthentication() {
+            const token = getAdminToken();
+
+            if (!token) {
                 authModal.classList.add('show');
+                return false;
             }
-            return isAuthenticated;
+
+            // Verify token with backend
+            try {
+                const response = await fetch('/api/auth/verify-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    authModal.classList.remove('show');
+                    return true;
+                } else {
+                    // Token invalid, clear and show login
+                    sessionStorage.removeItem('adminToken');
+                    authModal.classList.add('show');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+                sessionStorage.removeItem('adminToken');
+                authModal.classList.add('show');
+                return false;
+            }
         }
 
         // Verify admin code
@@ -2047,8 +2079,9 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    sessionStorage.setItem('adminAuthenticated', 'true');
+                if (data.success && data.token) {
+                    // Store token instead of boolean
+                    sessionStorage.setItem('adminToken', data.token);
                     authModal.classList.remove('show');
                     showAuthError('✅ Innlogget!', 'success');
                     setTimeout(() => {
@@ -2171,7 +2204,17 @@
 
         // Populate Admin QR tab
         function loadAdminQR() {
-            fetch('/api/auth/admin-qr-value')
+            const token = getAdminToken();
+            if (!token) {
+                console.error('No admin token available');
+                return;
+            }
+
+            fetch('/api/auth/admin-qr-value', {
+                headers: {
+                    'X-Admin-Token': token
+                }
+            })
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Kunne ikke hente admin-nøkkel');
@@ -2201,21 +2244,23 @@
                 .catch(error => {
                     console.error('Error loading admin QR:', error);
                     document.getElementById('adminQrCodeDisplay').innerHTML =
-                        '<p style="color: #d32f2f;">Feil ved lasting av QR-kode</p>';
+                        '<p style="color: #d32f2f;">Feil ved lasting av QR-kode. Vennligst logg inn på nytt.</p>';
                     document.getElementById('adminPinDisplay').textContent = 'ERROR';
                 });
         }
 
         // Load QR when page loads (after authentication)
-        if (sessionStorage.getItem('adminAuthenticated') === 'true') {
-            loadAdminQR();
-        }
+        checkAuthentication().then(isAuth => {
+            if (isAuth) {
+                loadAdminQR();
+            }
+        });
 
         // Also load QR when switching to the admin QR tab
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', () => {
                 const tabName = button.getAttribute('data-tab');
-                if (tabName === 'adminqr' && sessionStorage.getItem('adminAuthenticated') === 'true') {
+                if (tabName === 'adminqr' && getAdminToken()) {
                     loadAdminQR();
                 }
             });
@@ -2224,14 +2269,11 @@
         // Logout when clicking Home link
         document.getElementById('homeLink').addEventListener('click', (e) => {
             e.preventDefault();
-            // Clear admin authentication
-            sessionStorage.removeItem('adminAuthenticated');
+            // Clear admin token
+            sessionStorage.removeItem('adminToken');
             // Redirect to home
             window.location.href = '/index.html';
         });
-
-        // Check authentication on page load
-        checkAuthentication();
     </script>
 
     <script src="/js/admin.js"></script>

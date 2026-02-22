@@ -56,6 +56,9 @@ const feedbackRouter = require('./routes/feedback');
 // Set admin credentials for auth router
 authRouter.setAdminCredentials(ADMIN_ACCESS_KEY, ADMIN_PIN);
 
+// Get admin token middleware
+const requireAdminToken = authRouter.requireAdminToken;
+
 app.use('/api/auth', authRouter);
 app.use('/api/participants', participantsRouter);
 app.use('/api/qr', qrRouter);
@@ -68,7 +71,7 @@ app.use('/api/tic-tac-toe', ticTacToeRouter);
 app.use('/api/quiz', quizRouter);
 app.use('/api/program', programRouter);
 app.use('/api/photo-challenges', photoChallengesRouter);
-app.use('/api/admin', adminRouter);
+app.use('/api/admin', requireAdminToken, adminRouter); // Protected with admin token
 app.use('/api/statistics', statisticsRouter);
 app.use('/api/feedback', feedbackRouter);
 
