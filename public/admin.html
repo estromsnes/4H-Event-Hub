@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         .admin-container {
             max-width: 1200px;
@@ -360,12 +361,187 @@
         .badge.hidden {
             display: none;
         }
+
+        /* Authentication Modal */
+        #authModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #authModal.show {
+            display: flex;
+        }
+
+        .auth-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .auth-modal-content h2 {
+            color: #2E7D32;
+            margin-bottom: 10px;
+        }
+
+        .auth-modal-content p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .auth-tab-button {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #999;
+            transition: all 0.2s;
+        }
+
+        .auth-tab-button.active {
+            color: #2E7D32;
+            border-bottom-color: #2E7D32;
+        }
+
+        .auth-tab-content {
+            display: none;
+        }
+
+        .auth-tab-content.active {
+            display: block;
+        }
+
+        .auth-input-group {
+            margin-bottom: 20px;
+        }
+
+        .auth-input-group label {
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .auth-input-group input {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 4px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .auth-input-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        #authError {
+            color: #d32f2f;
+            margin-top: 15px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .auth-help {
+            margin-top: 25px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #1565C0;
+        }
+
+        .auth-help a {
+            color: #1565C0;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        #qrReaderAuth {
+            margin: 20px 0;
+        }
+
+        .auth-scanner-toggle {
+            margin-bottom: 15px;
+        }
+
+        .auth-scanner-toggle button {
+            margin: 0 5px;
+        }
     </style>
 </head>
 <body>
+    <!-- Authentication Modal -->
+    <div id="authModal" class="show">
+        <div class="auth-modal-content">
+            <h2>🔐 Admin Innlogging</h2>
+            <p>Du må logge inn for å få tilgang til admin-panelet</p>
+
+            <div class="auth-tabs">
+                <button class="auth-tab-button active" data-auth-tab="qr">📷 Skann QR</button>
+                <button class="auth-tab-button" data-auth-tab="pin">🔑 PIN-kode</button>
+            </div>
+
+            <div id="qrAuthTab" class="auth-tab-content active">
+                <div class="auth-scanner-toggle">
+                    <button class="button secondary btn-small" id="scanPhysicalBtnAuth">📱 Fysisk skanner</button>
+                    <button class="button primary btn-small" id="useCameraBtnAuth">📷 Bruk kamera</button>
+                </div>
+                <div id="qrScannerInputContainerAuth" style="margin-bottom: 20px;">
+                    <label for="qrScannerInputAuth" style="display: block; margin-bottom: 8px; font-weight: 600;">Skann QR-kode:</label>
+                    <input type="text" id="qrScannerInputAuth" placeholder="Klikk her og skann QR-kode..."
+                           style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #4CAF50; border-radius: 8px;">
+                </div>
+                <div id="qrReaderAuth" style="display: none;"></div>
+            </div>
+
+            <div id="pinAuthTab" class="auth-tab-content">
+                <div class="auth-input-group">
+                    <label for="pinInput">Tast inn backup PIN-kode:</label>
+                    <input type="text" id="pinInput" placeholder="****" maxlength="10" autocomplete="off">
+                </div>
+                <button class="button primary" id="verifyPinBtn">Logg inn</button>
+            </div>
+
+            <div id="authError"></div>
+
+            <div class="auth-help">
+                💡 <strong>Trenger du tilgang?</strong><br>
+                Be arrangør om admin QR-kode eller backup PIN.<br>
+                Arrangør kan skrive ut QR-koden fra serveren: <a href="/admin-qr.html" target="_blank">admin-qr.html</a>
+            </div>
+        </div>
+    </div>
+
     <!-- Navigation -->
     <div class="navbar">
-        <a href="/index.html" class="nav-link">← Hjem</a>
+        <a href="#" id="homeLink" class="nav-link">← Hjem (Logg ut)</a>
         <h2>Admin Panel</h2>
         <div style="width: 60px;"></div>
     </div>
@@ -383,6 +559,7 @@
             <button class="tab-button" data-tab="program">📅 Program</button>
             <button class="tab-button" data-tab="photo-challenges">📸 Bildeoppgaver</button>
             <button class="tab-button" data-tab="feedback">💬 Tilbakemeldinger<span id="feedbackBadge" class="badge hidden">0</span></button>
+            <button class="tab-button" data-tab="adminqr">🔑 Admin QR</button>
             <button class="tab-button" data-tab="stats">📊 Statistikk</button>
             <button class="tab-button" data-tab="database">🗄️ Database</button>
         </div>
@@ -1066,6 +1243,62 @@
             </div>
         </div>
         <!-- End Feedback Tab -->
+
+        <!-- Admin QR Tab -->
+        <div id="adminqrTab" class="tab-content">
+            <div class="section">
+                <h2>🔑 Admin QR-kode</h2>
+                <p style="color: var(--text-light); margin-bottom: 30px;">
+                    Denne QR-koden gir tilgang til admin-panelet. Del den kun med betrodde arrangører.
+                    QR-koden endres hver gang serveren startes på nytt.
+                </p>
+
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 30px;">
+                    <div style="background: linear-gradient(135deg, #f9f9f9, #ffffff); border-radius: 20px; padding: 40px; border: 3px solid #4CAF50; text-align: center;">
+                        <h3 style="color: #2E7D32; margin-bottom: 20px;">Skann for Admin-tilgang</h3>
+                        <div id="adminQrCodeDisplay" style="display: inline-block; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);"></div>
+                        <p style="color: #666; font-size: 14px; margin-top: 15px;">
+                            Bruk kamera eller fysisk QR-skanner for å logge inn
+                        </p>
+                    </div>
+
+                    <div style="background: #fff3e0; border-left: 5px solid #FF9800; padding: 25px; border-radius: 10px; width: 100%; max-width: 600px;">
+                        <h3 style="color: #E65100; margin-bottom: 15px;">🔑 Backup PIN-kode</h3>
+                        <p style="margin-bottom: 10px;">Hvis QR-koden ikke fungerer, bruk denne PIN-koden:</p>
+                        <div id="adminPinDisplay" style="font-size: 48px; font-weight: bold; color: #E65100; letter-spacing: 8px; font-family: 'Courier New', monospace; text-align: center; margin: 15px 0;">
+                            Laster...
+                        </div>
+                        <p style="font-size: 14px; color: #666; margin-top: 10px;">
+                            Tast inn denne koden på admin-innloggingssiden
+                        </p>
+                    </div>
+
+                    <div style="background: #e3f2fd; border-left: 5px solid #2196F3; padding: 25px; border-radius: 10px; width: 100%; max-width: 600px;">
+                        <h3 style="color: #1565C0; margin-bottom: 15px;">💡 Slik logger du inn som admin:</h3>
+                        <ol style="font-size: 16px; line-height: 1.8; padding-left: 30px; margin: 0;">
+                            <li>Åpne <strong>admin.html</strong> i nettleseren</li>
+                            <li><strong>Metode 1:</strong> Skann QR-koden ovenfor med kamera eller fysisk skanner</li>
+                            <li><strong>Metode 2:</strong> Tast inn backup PIN-koden manuelt</li>
+                            <li>Du får tilgang til admin-panelet for denne økten</li>
+                        </ol>
+                    </div>
+
+                    <div style="background: #ffebee; border-left: 5px solid #f44336; padding: 20px; border-radius: 10px; width: 100%; max-width: 600px;">
+                        <h3 style="color: #c62828; margin-bottom: 10px;">⚠️ Sikkerhetsinformasjon</h3>
+                        <p style="line-height: 1.6; margin: 0;">
+                            <strong>Behandle QR-koden og PIN-koden konfidensielt!</strong><br>
+                            De gir full tilgang til admin-panelet.
+                            Kun arrangører skal ha tilgang til denne informasjonen.
+                        </p>
+                    </div>
+
+                    <button onclick="window.print()" class="button primary no-print" style="font-size: 18px; padding: 15px 30px;">
+                        🖨️ Skriv ut denne siden
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- End Admin QR Tab -->
 
     </div>
     <!-- End admin-container -->
@@ -1773,6 +2006,233 @@
             <div id="feedbackModalStatus" class="hidden mt-2"></div>
         </div>
     </div>
+
+    <!-- Admin Authentication Script -->
+    <script>
+        // Admin Authentication
+        const authModal = document.getElementById('authModal');
+        const authError = document.getElementById('authError');
+        const pinInput = document.getElementById('pinInput');
+        const verifyPinBtn = document.getElementById('verifyPinBtn');
+        const qrScannerInputAuth = document.getElementById('qrScannerInputAuth');
+        const qrReaderAuth = document.getElementById('qrReaderAuth');
+        const qrScannerInputContainerAuth = document.getElementById('qrScannerInputContainerAuth');
+        const scanPhysicalBtnAuth = document.getElementById('scanPhysicalBtnAuth');
+        const useCameraBtnAuth = document.getElementById('useCameraBtnAuth');
+
+        let html5QrCodeAuth = null;
+        let isCameraScanningAuth = false;
+
+        // Check if already authenticated
+        function checkAuthentication() {
+            const isAuthenticated = sessionStorage.getItem('adminAuthenticated') === 'true';
+            if (isAuthenticated) {
+                authModal.classList.remove('show');
+            } else {
+                authModal.classList.add('show');
+            }
+            return isAuthenticated;
+        }
+
+        // Verify admin code
+        async function verifyAdminCode(code) {
+            try {
+                const response = await fetch('/api/auth/verify-admin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code: code.trim() })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    sessionStorage.setItem('adminAuthenticated', 'true');
+                    authModal.classList.remove('show');
+                    showAuthError('✅ Innlogget!', 'success');
+                    setTimeout(() => {
+                        authError.style.display = 'none';
+                    }, 2000);
+                } else {
+                    showAuthError('❌ Ugyldig kode. Prøv igjen.');
+                }
+            } catch (error) {
+                console.error('Auth error:', error);
+                showAuthError('❌ Feil ved innlogging. Sjekk nettverkstilkoblingen.');
+            }
+        }
+
+        function showAuthError(message, type = 'error') {
+            authError.textContent = message;
+            authError.style.color = type === 'success' ? '#2E7D32' : '#d32f2f';
+            authError.style.display = 'block';
+        }
+
+        // Auth tab switching
+        document.querySelectorAll('.auth-tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-auth-tab');
+
+                // Update buttons
+                document.querySelectorAll('.auth-tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+
+                // Update content
+                document.querySelectorAll('.auth-tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(tabName + 'AuthTab').classList.add('active');
+
+                // Reset error
+                authError.style.display = 'none';
+
+                // Stop camera if switching away from QR tab
+                if (tabName !== 'qr' && isCameraScanningAuth && html5QrCodeAuth) {
+                    html5QrCodeAuth.stop().catch(err => console.error('Error stopping camera:', err));
+                    isCameraScanningAuth = false;
+                }
+            });
+        });
+
+        // PIN verification
+        verifyPinBtn.addEventListener('click', () => {
+            const pin = pinInput.value.trim();
+            if (pin) {
+                verifyAdminCode(pin);
+            } else {
+                showAuthError('Vennligst tast inn PIN-kode');
+            }
+        });
+
+        pinInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                verifyPinBtn.click();
+            }
+        });
+
+        // Physical QR scanner
+        scanPhysicalBtnAuth.addEventListener('click', () => {
+            qrScannerInputContainerAuth.style.display = 'block';
+            qrReaderAuth.style.display = 'none';
+            if (isCameraScanningAuth && html5QrCodeAuth) {
+                html5QrCodeAuth.stop().catch(err => console.error('Error stopping camera:', err));
+                isCameraScanningAuth = false;
+            }
+            qrScannerInputAuth.focus();
+        });
+
+        qrScannerInputAuth.addEventListener('input', (e) => {
+            const code = e.target.value.trim();
+            if (code.length >= 10) {
+                verifyAdminCode(code);
+                qrScannerInputAuth.value = '';
+            }
+        });
+
+        // Camera QR scanner
+        useCameraBtnAuth.addEventListener('click', async () => {
+            qrScannerInputContainerAuth.style.display = 'none';
+            qrReaderAuth.style.display = 'block';
+
+            if (!html5QrCodeAuth) {
+                html5QrCodeAuth = new Html5Qrcode("qrReaderAuth");
+            }
+
+            if (isCameraScanningAuth) {
+                return;
+            }
+
+            try {
+                await html5QrCodeAuth.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 }
+                    },
+                    (decodedText) => {
+                        verifyAdminCode(decodedText);
+                        html5QrCodeAuth.stop().catch(err => console.error('Error stopping camera:', err));
+                        isCameraScanningAuth = false;
+                        qrReaderAuth.style.display = 'none';
+                        qrScannerInputContainerAuth.style.display = 'block';
+                    }
+                );
+                isCameraScanningAuth = true;
+            } catch (err) {
+                console.error('Error starting camera:', err);
+                showAuthError('Kunne ikke starte kamera. Prøv fysisk skanner.');
+                qrReaderAuth.style.display = 'none';
+                qrScannerInputContainerAuth.style.display = 'block';
+            }
+        });
+
+        // Populate Admin QR tab
+        function loadAdminQR() {
+            fetch('/api/auth/admin-qr-value')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Kunne ikke hente admin-nøkkel');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (!data.success) {
+                        throw new Error(data.message || 'Feil ved henting av admin-nøkkel');
+                    }
+
+                    // Generate QR code
+                    const qrContainer = document.getElementById('adminQrCodeDisplay');
+                    qrContainer.innerHTML = ''; // Clear any existing content
+                    new QRCode(qrContainer, {
+                        text: data.accessKey,
+                        width: 300,
+                        height: 300,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+
+                    // Display PIN
+                    document.getElementById('adminPinDisplay').textContent = data.pin;
+                })
+                .catch(error => {
+                    console.error('Error loading admin QR:', error);
+                    document.getElementById('adminQrCodeDisplay').innerHTML =
+                        '<p style="color: #d32f2f;">Feil ved lasting av QR-kode</p>';
+                    document.getElementById('adminPinDisplay').textContent = 'ERROR';
+                });
+        }
+
+        // Load QR when page loads (after authentication)
+        if (sessionStorage.getItem('adminAuthenticated') === 'true') {
+            loadAdminQR();
+        }
+
+        // Also load QR when switching to the admin QR tab
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab');
+                if (tabName === 'adminqr' && sessionStorage.getItem('adminAuthenticated') === 'true') {
+                    loadAdminQR();
+                }
+            });
+        });
+
+        // Logout when clicking Home link
+        document.getElementById('homeLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            // Clear admin authentication
+            sessionStorage.removeItem('adminAuthenticated');
+            // Redirect to home
+            window.location.href = '/index.html';
+        });
+
+        // Check authentication on page load
+        checkAuthentication();
+    </script>
 
     <script src="/js/admin.js"></script>
     <script src="/js/stats.js"></script>

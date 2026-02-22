@@ -1,9 +1,15 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Generate unique admin access key for this session
+const ADMIN_ACCESS_KEY = crypto.randomBytes(16).toString('hex');
+const ADMIN_PIN = process.env.ADMIN_PIN || '1234';
 
 // Database connection
 const dbPath = path.join(__dirname, 'database', 'data.db');
@@ -31,6 +37,7 @@ app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
 
 // Routes
+const authRouter = require('./routes/auth');
 const participantsRouter = require('./routes/participants');
 const qrRouter = require('./routes/qr');
 const eventRouter = require('./routes/event');
@@ -46,6 +53,10 @@ const adminRouter = require('./routes/admin');
 const statisticsRouter = require('./routes/statistics');
 const feedbackRouter = require('./routes/feedback');
 
+// Set admin credentials for auth router
+authRouter.setAdminCredentials(ADMIN_ACCESS_KEY, ADMIN_PIN);
+
+app.use('/api/auth', authRouter);
 app.use('/api/participants', participantsRouter);
 app.use('/api/qr', qrRouter);
 app.use('/api/event', eventRouter);
@@ -95,6 +106,8 @@ app.listen(PORT, () => {
     console.log(`📍 Local:    http://localhost:${PORT}`);
     console.log(`📱 Profile:  http://localhost:${PORT}/profile.html`);
     console.log(`⚙️  Admin:    http://localhost:${PORT}/admin.html`);
+    console.log('\n🔐 Admin PIN: ' + ADMIN_PIN);
+    console.log('   (QR-koden finner du inne i admin-panelet etter innlogging)');
     console.log('\n✨ Ready for camp participants!\n');
 });
 

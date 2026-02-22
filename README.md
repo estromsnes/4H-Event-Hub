@@ -158,6 +158,25 @@ npm install
 npm install --registry=https://registry.npmjs.org/
 ```
 
+### Steg 3: Konfigurer miljøvariabler (valgfritt)
+
+Kopier `.env.example` til `.env` og tilpass innstillingene:
+
+```bash
+cp .env.example .env
+```
+
+Åpne `.env` og rediger etter behov:
+```
+# Sett din egen admin PIN-kode (4-6 siffer anbefales)
+ADMIN_PIN=1234
+
+# Juster server-port hvis nødvendig
+PORT=3000
+```
+
+**Viktig**: `.env`-filen blir ikke committet til Git og inneholder konfidensielle innstillinger som admin PIN-koden.
+
 ## 🗄️ Database Setup
 
 ### Initialiser Database
@@ -692,28 +711,63 @@ For utskrift av QR-koder:
 - ✅ SQL injection beskyttelse med parameteriserte spørringer
 - ✅ Soft delete for alle data (active-flagg i stedet for permanent sletting)
 
+### 🔐 Admin Autentisering
+
+**Admin-panelet er beskyttet med QR-kode + PIN-system!**
+
+Ved oppstart av serveren genereres en unik admin QR-kode som arrangører kan skanne for å få tilgang. I tillegg kan du sette en backup PIN-kode i `.env`-filen.
+
+**Slik logger du inn som admin:**
+
+1. **Start serveren**: `npm start` (PIN-koden vises i konsollen)
+2. **Åpne admin**: Naviger til `http://localhost:3000/admin.html`
+3. **Logg inn**: Tast inn PIN-koden fra konsollen (eller skann QR hvis du allerede har den)
+4. **Finn QR-koden**: Gå til "🔑 Admin QR" fanen inne i admin-panelet
+5. **Skriv ut**: Klikk "Skriv ut" for å lage et utskrift av QR-koden til andre arrangører
+
+**Konfigurere backup PIN:**
+
+1. Kopier `.env.example` til `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+2. Åpne `.env` og sett din PIN-kode:
+   ```
+   ADMIN_PIN=1234
+   ```
+
+**Sikkerhetsfunksjoner:**
+
+- ✅ Unik QR-kode genereres ved hver server-oppstart
+- ✅ Backup PIN-kode for enkel tilgang hvis QR-kode mistes
+- ✅ Autentisering lagres kun for nettleser-økten (sessionStorage)
+- ✅ Når nettleseren lukkes, må admin logge inn på nytt
+- ✅ Egnet for intern bruk på lukket nettverk
+
 ### ⚠️ VIKTIG SIKKERHETSVARSEL
 
-**Admin-panelet har INGEN passord-beskyttelse!**
+**Admin-autentisering er designet for intern bruk på lukkede nettverk.**
 
-Dette er bevisst for enkelhetens skyld ved lokale arrangementer, men betyr at:
-- ❌ Hvem som helst med tilgang til nettverket kan åpne admin-panelet
-- ❌ All data kan slettes, endres eller eksporteres uten autentisering
-- ❌ IKKE egnet for åpen internett-tilgang uten tilleggsbeskyttelse
+Dette betyr at:
+- ⚠️ Autentisering er kun på frontend-nivå (sessionStorage)
+- ⚠️ IKKE egnet for åpen internett-tilgang uten tilleggsbeskyttelse
+- ⚠️ Backend API-endepunkter er ikke beskyttet med autentisering
 
 **Anbefalte sikkerhetstiltak:**
 
 1. **For lokale arrangementer** (anbefalt bruk):
    - Kjør kun på lukket/privat nettverk
-   - Gi IKKE deltakere tilgang til admin-URL
-   - Begrens tilgang til arrangør-PC/iPad
+   - Hold admin QR-kode konfidensielt
+   - Del backup PIN kun med betrodde arrangører
+   - Endre PIN i `.env` for hvert arrangement
 
 2. **For produksjon på internett** (krever ekstra arbeid):
+   - Implementer backend autentisering-middleware
    - Legg til HTTP Basic Authentication foran admin-panelet
    - Bruk reverse proxy (nginx) med passord-beskyttelse
-   - Alternativt: Implementer session-basert autentisering
    - Bruk HTTPS (Let's Encrypt)
    - Sett opp brannmur-regler
+   - Implementer rate limiting
 
 3. **Database-sikkerhet**:
    - Ta regelmessige backups av `database/data.db`
