@@ -458,13 +458,6 @@ class QuizManager {
         // Update progress
         this.progressText.textContent = `Spørsmål ${question.question_number} av ${question.total_questions}`;
 
-        // Debug log
-        console.log('displayQuestion:', {
-            question_id: question.question_id,
-            question_number: question.question_number,
-            is_multiple_choice: question.is_multiple_choice
-        });
-
         // Update instruction based on single/multiple choice
         const icon = this.selectionInstruction.querySelector('.icon');
         if (question.is_multiple_choice) {

@@ -543,9 +543,6 @@ router.get('/session/:id/question', async (req, res) => {
             : ['A'];
         const isMultipleChoice = correctAnswers.length > 1;
 
-        // Debug log
-        console.log(`Question ${question.id}: correct_option="${question.correct_option}", parsed=${correctAnswers.length} answers, isMultipleChoice=${isMultipleChoice}`);
-
         res.json({
             question_id: question.id,
             question_text: question.question_text,
