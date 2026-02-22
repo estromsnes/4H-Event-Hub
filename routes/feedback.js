@@ -85,12 +85,12 @@ router.get('/', (req, res) => {
     db.all(
         `SELECT
             f.*,
-            CASE
-                WHEN f.is_anonymous = 1 THEN NULL
-                ELSE p.first_name || ' ' || p.last_name
-            END as participant_name
+            p.first_name,
+            p.last_name,
+            p.age,
+            p.club
          FROM feedback f
-         LEFT JOIN participants p ON f.participant_code = p.participant_code
+         LEFT JOIN participants p ON f.participant_code = p.participant_code AND p.active = 1
          WHERE f.active = 1
          ORDER BY f.submitted_at DESC`,
         [],

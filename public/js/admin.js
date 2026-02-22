@@ -4354,9 +4354,14 @@ function renderFeedbackCard(fb) {
         ? '<span style="background: #4CAF50; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">✨ NY</span>'
         : '<span style="background: #9e9e9e; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">✓ LEST</span>';
 
-    const fromBadge = fb.is_anonymous === 1
-        ? '<span style="background: #9c27b0; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">🕵️ ANONYM</span>'
-        : `<span style="background: #2196F3; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">👤 ${escapeHtml(fb.first_name)} ${escapeHtml(fb.last_name)}</span>`;
+    let fromBadge;
+    if (fb.is_anonymous === 1) {
+        fromBadge = '<span style="background: #9c27b0; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">🕵️ ANONYM</span>';
+    } else {
+        const name = `${fb.first_name || ''} ${fb.last_name || ''}`.trim();
+        const club = fb.club ? ` (${escapeHtml(fb.club)})` : '';
+        fromBadge = `<span style="background: #2196F3; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 600;">👤 ${escapeHtml(name)}${club}</span>`;
+    }
 
     const submittedTime = new Date(fb.submitted_at).toLocaleString('no-NO', {
         day: '2-digit',
@@ -4420,7 +4425,11 @@ async function showFeedbackDetail(feedbackId) {
         if (feedback.is_anonymous === 1) {
             feedbackModalFrom.textContent = '🕵️ Anonym';
         } else {
-            feedbackModalFrom.textContent = `👤 ${feedback.first_name} ${feedback.last_name}`;
+            const firstName = feedback.first_name || '';
+            const lastName = feedback.last_name || '';
+            const name = `${firstName} ${lastName}`.trim();
+            const club = feedback.club ? ` (${feedback.club})` : '';
+            feedbackModalFrom.textContent = `👤 ${name}${club}`;
         }
 
         // Submitted date/time
