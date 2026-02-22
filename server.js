@@ -43,6 +43,7 @@ const quizRouter = require('./routes/quiz');
 const programRouter = require('./routes/program');
 const photoChallengesRouter = require('./routes/photo-challenges');
 const adminRouter = require('./routes/admin');
+const statisticsRouter = require('./routes/statistics');
 
 app.use('/api/participants', participantsRouter);
 app.use('/api/qr', qrRouter);
@@ -56,6 +57,7 @@ app.use('/api/quiz', quizRouter);
 app.use('/api/program', programRouter);
 app.use('/api/photo-challenges', photoChallengesRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/statistics', statisticsRouter);
 
 // Root redirect to profile page (main interface)
 app.get('/', (req, res) => {
