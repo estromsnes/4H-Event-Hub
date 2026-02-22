@@ -24,7 +24,6 @@
     <header class="event-header">
         <img id="eventLogo" class="event-logo hidden" alt="Event logo">
         <h1 class="event-title">🧠 Quiz</h1>
-        <p class="event-subtitle" id="eventSubtitle">Laster...</p>
     </header>
 
     <!-- Participant Scan View -->
@@ -33,22 +32,7 @@
             <div class="team-selector">
                 <h1>🧠</h1>
                 <h2>Skann din deltaker-QR</h2>
-                <p style="color: var(--text-light); margin-bottom: 30px;">Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
-
-                <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                    <input type="text" id="participantBarcodeInput" class="barcode-input"
-                           autocomplete="off" autofocus placeholder="Skann QR-kode..."
-                           style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px;">
-
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
-                        <span style="font-size: 24px;">⌨️</span>
-                        <span style="color: var(--text-light);">Strekkodeskanner klar</span>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
-                    eller
-                </div>
+                <p style="color: var(--text-light); margin-bottom: 30px;">Hold QR-koden foran kameraet eller bruk strekkodeskanneren</p>
 
                 <div id="participantQrReader" style="margin-bottom: 20px;"></div>
 
@@ -221,6 +205,7 @@
         }
         document.addEventListener('DOMContentLoaded', loadEventInfo);
     </script>
+    <script src="/js/barcode-scanner-global.js"></script>
     <script src="/js/scanner.js"></script>
     <script src="/js/qr-upload-visibility.js"></script>
     <script src="/js/quiz.js"></script>

@@ -8,14 +8,17 @@ class TicTacToeGame {
         this.gameState = null;
         this.myPlayerNumber = null;
         this.myParticipantCode = null;
-        this.player1Name = null;
-        this.player2Name = null;
+        this.player1NameStr = null;
+        this.player2NameStr = null;
         this.player1Code = null;
         this.player2Code = null;
 
         this.initElements();
         this.initScanners();
         this.initEventListeners();
+
+        // Activate global barcode scanner for Player 1
+        globalBarcodeScanner.activate((qrData) => this.handlePlayer1Scan(qrData));
     }
 
     initElements() {
@@ -26,13 +29,11 @@ class TicTacToeGame {
         this.resultView = document.getElementById('resultView');
 
         // Player 1 scan
-        this.player1BarcodeInput = document.getElementById('player1BarcodeInput');
         this.player1QrReader = document.getElementById('player1QrReader');
         this.startPlayer1ScanBtn = document.getElementById('startPlayer1ScanBtn');
         this.player1ScanFeedback = document.getElementById('player1ScanFeedback');
 
         // Player 2 scan
-        this.player2BarcodeInput = document.getElementById('player2BarcodeInput');
         this.player2QrReader = document.getElementById('player2QrReader');
         this.startPlayer2ScanBtn = document.getElementById('startPlayer2ScanBtn');
         this.player2ScanFeedback = document.getElementById('player2ScanFeedback');
@@ -87,68 +88,6 @@ class TicTacToeGame {
     }
 
     initEventListeners() {
-        // Player 1 barcode input - use buffer approach for better barcode scanner support
-        let player1ScanBuffer = '';
-        let player1ScanTimeout;
-
-        this.player1BarcodeInput.addEventListener('input', (e) => {
-            clearTimeout(player1ScanTimeout);
-            player1ScanBuffer += e.target.value;
-            e.target.value = '';
-
-            player1ScanTimeout = setTimeout(() => {
-                if (player1ScanBuffer.trim()) {
-                    this.handlePlayer1Scan(player1ScanBuffer.trim());
-                }
-                player1ScanBuffer = '';
-            }, 100);
-        });
-
-        // Also listen for Enter key (most barcode scanners send Enter after scan)
-        this.player1BarcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (player1ScanTimeout) {
-                    clearTimeout(player1ScanTimeout);
-                }
-                if (player1ScanBuffer.trim()) {
-                    this.handlePlayer1Scan(player1ScanBuffer.trim());
-                }
-                player1ScanBuffer = '';
-            }
-        });
-
-        // Player 2 barcode input - use buffer approach for better barcode scanner support
-        let player2ScanBuffer = '';
-        let player2ScanTimeout;
-
-        this.player2BarcodeInput.addEventListener('input', (e) => {
-            clearTimeout(player2ScanTimeout);
-            player2ScanBuffer += e.target.value;
-            e.target.value = '';
-
-            player2ScanTimeout = setTimeout(() => {
-                if (player2ScanBuffer.trim()) {
-                    this.handlePlayer2Scan(player2ScanBuffer.trim());
-                }
-                player2ScanBuffer = '';
-            }, 100);
-        });
-
-        // Also listen for Enter key for player 2
-        this.player2BarcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (player2ScanTimeout) {
-                    clearTimeout(player2ScanTimeout);
-                }
-                if (player2ScanBuffer.trim()) {
-                    this.handlePlayer2Scan(player2ScanBuffer.trim());
-                }
-                player2ScanBuffer = '';
-            }
-        });
-
         // Scanner buttons
         this.startPlayer1ScanBtn.addEventListener('click', () => this.togglePlayer1Scanner());
         this.startPlayer2ScanBtn.addEventListener('click', () => this.togglePlayer2Scanner());
@@ -235,38 +174,9 @@ class TicTacToeGame {
         }
     }
 
-    /**
-     * Decode barcode scanner keyboard layout issues
-     * Some barcode scanners send JSON with wrong keyboard mapping
-     */
-    decodeBarcodeInput(input) {
-        // Map Norwegian keyboard chars back to JSON chars
-        const charMap = {
-            'Å': '{',
-            'Æ': '"',
-            'Ø': ':',
-            '^': '}',
-            '¨': '[',
-            '\'': ']',
-            '§': ','
-        };
-
-        // Try to detect if this is garbled JSON
-        if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
-            let decoded = input;
-            for (const [garbled, correct] of Object.entries(charMap)) {
-                decoded = decoded.split(garbled).join(correct);
-            }
-            return decoded;
-        }
-
-        // Also replace + with - for participant codes (SK+2026+004 → SK-2026-004)
-        return input.replace(/\+/g, '-');
-    }
-
     async handlePlayer1Scan(qrData) {
         // Decode potential keyboard layout issues
-        const decodedData = this.decodeBarcodeInput(qrData);
+        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
         let participantCode;
 
         try {
@@ -323,7 +233,7 @@ class TicTacToeGame {
 
     async handlePlayer2Scan(qrData) {
         // Decode potential keyboard layout issues
-        const decodedData = this.decodeBarcodeInput(qrData);
+        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
         let participantCode;
 
         try {
@@ -388,19 +298,21 @@ class TicTacToeGame {
         this.player1Name.textContent = player1.name;
         this.player1Team.textContent = player1.team || 'Ikke tildelt lag';
 
-        // Focus on player 2 barcode input for scanning
-        setTimeout(() => {
-            this.player2BarcodeInput.focus();
-        }, 100);
+        // Switch global barcode scanner to Player 2
+        globalBarcodeScanner.deactivate();
+        globalBarcodeScanner.activate((qrData) => this.handlePlayer2Scan(qrData));
     }
 
     startGame(gameData) {
+        // Deactivate global barcode scanner (game is starting)
+        globalBarcodeScanner.deactivate();
+
         this.hideView(this.player2ScanView);
         this.showView(this.gameView);
 
         // Store player info
-        this.player1Name = gameData.player1.name;
-        this.player2Name = gameData.player2.name;
+        this.player1NameStr = gameData.player1.name;
+        this.player2NameStr = gameData.player2.name;
         this.player1Code = gameData.player1.code;
         this.player2Code = gameData.player2.code;
 
@@ -436,7 +348,7 @@ class TicTacToeGame {
         });
 
         // Update turn indicator - show whose turn it is
-        const currentPlayerName = gameData.current_turn === 1 ? this.player1Name : this.player2Name;
+        const currentPlayerName = gameData.current_turn === 1 ? this.player1NameStr : this.player2NameStr;
         const currentPlayerSymbol = gameData.current_turn === 1 ? 'X' : 'O';
 
         this.turnIndicator.textContent = `🎯 ${currentPlayerName} sin tur (${currentPlayerSymbol})`;
@@ -590,8 +502,8 @@ class TicTacToeGame {
         this.gameState = null;
         this.myPlayerNumber = null;
         this.myParticipantCode = null;
-        this.player1Name = null;
-        this.player2Name = null;
+        this.player1NameStr = null;
+        this.player2NameStr = null;
         this.player1Code = null;
         this.player2Code = null;
 
@@ -601,8 +513,6 @@ class TicTacToeGame {
         this.hideView(this.resultView);
         this.showView(this.player1ScanView);
 
-        this.player1BarcodeInput.value = '';
-        this.player2BarcodeInput.value = '';
         this.player1ScanFeedback.classList.add('hidden');
         this.player2ScanFeedback.classList.add('hidden');
 
@@ -613,10 +523,9 @@ class TicTacToeGame {
             cell.disabled = false;
         });
 
-        // Set focus to player 1 barcode input so scanner works immediately
-        setTimeout(() => {
-            this.player1BarcodeInput.focus();
-        }, 100);
+        // Reactivate global barcode scanner for Player 1
+        globalBarcodeScanner.deactivate();
+        globalBarcodeScanner.activate((qrData) => this.handlePlayer1Scan(qrData));
     }
 
     showPlayer1ScanFeedback(message, type) {

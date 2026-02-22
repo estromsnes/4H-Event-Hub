@@ -51,70 +51,8 @@ class ScavengerHunt {
         this.newHuntBtn = document.getElementById('newHuntBtn');
 
         // Event listeners
-        // Participant barcode input - use buffer approach for better barcode scanner support
-        let participantScanBuffer = '';
-        let participantScanTimeout;
-
-        this.participantBarcodeInput.addEventListener('input', (e) => {
-            clearTimeout(participantScanTimeout);
-            participantScanBuffer += e.target.value;
-            e.target.value = '';
-
-            participantScanTimeout = setTimeout(() => {
-                if (participantScanBuffer.trim()) {
-                    this.handleParticipantScan(participantScanBuffer.trim());
-                }
-                participantScanBuffer = '';
-            }, 100);
-        });
-
-        // Also listen for Enter key (most barcode scanners send Enter after scan)
-        this.participantBarcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (participantScanTimeout) {
-                    clearTimeout(participantScanTimeout);
-                }
-                if (participantScanBuffer.trim()) {
-                    this.handleParticipantScan(participantScanBuffer.trim());
-                }
-                participantScanBuffer = '';
-            }
-        });
-
         this.startParticipantScanBtn.addEventListener('click', () => this.toggleParticipantScanner());
         this.participantQrFileInput.addEventListener('change', (e) => this.handleParticipantFileUpload(e));
-
-        // Checkpoint barcode input - use buffer approach for better barcode scanner support
-        let checkpointScanBuffer = '';
-        let checkpointScanTimeout;
-
-        this.barcodeInput.addEventListener('input', (e) => {
-            clearTimeout(checkpointScanTimeout);
-            checkpointScanBuffer += e.target.value;
-            e.target.value = '';
-
-            checkpointScanTimeout = setTimeout(() => {
-                if (checkpointScanBuffer.trim()) {
-                    this.handleScan(checkpointScanBuffer.trim());
-                }
-                checkpointScanBuffer = '';
-            }, 100);
-        });
-
-        // Also listen for Enter key for checkpoint scanning
-        this.barcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (checkpointScanTimeout) {
-                    clearTimeout(checkpointScanTimeout);
-                }
-                if (checkpointScanBuffer.trim()) {
-                    this.handleScan(checkpointScanBuffer.trim());
-                }
-                checkpointScanBuffer = '';
-            }
-        });
 
         this.startCheckpointScanBtn.addEventListener('click', () => this.toggleCheckpointScanner());
         this.checkpointQrFileInput.addEventListener('change', (e) => this.handleCheckpointFileUpload(e));
@@ -228,10 +166,8 @@ class ScavengerHunt {
             this.hideView(this.loadingView);
             this.showView(this.participantScanView);
 
-            // Focus on participant barcode input for scanning
-            setTimeout(() => {
-                this.participantBarcodeInput.focus();
-            }, 100);
+            // Activate global barcode scanner for participant scanning
+            globalBarcodeScanner.activate((qrData) => this.handleParticipantScan(qrData));
         } catch (err) {
             console.error('Initialization error:', err);
             alert('Kunne ikke laste data. Prøv igjen.');
@@ -247,38 +183,10 @@ class ScavengerHunt {
         this.checkpoints = await response.json();
     }
 
-    /**
-     * Decode barcode scanner keyboard layout issues
-     * Some barcode scanners send JSON with wrong keyboard mapping
-     */
-    decodeBarcodeInput(input) {
-        // Map Norwegian keyboard chars back to JSON chars
-        const charMap = {
-            'Å': '{',
-            'Æ': '"',
-            'Ø': ':',
-            '^': '}',
-            '¨': '[',
-            '\'': ']',
-            '§': ','
-        };
-
-        // Try to detect if this is garbled JSON
-        if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
-            let decoded = input;
-            for (const [garbled, correct] of Object.entries(charMap)) {
-                decoded = decoded.split(garbled).join(correct);
-            }
-            return decoded;
-        }
-
-        // Also replace + with - for participant codes (SK+2026+004 → SK-2026-004)
-        return input.replace(/\+/g, '-');
-    }
 
     async handleParticipantScan(qrData) {
         // Decode potential keyboard layout issues
-        const decodedData = this.decodeBarcodeInput(qrData);
+        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
         let participantCode;
 
         try {
@@ -358,6 +266,9 @@ class ScavengerHunt {
                 this.isParticipantScannerActive = false;
             }
 
+            // Deactivate participant scanner and activate checkpoint scanner
+            globalBarcodeScanner.deactivate();
+
             const response = await fetch('/api/scavenger/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -382,6 +293,9 @@ class ScavengerHunt {
             this.hideView(this.participantScanView);
             this.showView(this.huntView);
             this.updateHuntView();
+
+            // Activate global barcode scanner for checkpoint scanning
+            globalBarcodeScanner.activate((qrData) => this.handleScan(qrData));
 
         } catch (err) {
             console.error('Error starting hunt:', err);
@@ -430,7 +344,7 @@ class ScavengerHunt {
 
     async handleScan(qrData) {
         // Decode potential keyboard layout issues
-        const decodedData = this.decodeBarcodeInput(qrData);
+        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
         let qrCode;
 
         try {
@@ -507,6 +421,9 @@ class ScavengerHunt {
     }
 
     async showCompletion() {
+        // Deactivate global barcode scanner
+        globalBarcodeScanner.deactivate();
+
         // Stop checkpoint scanner if active
         if (this.isCheckpointScannerActive) {
             await this.checkpointScanner.stop();
@@ -628,16 +545,12 @@ class ScavengerHunt {
         this.hideView(this.completionView);
         this.showView(this.participantScanView);
 
-        this.participantBarcodeInput.value = '';
         this.participantScanFeedback.classList.add('hidden');
-        this.barcodeInput.value = '';
         this.scanFeedback.classList.add('hidden');
         this.foundCheckpoints.classList.add('hidden');
 
-        // Focus on participant barcode input for scanning
-        setTimeout(() => {
-            this.participantBarcodeInput.focus();
-        }, 100);
+        // Activate global barcode scanner for participant scanning
+        globalBarcodeScanner.activate((qrData) => this.handleParticipantScan(qrData));
     }
 
     showView(element) {

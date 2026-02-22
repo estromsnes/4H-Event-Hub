@@ -35,24 +35,6 @@ class TeamChallengeManager {
     }
 
     initScanner() {
-        // Barcode scanner (keyboard emulation)
-        const barcodeInput = document.getElementById('barcodeInput');
-        let scanBuffer = '';
-        let scanTimeout;
-
-        barcodeInput.addEventListener('input', (e) => {
-            clearTimeout(scanTimeout);
-            scanBuffer += e.target.value;
-            e.target.value = '';
-
-            scanTimeout = setTimeout(() => {
-                if (scanBuffer.trim()) {
-                    this.handleScan(scanBuffer.trim());
-                }
-                scanBuffer = '';
-            }, 100);
-        });
-
         // Camera scanner
         this.scanner = new QRScanner();
         this.scanner.init(
@@ -101,44 +83,18 @@ class TeamChallengeManager {
 
         this.showView('scanner');
         this.isScanning = true;
-        document.getElementById('barcodeInput').focus();
+
+        // Activate global barcode scanner
+        globalBarcodeScanner.activate((qrData) => this.handleScan(qrData));
     }
 
-    /**
-     * Decode barcode scanner keyboard layout issues
-     * Some barcode scanners send JSON with wrong keyboard mapping
-     */
-    decodeBarcodeInput(input) {
-        // Map Norwegian keyboard chars back to JSON chars
-        const charMap = {
-            'Å': '{',
-            'Æ': '"',
-            'Ø': ':',
-            '^': '}',
-            '¨': '[',
-            '\'': ']',
-            '§': ','
-        };
-
-        // Try to detect if this is garbled JSON
-        if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
-            let decoded = input;
-            for (const [garbled, correct] of Object.entries(charMap)) {
-                decoded = decoded.split(garbled).join(correct);
-            }
-            return decoded;
-        }
-
-        // Also replace + with - for participant codes (SK+2026+004 → SK-2026-004)
-        return input.replace(/\+/g, '-');
-    }
 
     async handleScan(participantCode) {
         if (!this.isScanning) return;
 
         try {
             // Decode potential keyboard layout issues
-            const decodedInput = this.decodeBarcodeInput(participantCode);
+            const decodedInput = GlobalBarcodeScanner.decodeBarcodeInput(participantCode);
 
             // Parse QR code if JSON format
             let code = decodedInput;
@@ -318,6 +274,9 @@ class TeamChallengeManager {
         this.stopTimer();
         this.isScanning = false;
 
+        // Deactivate global barcode scanner
+        globalBarcodeScanner.deactivate();
+
         // Stop the scanner
         if (this.scanner && this.scanner.isScanning) {
             this.scanner.stop();
@@ -361,6 +320,9 @@ class TeamChallengeManager {
     onChallengeTimeout(scannedCount = 0, requiredCount = 0) {
         this.stopTimer();
         this.isScanning = false;
+
+        // Deactivate global barcode scanner
+        globalBarcodeScanner.deactivate();
 
         // Stop the scanner
         if (this.scanner && this.scanner.isScanning) {
@@ -644,6 +606,9 @@ class TeamChallengeManager {
         this.teamName = null;
         this.stopTimer();
         this.isScanning = false;
+
+        // Deactivate global barcode scanner
+        globalBarcodeScanner.deactivate();
 
         // Stop scanner if running
         if (this.scanner && this.scanner.isScanning) {

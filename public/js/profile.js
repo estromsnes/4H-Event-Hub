@@ -9,7 +9,6 @@ let camera = null;
 // DOM Elements
 const scannerView = document.getElementById('scannerView');
 const profileView = document.getElementById('profileView');
-const barcodeInput = document.getElementById('barcodeInput');
 const startScanBtn = document.getElementById('startScanBtn');
 const qrFileInput = document.getElementById('qrFileInput');
 const scanStatus = document.getElementById('scanStatus');
@@ -19,14 +18,10 @@ const profilePhoto = document.getElementById('profilePhoto');
 const photoPlaceholder = document.getElementById('photoPlaceholder');
 const profileName = document.getElementById('profileName');
 const profileAge = document.getElementById('profileAge');
-const profileLocation = document.getElementById('profileLocation');
 const profileClub = document.getElementById('profileClub');
-const profileClubRow = document.getElementById('profileClubRow');
 const profileRole = document.getElementById('profileRole');
-const profileRoleRow = document.getElementById('profileRoleRow');
 const profileTeam = document.getElementById('profileTeam');
 const profileTeamRow = document.getElementById('profileTeamRow');
-const profileCode = document.getElementById('profileCode');
 
 const takeSelfieBtn = document.getElementById('takeSelfieBtn');
 const cameraModal = document.getElementById('cameraModal');
@@ -91,8 +86,8 @@ function initApp() {
     retakeBtn.addEventListener('click', retakePhoto);
     uploadBtn.addEventListener('click', uploadPhoto);
 
-    // Keyboard/barcode scanner input handling
-    setupBarcodeScanner();
+    // Activate global barcode scanner
+    globalBarcodeScanner.activate((qrData) => onScanSuccess(qrData));
 
     console.log('App initialized successfully');
 }
@@ -166,126 +161,6 @@ function formatDate(dateStr) {
     return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' });
 }
 
-// Barcode scanner (keyboard emulation) handling
-function setupBarcodeScanner() {
-    let scanBuffer = '';
-    let scanTimeout = null;
-
-    // Listen for keyboard input
-    barcodeInput.addEventListener('input', (e) => {
-        const value = e.target.value;
-        scanBuffer += value;
-        barcodeInput.value = ''; // Clear input immediately
-
-        // Clear existing timeout
-        if (scanTimeout) {
-            clearTimeout(scanTimeout);
-        }
-
-        // Set timeout to process scan (barcode scanners are fast, < 100ms between chars)
-        scanTimeout = setTimeout(() => {
-            processBarcodeInput(scanBuffer.trim());
-            scanBuffer = '';
-        }, 100);
-    });
-
-    // Also listen for Enter key (most barcode scanners send Enter after scan)
-    barcodeInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            if (scanTimeout) {
-                clearTimeout(scanTimeout);
-            }
-            processBarcodeInput(scanBuffer.trim());
-            scanBuffer = '';
-        }
-    });
-
-    // Keep focus on input when clicking anywhere in scanner view
-    scannerView.addEventListener('click', (e) => {
-        // Don't steal focus if clicking the camera button
-        if (e.target !== startScanBtn && !startScanBtn.contains(e.target)) {
-            barcodeInput.focus();
-        }
-    });
-
-    // Ensure input stays focused
-    barcodeInput.addEventListener('blur', () => {
-        // Re-focus after short delay if we're still in scanner view
-        setTimeout(() => {
-            if (!profileView.classList.contains('hidden') && !scannerView.classList.contains('hidden')) {
-                return; // Don't refocus if we've navigated away
-            }
-            if (scannerView.classList.contains('hidden')) {
-                return; // Don't refocus if scanner view is hidden
-            }
-            barcodeInput.focus();
-        }, 100);
-    });
-
-    console.log('Barcode scanner keyboard handler initialized');
-}
-
-/**
- * Decode barcode scanner keyboard layout issues
- * Some barcode scanners send JSON with wrong keyboard mapping
- */
-function decodeBarcodeInput(input) {
-    // Map Norwegian keyboard chars back to JSON chars
-    const charMap = {
-        'Å': '{',
-        'Æ': '"',
-        'Ø': ':',
-        '^': '}',
-        '¨': '[',
-        '\'': ']',
-        '§': ','
-    };
-
-    // Try to detect if this is garbled JSON
-    if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
-        let decoded = input;
-        for (const [garbled, correct] of Object.entries(charMap)) {
-            decoded = decoded.split(garbled).join(correct);
-        }
-        return decoded;
-    }
-
-    // Also replace + with - for participant codes (SK+2026+004 → SK-2026-004)
-    return input.replace(/\+/g, '-');
-}
-
-// Process barcode scanner input
-function processBarcodeInput(input) {
-    if (!input) return;
-
-    console.log('Barcode scanner input:', input);
-
-    // Decode potential keyboard layout issues
-    const decodedInput = decodeBarcodeInput(input);
-
-    try {
-        // Try to parse as JSON first (QR codes generated by our app)
-        const data = JSON.parse(decodedInput);
-        if (data.type === 'participant' && data.code) {
-            onScanSuccess(data.code);
-            return;
-        }
-    } catch (e) {
-        // Not JSON, might be direct participant code
-    }
-
-    // Check if input looks like a participant code (e.g. SK-2026-001 or sk-2026-001)
-    const participantCodePattern = /^[A-Za-z]+-\d{4}-\d{3}$/i;
-    if (participantCodePattern.test(decodedInput)) {
-        onScanSuccess(decodedInput);
-        return;
-    }
-
-    // Otherwise show error
-    showStatus('Ugyldig QR-kode format: ' + decodedInput, 'error');
-    console.warn('Invalid barcode format:', decodedInput);
-}
 
 // Scanner functions
 async function startScanning() {
@@ -318,7 +193,7 @@ async function onScanSuccess(qrData) {
     console.log('QR Code scanned:', qrData);
 
     // Decode potential keyboard layout issues
-    const decodedData = decodeBarcodeInput(qrData);
+    const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
     let participantCode;
 
     try {
@@ -391,10 +266,8 @@ function showScannerView() {
     startScanBtn.textContent = '📷 Start Kamera-Skanning';
     scanStatus.classList.add('hidden');
 
-    // Re-focus on barcode input for keyboard scanner
-    setTimeout(() => {
-        barcodeInput.focus();
-    }, 100);
+    // Activate global barcode scanner
+    globalBarcodeScanner.activate((qrData) => onScanSuccess(qrData));
 }
 
 function showProfileView() {
@@ -403,23 +276,8 @@ function showProfileView() {
     // Update profile information
     profileName.textContent = `${currentParticipant.first_name} ${currentParticipant.last_name}`;
     profileAge.textContent = currentParticipant.age || '-';
-    profileLocation.textContent = currentParticipant.home_location || '-';
-    profileCode.textContent = currentParticipant.participant_code;
-
-    // Update optional fields (club, role, team)
-    if (currentParticipant.club) {
-        profileClub.textContent = currentParticipant.club;
-        profileClubRow.classList.remove('hidden');
-    } else {
-        profileClubRow.classList.add('hidden');
-    }
-
-    if (currentParticipant.role) {
-        profileRole.textContent = currentParticipant.role;
-        profileRoleRow.classList.remove('hidden');
-    } else {
-        profileRoleRow.classList.add('hidden');
-    }
+    profileClub.textContent = currentParticipant.club || '-';
+    profileRole.textContent = currentParticipant.role || '-';
 
     if (currentParticipant.team) {
         profileTeam.textContent = currentParticipant.team;
@@ -447,6 +305,9 @@ function showProfileView() {
 
     // Load and show courses
     loadCourses(currentParticipant.participant_code);
+
+    // Deactivate global barcode scanner
+    globalBarcodeScanner.deactivate();
 
     // Switch views
     scannerView.classList.add('hidden');

@@ -31,22 +31,7 @@
             <div class="team-selector">
                 <h1>👤</h1>
                 <h2>Skann din QR-kode</h2>
-                <p style="color: var(--text-light); margin-bottom: 30px;">Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
-
-                <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                    <input type="text" id="barcodeInput" class="barcode-input"
-                           autocomplete="off" autofocus placeholder="Skann QR-kode..."
-                           style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px;">
-
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
-                        <span style="font-size: 24px;">⌨️</span>
-                        <span style="color: var(--text-light);">Strekkodeskanner klar</span>
-                    </div>
-                </div>
-
-                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
-                    eller
-                </div>
+                <p style="color: var(--text-light); margin-bottom: 30px;">Hold QR-koden foran kameraet eller bruk strekkodeskanneren</p>
 
                 <div id="qr-reader" style="margin-bottom: 20px;"></div>
 
@@ -77,6 +62,9 @@
                     <span class="placeholder-icon">👤</span>
                     <p>Ingen selfie ennå</p>
                 </div>
+                <button id="takeSelfieBtn" class="button primary selfie-button">
+                    📸 Ta Selfie
+                </button>
             </div>
 
             <!-- Profile Info -->
@@ -84,20 +72,14 @@
                 <h1 id="profileName" class="profile-name">-</h1>
                 <div class="profile-details">
                     <p><strong>Alder:</strong> <span id="profileAge">-</span> år</p>
-                    <p><strong>Hjemsted:</strong> <span id="profileLocation">-</span></p>
-                    <p id="profileClubRow" class="hidden"><strong>Klubb:</strong> <span id="profileClub">-</span></p>
-                    <p id="profileRoleRow" class="hidden"><strong>Rolle:</strong> <span id="profileRole">-</span></p>
+                    <p><strong>Klubb:</strong> <span id="profileClub">-</span></p>
+                    <p><strong>Rolle:</strong> <span id="profileRole">-</span></p>
                     <p id="profileTeamRow" class="hidden"><strong>Lag:</strong> <span id="profileTeam">-</span></p>
-                    <p><strong>Kode:</strong> <span id="profileCode">-</span></p>
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="action-buttons">
-                <button id="takeSelfieBtn" class="button primary large-button">
-                    📸 Ta Selfie
-                </button>
-
                 <button id="scanAgainBtn" class="button secondary large-button">
                     🔄 Skann Ny Kode
                 </button>
@@ -154,6 +136,7 @@
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <!-- Include our JavaScript modules -->
+    <script src="/js/barcode-scanner-global.js"></script>
     <script src="/js/scanner.js"></script>
     <script src="/js/camera.js"></script>
     <script src="/js/qr-upload-visibility.js"></script>

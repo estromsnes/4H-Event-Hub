@@ -176,13 +176,16 @@
 .profile-photo-container {
     position: relative;
     width: 250px;
-    height: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
 }
 
 .profile-photo,
 .photo-placeholder {
-    width: 100%;
-    height: 100%;
+    width: 250px;
+    height: 250px;
     border-radius: 50%;
     object-fit: cover;
     border: 5px solid var(--primary-color);
@@ -201,6 +204,14 @@
 .placeholder-icon {
     font-size: 80px;
     margin-bottom: 10px;
+}
+
+.selfie-button {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .photo-placeholder p {
@@ -349,6 +360,11 @@
 
     .profile-photo-container {
         width: 200px;
+    }
+
+    .profile-photo,
+    .photo-placeholder {
+        width: 200px;
         height: 200px;
     }
 
@@ -369,6 +385,11 @@
     }
 
     .profile-photo-container {
+        width: 180px;
+    }
+
+    .profile-photo,
+    .photo-placeholder {
         width: 180px;
         height: 180px;
     }
@@ -415,8 +436,20 @@
 
 .team-members-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px;
+}
+
+@media (max-width: 900px) {
+    .team-members-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .team-members-list {
+        grid-template-columns: 1fr;
+    }
 }
 
 .team-member-card {
@@ -521,6 +554,7 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     border-left: 5px solid var(--primary-color);
+    overflow: hidden;
 }
 
 .course-card:hover {
@@ -540,6 +574,8 @@
     color: var(--primary-dark);
     margin-bottom: 8px;
     text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .course-description {
@@ -548,16 +584,22 @@
     margin-bottom: 12px;
     text-align: center;
     line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .course-details {
     font-size: 14px;
     color: var(--text);
     line-height: 1.6;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .course-details p {
     margin: 5px 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .course-instructor {

@@ -14,7 +14,6 @@
     // DOM Elements
     const scannerView = document.getElementById('scannerView');
     const challengesView = document.getElementById('challengesView');
-    const barcodeInput = document.getElementById('barcodeInput');
     const qrFileInput = document.getElementById('qrFileInput');
     const startScanBtn = document.getElementById('startScanBtn');
     const scanStatus = document.getElementById('scanStatus');
@@ -40,42 +39,12 @@
     // Initialize
     function init() {
         setupEventListeners();
-        barcodeInput.focus();
+        // Activate global barcode scanner
+        globalBarcodeScanner.activate((qrData) => lookupParticipant(qrData));
     }
 
     // Event Listeners
     function setupEventListeners() {
-        // Barcode scanner input - use buffer approach for better barcode scanner support
-        let scanBuffer = '';
-        let scanTimeout;
-
-        barcodeInput.addEventListener('input', (e) => {
-            clearTimeout(scanTimeout);
-            scanBuffer += e.target.value;
-            e.target.value = '';
-
-            scanTimeout = setTimeout(() => {
-                if (scanBuffer.trim()) {
-                    lookupParticipant(scanBuffer.trim());
-                }
-                scanBuffer = '';
-            }, 100);
-        });
-
-        // Also listen for Enter key (most barcode scanners send Enter after scan)
-        barcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (scanTimeout) {
-                    clearTimeout(scanTimeout);
-                }
-                if (scanBuffer.trim()) {
-                    lookupParticipant(scanBuffer.trim());
-                }
-                scanBuffer = '';
-            }
-        });
-
         // QR Code scanner
         startScanBtn.addEventListener('click', startQRScanner);
         qrFileInput.addEventListener('change', handleQRFileUpload);
@@ -154,38 +123,12 @@
             });
     }
 
-    // Decode barcode input from Norwegian keyboard layout
-    function decodeBarcodeInput(input) {
-        // Map Norwegian keyboard chars back to JSON chars
-        const charMap = {
-            'Å': '{',
-            'Æ': '"',
-            'Ø': ':',
-            '^': '}',
-            '¨': '[',
-            '\'': ']',
-            '§': ','
-        };
-
-        // Try to detect if this is garbled JSON
-        if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
-            let decoded = input;
-            for (const [garbled, correct] of Object.entries(charMap)) {
-                decoded = decoded.split(garbled).join(correct);
-            }
-            return decoded;
-        }
-
-        // Also replace + with - for participant codes (SK+2026+004 → SK-2026-004)
-        return input.replace(/\+/g, '-');
-    }
-
     // Lookup Participant
     async function lookupParticipant(qrData) {
         showStatus('info', 'Søker etter deltaker...');
 
         // Decode barcode input (fixes Norwegian keyboard layout issues)
-        const decodedData = decodeBarcodeInput(qrData);
+        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
 
         // Parse QR code - try JSON first
         let participantCode;
@@ -261,6 +204,9 @@
 
     // Show Challenges View
     function showChallengesView() {
+        // Deactivate global barcode scanner (moving to challenges view)
+        globalBarcodeScanner.deactivate();
+
         scannerView.classList.add('hidden');
         challengesView.classList.remove('hidden');
 

@@ -268,7 +268,6 @@
     <header class="event-header">
         <img id="eventLogo" class="event-logo hidden" alt="Event logo">
         <h1 class="event-title">⭕ Tripp-Trapp-Tresko</h1>
-        <p class="event-subtitle" id="eventSubtitle">Laster...</p>
     </header>
 
     <div class="ttt-container" id="app">
@@ -280,19 +279,6 @@
                 <p style="text-align: center; color: var(--text-light); margin-bottom: 30px;">
                     Start et nytt spill ved å skanne din deltaker-QR
                 </p>
-
-                <input type="text" id="player1BarcodeInput" class="barcode-input"
-                       autocomplete="off" autofocus placeholder="Skann QR-kode..."
-                       style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px;">
-
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
-                    <span style="font-size: 24px;">⌨️</span>
-                    <span style="color: var(--text-light);">Strekkodeskanner klar</span>
-                </div>
-
-                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
-                    eller
-                </div>
 
                 <div id="player1QrReader" style="margin-bottom: 15px;"></div>
 
@@ -324,19 +310,6 @@
                 <p style="text-align: center; color: var(--text-light); margin-bottom: 30px;">
                     Bli med i spillet og utfordr spiller 1!
                 </p>
-
-                <input type="text" id="player2BarcodeInput" class="barcode-input"
-                       autocomplete="off" autofocus placeholder="Skann QR-kode..."
-                       style="width: 100%; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px;">
-
-                <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; padding: 15px; background: var(--background); border-radius: 10px;">
-                    <span style="font-size: 24px;">⌨️</span>
-                    <span style="color: var(--text-light);">Strekkodeskanner klar</span>
-                </div>
-
-                <div style="text-align: center; margin: 20px 0; color: var(--text-light); font-weight: bold;">
-                    eller
-                </div>
 
                 <div id="player2QrReader" style="margin-bottom: 15px;"></div>
 
@@ -428,6 +401,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="/js/barcode-scanner-global.js"></script>
     <script src="/js/scanner.js"></script>
     <script src="/js/qr-upload-visibility.js"></script>
     <script src="/js/tic-tac-toe.js"></script>

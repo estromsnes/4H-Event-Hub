@@ -17,6 +17,9 @@ class QuizManager {
         this.initScanners();
         this.initEventListeners();
         this.loadEventSettings();
+
+        // Activate global barcode scanner on initial load
+        globalBarcodeScanner.activate((qrData) => this.handleParticipantScan(qrData));
     }
 
     initElements() {
@@ -27,7 +30,6 @@ class QuizManager {
         this.resultsView = document.getElementById('resultsView');
 
         // Participant scan
-        this.participantBarcodeInput = document.getElementById('participantBarcodeInput');
         this.participantQrReader = document.getElementById('participantQrReader');
         this.startParticipantScanBtn = document.getElementById('startParticipantScanBtn');
         this.participantQrFileInput = document.getElementById('participantQrFileInput');
@@ -101,37 +103,6 @@ class QuizManager {
     }
 
     initEventListeners() {
-        // Participant barcode input - use buffer approach for better barcode scanner support
-        let scanBuffer = '';
-        let scanTimeout;
-
-        this.participantBarcodeInput.addEventListener('input', (e) => {
-            clearTimeout(scanTimeout);
-            scanBuffer += e.target.value;
-            e.target.value = '';
-
-            scanTimeout = setTimeout(() => {
-                if (scanBuffer.trim()) {
-                    this.handleParticipantScan(scanBuffer.trim());
-                }
-                scanBuffer = '';
-            }, 100);
-        });
-
-        // Also listen for Enter key (most barcode scanners send Enter after scan)
-        this.participantBarcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (scanTimeout) {
-                    clearTimeout(scanTimeout);
-                }
-                if (scanBuffer.trim()) {
-                    this.handleParticipantScan(scanBuffer.trim());
-                }
-                scanBuffer = '';
-            }
-        });
-
         // Scanner button
         this.startParticipantScanBtn.addEventListener('click', () => this.toggleParticipantScanner());
 
@@ -171,32 +142,6 @@ class QuizManager {
         if (this.closeLeaderboardBtn) {
             this.closeLeaderboardBtn.addEventListener('click', () => this.closeLeaderboard());
         }
-    }
-
-    /**
-     * Decode barcode scanner keyboard layout issues
-     */
-    decodeBarcodeInput(input) {
-        const charMap = {
-            'Å': '{',
-            'Æ': '"',
-            'Ø': ':',
-            '^': '}',
-            '¨': '[',
-            '\'': ']',
-            '§': ','
-        };
-
-        if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
-            let decoded = input;
-            for (const [garbled, correct] of Object.entries(charMap)) {
-                decoded = decoded.split(garbled).join(correct);
-            }
-            return decoded;
-        }
-
-        // Replace + with - for participant codes
-        return input.replace(/\+/g, '-');
     }
 
     async toggleParticipantScanner() {
@@ -257,7 +202,7 @@ class QuizManager {
 
     async handleParticipantScan(qrData) {
         console.log('Raw QR data:', qrData);
-        const decodedData = this.decodeBarcodeInput(qrData);
+        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
         console.log('Decoded data:', decodedData);
         let participantCode;
 
@@ -390,6 +335,9 @@ class QuizManager {
     }
 
     async startQuiz() {
+        // Deactivate global barcode scanner
+        globalBarcodeScanner.deactivate();
+
         this.hideView(this.participantScanView);
         this.showView(this.questionView);
         this.teamNameEl.textContent = this.teamName;
@@ -782,13 +730,10 @@ class QuizManager {
         this.hideView(this.resultsView);
         this.showView(this.participantScanView);
 
-        this.participantBarcodeInput.value = '';
         this.participantScanFeedback.classList.add('hidden');
 
-        // Focus on participant barcode input for scanning
-        setTimeout(() => {
-            this.participantBarcodeInput.focus();
-        }, 100);
+        // Activate global barcode scanner
+        globalBarcodeScanner.activate((qrData) => this.handleParticipantScan(qrData));
     }
 
     showView(element) {
