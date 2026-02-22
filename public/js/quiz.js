@@ -83,12 +83,21 @@ class QuizManager {
     }
 
     initEventListeners() {
-        // Participant barcode input
-        this.participantBarcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.handleParticipantScan(e.target.value);
-                e.target.value = '';
-            }
+        // Participant barcode input - use buffer approach for better barcode scanner support
+        let scanBuffer = '';
+        let scanTimeout;
+
+        this.participantBarcodeInput.addEventListener('input', (e) => {
+            clearTimeout(scanTimeout);
+            scanBuffer += e.target.value;
+            e.target.value = '';
+
+            scanTimeout = setTimeout(() => {
+                if (scanBuffer.trim()) {
+                    this.handleParticipantScan(scanBuffer.trim());
+                }
+                scanBuffer = '';
+            }, 100);
         });
 
         // Scanner button

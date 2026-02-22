@@ -57,20 +57,40 @@ class ScavengerHunt {
         this.closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
 
         // Event listeners
-        this.participantBarcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.handleParticipantScan(e.target.value);
-                e.target.value = '';
-            }
+        // Participant barcode input - use buffer approach for better barcode scanner support
+        let participantScanBuffer = '';
+        let participantScanTimeout;
+
+        this.participantBarcodeInput.addEventListener('input', (e) => {
+            clearTimeout(participantScanTimeout);
+            participantScanBuffer += e.target.value;
+            e.target.value = '';
+
+            participantScanTimeout = setTimeout(() => {
+                if (participantScanBuffer.trim()) {
+                    this.handleParticipantScan(participantScanBuffer.trim());
+                }
+                participantScanBuffer = '';
+            }, 100);
         });
         this.startParticipantScanBtn.addEventListener('click', () => this.toggleParticipantScanner());
         this.participantQrFileInput.addEventListener('change', (e) => this.handleParticipantFileUpload(e));
 
-        this.barcodeInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.handleScan(e.target.value);
-                e.target.value = '';
-            }
+        // Checkpoint barcode input - use buffer approach for better barcode scanner support
+        let checkpointScanBuffer = '';
+        let checkpointScanTimeout;
+
+        this.barcodeInput.addEventListener('input', (e) => {
+            clearTimeout(checkpointScanTimeout);
+            checkpointScanBuffer += e.target.value;
+            e.target.value = '';
+
+            checkpointScanTimeout = setTimeout(() => {
+                if (checkpointScanBuffer.trim()) {
+                    this.handleScan(checkpointScanBuffer.trim());
+                }
+                checkpointScanBuffer = '';
+            }, 100);
         });
         this.startCheckpointScanBtn.addEventListener('click', () => this.toggleCheckpointScanner());
         this.checkpointQrFileInput.addEventListener('change', (e) => this.handleCheckpointFileUpload(e));

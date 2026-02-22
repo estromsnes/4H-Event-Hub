@@ -106,15 +106,11 @@ router.post('/start', async (req, res) => {
             const scans = await getSessionScans(db, validSession.id);
             const teamMembers = await getTeamMembersWithStatus(db, teamName, scans);
 
-            const status = validSession.timer_start_time
-                ? (scans.length === 1 ? 'waiting_for_second' : 'in_progress')
-                : 'waiting_for_second';
-
             console.log(`[Team Challenge] Resuming existing valid session ${validSession.id}`);
             return res.json({
                 session_id: validSession.id,
                 team_name: teamName,
-                status: status,
+                status: 'in_progress',
                 scans_required: teamMembers.length,
                 scans_completed: scans.length,
                 time_limit_seconds: validSession.time_limit_seconds,
@@ -127,8 +123,8 @@ router.post('/start', async (req, res) => {
         const sessionId = await new Promise((resolve, reject) => {
             db.run(
                 `INSERT INTO team_challenge_sessions (
-                    team_name, started_by, session_start_time, time_limit_seconds
-                ) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), 120)`,
+                    team_name, started_by, session_start_time, timer_start_time, time_limit_seconds
+                ) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), 120)`,
                 [teamName, participant_code],
                 function(err) {
                     if (err) reject(err);
@@ -157,12 +153,12 @@ router.post('/start', async (req, res) => {
         res.status(201).json({
             session_id: sessionId,
             team_name: teamName,
-            status: 'waiting_for_second',
+            status: 'in_progress',
             scans_required: teamMembers.length,
             scans_completed: 1,
-            time_limit_seconds: 300,
+            time_limit_seconds: 120,
             team_members: teamMembers,
-            timer_started: false
+            timer_started: true
         });
 
     } catch (err) {
@@ -294,35 +290,6 @@ router.post('/scan', async (req, res) => {
                 }
             );
         });
-
-        // If this is scan #2, start the timer
-        if (scanOrder === 2 && !session.timer_start_time) {
-            await new Promise((resolve, reject) => {
-                db.run(
-                    `UPDATE team_challenge_sessions
-                     SET timer_start_time = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
-                     WHERE id = ?`,
-                    [session_id],
-                    (err) => {
-                        if (err) reject(err);
-                        else resolve();
-                    }
-                );
-            });
-
-            // Refresh session
-            const updatedSession = await new Promise((resolve, reject) => {
-                db.get(
-                    'SELECT * FROM team_challenge_sessions WHERE id = ?',
-                    [session_id],
-                    (err, row) => {
-                        if (err) reject(err);
-                        else resolve(row);
-                    }
-                );
-            });
-            session.timer_start_time = updatedSession.timer_start_time;
-        }
 
         // Get updated scans and team members
         const updatedScans = await getSessionScans(db, session_id);
