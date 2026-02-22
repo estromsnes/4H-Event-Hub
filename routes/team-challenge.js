@@ -50,8 +50,8 @@ router.post('/start', async (req, res) => {
             return res.status(400).json({ error: 'Du må være tildelt et lag for å delta i lagutfordringen' });
         }
 
-        if (participant.role !== 'Deltaker') {
-            return res.status(400).json({ error: 'Kun deltakere med rolle "Deltaker" kan delta i lagutfordringen' });
+        if (participant.role !== 'Deltaker' && participant.role !== 'Frivillig') {
+            return res.status(400).json({ error: 'Kun deltakere og frivillige kan delta i lagutfordringen' });
         }
 
         const teamName = participant.team;
@@ -225,8 +225,8 @@ router.post('/scan', async (req, res) => {
         }
 
         // Validate participant has "Deltaker" role
-        if (participant.role !== 'Deltaker') {
-            return res.status(400).json({ error: 'Kun deltakere med rolle "Deltaker" kan delta i lagutfordringen' });
+        if (participant.role !== 'Deltaker' && participant.role !== 'Frivillig') {
+            return res.status(400).json({ error: 'Kun deltakere og frivillige kan delta i lagutfordringen' });
         }
 
         // Check if already scanned (UNIQUE constraint will catch this too)

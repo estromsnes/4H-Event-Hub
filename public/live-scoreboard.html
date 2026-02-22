@@ -681,6 +681,34 @@
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
+        // Check URL hash to open specific tab
+        function initializeFromHash() {
+            const hash = window.location.hash.substring(1); // Remove the # character
+            const validTabs = ['team-challenge', 'photo-challenges', 'quiz', 'scavenger', 'tic-tac-toe'];
+
+            if (hash && validTabs.includes(hash)) {
+                // Update current tab
+                currentTab = hash;
+
+                // Update active tab button
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.getAttribute('data-tab') === hash) {
+                        btn.classList.add('active');
+                    }
+                });
+
+                // Update active tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(hash).classList.add('active');
+            }
+        }
+
+        // Initialize from URL hash
+        initializeFromHash();
+
         // Initial load
         loadScoreboard(currentTab);
 

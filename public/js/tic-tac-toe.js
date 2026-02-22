@@ -61,13 +61,6 @@ class TicTacToeGame {
         // Buttons
         this.cancelWaitBtn = document.getElementById('cancelWaitBtn');
         this.playAgainBtn = document.getElementById('playAgainBtn');
-        this.viewLeaderboardBtn1 = document.getElementById('viewLeaderboardBtn1');
-        this.viewLeaderboardBtn2 = document.getElementById('viewLeaderboardBtn2');
-
-        // Leaderboard
-        this.leaderboardModal = document.getElementById('leaderboardModal');
-        this.leaderboardContent = document.getElementById('leaderboardContent');
-        this.closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
 
         this.isPlayer1ScannerActive = false;
         this.isPlayer2ScannerActive = false;
@@ -172,9 +165,6 @@ class TicTacToeGame {
         // Buttons
         this.cancelWaitBtn.addEventListener('click', () => this.reset());
         this.playAgainBtn.addEventListener('click', () => this.reset());
-        this.viewLeaderboardBtn1.addEventListener('click', () => this.showLeaderboard());
-        this.viewLeaderboardBtn2.addEventListener('click', () => this.showLeaderboard());
-        this.closeLeaderboardBtn.addEventListener('click', () => this.closeLeaderboard());
     }
 
     async togglePlayer1Scanner() {

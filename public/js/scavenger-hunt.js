@@ -48,13 +48,7 @@ class ScavengerHunt {
         // Completion view
         this.completionTeamName = document.getElementById('completionTeamName');
         this.completionTime = document.getElementById('completionTime');
-        this.viewLeaderboardBtn = document.getElementById('viewLeaderboardBtn');
         this.newHuntBtn = document.getElementById('newHuntBtn');
-
-        // Leaderboard modal
-        this.leaderboardModal = document.getElementById('leaderboardModal');
-        this.leaderboardContent = document.getElementById('leaderboardContent');
-        this.closeLeaderboardBtn = document.getElementById('closeLeaderboardBtn');
 
         // Event listeners
         // Participant barcode input - use buffer approach for better barcode scanner support
@@ -127,8 +121,6 @@ class ScavengerHunt {
 
         this.quitBtn.addEventListener('click', () => this.quitHunt());
         this.newHuntBtn.addEventListener('click', () => this.reset());
-        this.viewLeaderboardBtn.addEventListener('click', () => this.showLeaderboard());
-        this.closeLeaderboardBtn.addEventListener('click', () => this.closeLeaderboard());
     }
 
     async handleParticipantFileUpload(event) {

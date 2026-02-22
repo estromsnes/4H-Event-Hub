@@ -75,12 +75,6 @@ class TeamChallengeManager {
         document.getElementById('takeTeamPhotoBtn')
             .addEventListener('click', () => this.openCameraModal());
 
-        document.getElementById('viewLeaderboardBtn')
-            .addEventListener('click', () => this.showLeaderboard());
-
-        document.getElementById('viewLeaderboardBtn2')
-            .addEventListener('click', () => this.showLeaderboard());
-
         document.getElementById('newChallengeBtn')
             .addEventListener('click', () => this.resetChallenge());
 
@@ -97,16 +91,6 @@ class TeamChallengeManager {
 
         // Camera modal buttons
         this.initCameraModal();
-
-        // Leaderboard modal
-        document.getElementById('closeLeaderboardBtn')
-            .addEventListener('click', () => this.closeLeaderboard());
-
-        // Leaderboard tabs
-        document.getElementById('tabFastest')
-            .addEventListener('click', () => this.showLeaderboard('fastest'));
-        document.getElementById('tabFirst')
-            .addEventListener('click', () => this.showLeaderboard('first'));
     }
 
     async startChallenge() {

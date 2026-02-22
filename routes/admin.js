@@ -105,11 +105,16 @@ router.post('/load-dummy-data', async (req, res) => {
             'Gran 4H', 'Brandbu 4H', 'Jaren 4H', 'Hamar 4H', 'Brumunddal 4H'
         ];
 
-        // Team names
+        // Team names for participants
         const teamNames = [
             'Lag Rød', 'Lag Blå', 'Lag Grønn', 'Lag Gul', 'Lag Oransje',
             'Lag Lilla', 'Lag Rosa', 'Lag Turkis', 'Lag Brun', 'Lag Grå',
             'Lag Hvit', 'Lag Sort', 'Lag Sølv', 'Lag Gull', 'Lag Bronse'
+        ];
+
+        // Team names for leaders
+        const leaderTeamNames = [
+            'Lederlag Nord', 'Lederlag Sør', 'Lederlag Øst', 'Lederlag Vest'
         ];
 
         // Roles distribution
@@ -262,10 +267,18 @@ router.post('/load-dummy-data', async (req, res) => {
                 age = 20 + Math.floor(Math.random() * 25); // 20-44
             }
 
-            // Assign team (70% have teams)
-            const team = Math.random() < 0.7
-                ? teamNames[Math.floor(Math.random() * teamNames.length)]
-                : null;
+            // Assign team based on role
+            let team = null;
+            if (selectedRole === 'Deltaker') {
+                // Deltaker: assign to participant teams (80% have teams)
+                team = Math.random() < 0.8
+                    ? teamNames[Math.floor(Math.random() * teamNames.length)]
+                    : null;
+            } else if (selectedRole === 'Leder') {
+                // Leder: assign to leader teams (all leaders get a team)
+                team = leaderTeamNames[Math.floor(Math.random() * leaderTeamNames.length)];
+            }
+            // Frivillig and Arrangør: no team (null)
 
             const participantCode = `TEST${String(i).padStart(4, '0')}`;
 
