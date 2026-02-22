@@ -3548,11 +3548,18 @@ const photoChallengeStatus = document.getElementById('photoChallengeStatus');
 
 // DOM Elements - Submissions
 const submissionsFilter = document.getElementById('submissionsFilter');
+const submissionsSort = document.getElementById('submissionsSort');
+const groupByChallenge = document.getElementById('groupByChallenge');
+const pendingCount = document.getElementById('pendingCount');
 const photoSubmissionsList = document.getElementById('photoSubmissionsList');
 const submissionStatus = document.getElementById('submissionStatus');
 
 // DOM Elements - Review Modal
 const reviewSubmissionModal = document.getElementById('reviewSubmissionModal');
+const prevSubmissionBtn = document.getElementById('prevSubmissionBtn');
+const nextSubmissionBtn = document.getElementById('nextSubmissionBtn');
+const quickApproveBtn = document.getElementById('quickApproveBtn');
+const quickRejectBtn = document.getElementById('quickRejectBtn');
 const reviewSubmissionForm = document.getElementById('reviewSubmissionForm');
 const reviewSubmissionIdInput = document.getElementById('reviewSubmissionId');
 const reviewSubmissionMaxPointsInput = document.getElementById('reviewSubmissionMaxPoints');
@@ -3579,13 +3586,36 @@ closePhotoChallengeBtn.addEventListener('click', closePhotoChallengeModal);
 cancelPhotoChallengeBtn.addEventListener('click', closePhotoChallengeModal);
 photoChallengeForm.addEventListener('submit', savePhotoChallenge);
 
+// State for navigation
+let currentSubmissions = [];
+let currentSubmissionIndex = -1;
+
 // Event Listeners - Submissions
 submissionsFilter.addEventListener('change', loadPhotoSubmissions);
+submissionsSort.addEventListener('change', loadPhotoSubmissions);
+groupByChallenge.addEventListener('change', loadPhotoSubmissions);
 
 // Event Listeners - Review Modal
 closeReviewSubmissionBtn.addEventListener('click', closeReviewSubmissionModal);
 cancelReviewSubmissionBtn.addEventListener('click', closeReviewSubmissionModal);
 reviewSubmissionForm.addEventListener('submit', saveReview);
+prevSubmissionBtn.addEventListener('click', navigateToPreviousSubmission);
+nextSubmissionBtn.addEventListener('click', navigateToNextSubmission);
+quickApproveBtn.addEventListener('click', quickApprove);
+quickRejectBtn.addEventListener('click', quickReject);
+
+// Keyboard navigation in modal
+document.addEventListener('keydown', (e) => {
+    if (!reviewSubmissionModal.classList.contains('hidden')) {
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            navigateToPreviousSubmission();
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            navigateToNextSubmission();
+        }
+    }
+});
 
 /**
  * Load all photo challenges
@@ -3766,12 +3796,16 @@ async function deletePhotoChallenge(challengeId, challengeTitle) {
 }
 
 /**
- * Load photo submissions
+ * Load photo submissions with filtering, sorting, and grouping
  */
 async function loadPhotoSubmissions() {
     try {
         const response = await fetch('/api/photo-challenges/submissions/all');
         let submissions = await response.json();
+
+        // Update counter
+        const pendingSubmissions = submissions.filter(s => s.status === 'pending');
+        pendingCount.textContent = pendingSubmissions.length;
 
         // Apply filter
         const filterValue = submissionsFilter.value;
@@ -3779,56 +3813,111 @@ async function loadPhotoSubmissions() {
             submissions = submissions.filter(s => s.status === filterValue);
         }
 
+        // Apply sorting
+        const sortValue = submissionsSort.value;
+        if (sortValue === 'newest') {
+            submissions.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+        } else if (sortValue === 'oldest') {
+            submissions.sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+        } else if (sortValue === 'team') {
+            submissions.sort((a, b) => a.team_name.localeCompare(b.team_name));
+        } else if (sortValue === 'challenge') {
+            submissions.sort((a, b) => a.challenge_title.localeCompare(b.challenge_title));
+        }
+
+        // Store for navigation
+        currentSubmissions = submissions;
+
         if (submissions.length === 0) {
             photoSubmissionsList.innerHTML = '<p class="text-center" style="color: var(--text-light); padding: 40px;">Ingen innleveringer ennå</p>';
             return;
         }
 
-        photoSubmissionsList.innerHTML = submissions.map(sub => {
-            const statusBadge = sub.status === 'pending'
-                ? '<span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">⏳ VENTER</span>'
-                : sub.status === 'reviewed'
-                ? '<span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✓ VURDERT</span>'
-                : '<span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✗ AVVIST</span>';
+        // Check if grouping is enabled
+        const shouldGroup = groupByChallenge.checked;
 
-            const submittedTime = new Date(sub.submitted_at).toLocaleString('no-NO', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+        if (shouldGroup) {
+            // Group by challenge
+            const groupedSubmissions = {};
+            submissions.forEach(sub => {
+                const challengeKey = sub.challenge_id;
+                if (!groupedSubmissions[challengeKey]) {
+                    groupedSubmissions[challengeKey] = {
+                        title: sub.challenge_title,
+                        icon: sub.icon,
+                        submissions: []
+                    };
+                }
+                groupedSubmissions[challengeKey].submissions.push(sub);
             });
 
-            return `
-                <div class="team-card" style="cursor: pointer;" onclick="openReviewSubmissionModal(${sub.id})">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
-                        <h3 style="margin: 0; font-size: 18px;">
-                            ${sub.icon || '📸'} ${sub.challenge_title}
+            // Render grouped
+            photoSubmissionsList.innerHTML = Object.values(groupedSubmissions).map(group => {
+                const submissionCards = group.submissions.map(sub => renderSubmissionCard(sub)).join('');
+                return `
+                    <div style="grid-column: 1 / -1; margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 15px; padding-bottom: 10px; border-bottom: 3px solid var(--primary-color); color: var(--primary-dark);">
+                            ${group.icon || '📸'} ${group.title} (${group.submissions.length})
                         </h3>
-                        ${statusBadge}
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+                            ${submissionCards}
+                        </div>
                     </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <img src="${sub.image_path}" alt="Submission" style="width: 100%; border-radius: 10px; border: 2px solid #ddd;">
-                    </div>
-
-                    <p style="margin: 5px 0; font-size: 14px;"><strong>Lag:</strong> ${sub.team_name}</p>
-                    <p style="margin: 5px 0; font-size: 14px;"><strong>Deltaker:</strong> ${sub.participant_code}</p>
-                    <p style="margin: 5px 0; font-size: 14px;"><strong>Sendt inn:</strong> ${submittedTime}</p>
-                    ${sub.points_awarded !== null ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Poeng tildelt:</strong> ${sub.points_awarded} / ${sub.max_points}</p>` : ''}
-                    ${sub.admin_comment ? `<p style="margin: 5px 0; font-size: 14px; color: var(--text-light);"><strong>Kommentar:</strong> ${sub.admin_comment}</p>` : ''}
-
-                    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd; text-align: center; color: var(--primary-color); font-weight: 600;">
-                        Klikk for å vurdere
-                    </div>
-                </div>
-            `;
-        }).join('');
+                `;
+            }).join('');
+        } else {
+            // Render flat list
+            photoSubmissionsList.innerHTML = submissions.map(sub => renderSubmissionCard(sub)).join('');
+        }
 
     } catch (error) {
         console.error('Error loading photo submissions:', error);
         photoSubmissionsList.innerHTML = '<p class="text-center" style="color: #f44336;">Kunne ikke laste innleveringer</p>';
     }
+}
+
+/**
+ * Render a single submission card
+ */
+function renderSubmissionCard(sub) {
+    const statusBadge = sub.status === 'pending'
+        ? '<span style="background: #ff9800; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">⏳ VENTER</span>'
+        : sub.status === 'reviewed'
+        ? '<span style="background: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✓ VURDERT</span>'
+        : '<span style="background: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">✗ AVVIST</span>';
+
+    const submittedTime = new Date(sub.submitted_at).toLocaleString('no-NO', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    return `
+        <div class="team-card" style="cursor: pointer;" onclick="openReviewSubmissionModal(${sub.id})">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                <h3 style="margin: 0; font-size: 18px;">
+                    ${sub.icon || '📸'} ${sub.challenge_title}
+                </h3>
+                ${statusBadge}
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <img src="${sub.image_path}" alt="Submission" style="width: 100%; border-radius: 10px; border: 2px solid #ddd;">
+            </div>
+
+            <p style="margin: 5px 0; font-size: 14px;"><strong>Lag:</strong> ${sub.team_name}</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong>Deltaker:</strong> ${sub.participant_code}</p>
+            <p style="margin: 5px 0; font-size: 14px;"><strong>Sendt inn:</strong> ${submittedTime}</p>
+            ${sub.points_awarded !== null ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Poeng tildelt:</strong> ${sub.points_awarded} / ${sub.max_points}</p>` : ''}
+            ${sub.admin_comment ? `<p style="margin: 5px 0; font-size: 14px; color: var(--text-light);"><strong>Kommentar:</strong> ${sub.admin_comment}</p>` : ''}
+
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd; text-align: center; color: var(--primary-color); font-weight: 600;">
+                Klikk for å vurdere
+            </div>
+        </div>
+    `;
 }
 
 /**
@@ -3844,6 +3933,10 @@ async function openReviewSubmissionModal(submissionId) {
             alert('Kunne ikke finne innlevering');
             return;
         }
+
+        // Find and store current index
+        currentSubmissionIndex = currentSubmissions.findIndex(s => s.id === submissionId);
+        updateNavigationButtons();
 
         reviewSubmissionIdInput.value = submission.id;
         reviewSubmissionMaxPointsInput.value = submission.max_points;
@@ -3933,6 +4026,133 @@ async function saveReview(e) {
 
     } catch (error) {
         console.error('Error saving review:', error);
+        reviewSubmissionModalStatus.textContent = `❌ ${error.message}`;
+        reviewSubmissionModalStatus.style.background = '#ffcdd2';
+        reviewSubmissionModalStatus.style.color = '#c62828';
+        reviewSubmissionModalStatus.classList.remove('hidden');
+    }
+}
+
+/**
+ * Navigate to previous submission
+ */
+function navigateToPreviousSubmission() {
+    if (currentSubmissionIndex > 0) {
+        const prevSubmission = currentSubmissions[currentSubmissionIndex - 1];
+        openReviewSubmissionModal(prevSubmission.id);
+    }
+}
+
+/**
+ * Navigate to next submission
+ */
+function navigateToNextSubmission() {
+    if (currentSubmissionIndex < currentSubmissions.length - 1) {
+        const nextSubmission = currentSubmissions[currentSubmissionIndex + 1];
+        openReviewSubmissionModal(nextSubmission.id);
+    }
+}
+
+/**
+ * Update navigation button states
+ */
+function updateNavigationButtons() {
+    prevSubmissionBtn.disabled = currentSubmissionIndex <= 0;
+    nextSubmissionBtn.disabled = currentSubmissionIndex >= currentSubmissions.length - 1;
+}
+
+/**
+ * Quick approve with full points
+ */
+async function quickApprove() {
+    const submissionId = reviewSubmissionIdInput.value;
+    const maxPoints = reviewSubmissionMaxPointsInput.value;
+
+    const reviewData = {
+        points_awarded: parseInt(maxPoints),
+        status: 'reviewed',
+        admin_comment: ''
+    };
+
+    try {
+        const response = await fetch(`/api/photo-challenges/submissions/${submissionId}/review`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reviewData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to approve');
+        }
+
+        reviewSubmissionModalStatus.textContent = '✅ Godkjent!';
+        reviewSubmissionModalStatus.style.background = '#c8e6c9';
+        reviewSubmissionModalStatus.style.color = '#2e7d32';
+        reviewSubmissionModalStatus.classList.remove('hidden');
+
+        setTimeout(() => {
+            // Move to next submission if available
+            if (currentSubmissionIndex < currentSubmissions.length - 1) {
+                navigateToNextSubmission();
+            } else {
+                closeReviewSubmissionModal();
+            }
+            loadPhotoSubmissions();
+            loadPhotoChallengeLeaderboard();
+        }, 800);
+
+    } catch (error) {
+        console.error('Error approving:', error);
+        reviewSubmissionModalStatus.textContent = `❌ ${error.message}`;
+        reviewSubmissionModalStatus.style.background = '#ffcdd2';
+        reviewSubmissionModalStatus.style.color = '#c62828';
+        reviewSubmissionModalStatus.classList.remove('hidden');
+    }
+}
+
+/**
+ * Quick reject with 0 points
+ */
+async function quickReject() {
+    const submissionId = reviewSubmissionIdInput.value;
+
+    const reviewData = {
+        points_awarded: 0,
+        status: 'rejected',
+        admin_comment: ''
+    };
+
+    try {
+        const response = await fetch(`/api/photo-challenges/submissions/${submissionId}/review`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(reviewData)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to reject');
+        }
+
+        reviewSubmissionModalStatus.textContent = '✅ Avvist!';
+        reviewSubmissionModalStatus.style.background = '#ffcdd2';
+        reviewSubmissionModalStatus.style.color = '#c62828';
+        reviewSubmissionModalStatus.classList.remove('hidden');
+
+        setTimeout(() => {
+            // Move to next submission if available
+            if (currentSubmissionIndex < currentSubmissions.length - 1) {
+                navigateToNextSubmission();
+            } else {
+                closeReviewSubmissionModal();
+            }
+            loadPhotoSubmissions();
+            loadPhotoChallengeLeaderboard();
+        }, 800);
+
+    } catch (error) {
+        console.error('Error rejecting:', error);
         reviewSubmissionModalStatus.textContent = `❌ ${error.message}`;
         reviewSubmissionModalStatus.style.background = '#ffcdd2';
         reviewSubmissionModalStatus.style.color = '#c62828';
