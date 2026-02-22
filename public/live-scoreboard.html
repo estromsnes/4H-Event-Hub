@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Scoreboard - QR Skattejakt</title>
+    <title>Live Scoreboard - 4H Event Hub</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/main.css">
@@ -23,7 +23,7 @@
             background: white;
             border-radius: 15px;
             padding: 30px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             text-align: center;
         }
@@ -46,18 +46,63 @@
             margin-top: 10px;
         }
 
+        /* Tabs */
+        .tabs-container {
+            background: white;
+            border-radius: 15px;
+            padding: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #f5f5f5;
+            color: #666;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            background: #e0e0e0;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .scoreboard-grid {
             display: grid;
             gap: 15px;
         }
 
-        .team-card {
+        .team-card, .player-card {
             background: white;
             border-radius: 15px;
             padding: 20px 30px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             display: grid;
-            grid-template-columns: 80px 80px 1fr auto auto;
+            grid-template-columns: 80px 80px 1fr auto;
             align-items: center;
             gap: 20px;
             transition: transform 0.2s ease;
@@ -86,7 +131,7 @@
             font-size: 36px;
         }
 
-        .team-card:hover {
+        .team-card:hover, .player-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
         }
@@ -99,6 +144,31 @@
         .team-card.active {
             background: linear-gradient(135deg, #fff9e6, #fff3cd);
             border: 2px solid #FFC107;
+        }
+
+        .stats-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .stats-badge.points {
+            background: #FF9800;
+        }
+
+        .stats-badge.score {
+            background: #2196F3;
+        }
+
+        .stats-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            text-align: center;
         }
 
         .team-rank {
@@ -245,72 +315,309 @@
 
     <div class="scoreboard-container">
         <div class="scoreboard-header">
-            <h1>🎯 Live Scoreboard</h1>
-            <p>QR Skattejakt - Sanntid</p>
+            <h1>🏆 Live Scoreboard</h1>
+            <p>Alle aktiviteter</p>
             <p class="last-updated" id="lastUpdated">Laster...</p>
         </div>
 
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>Laster scoreboard...</p>
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <button class="tab-button active" data-tab="team-challenge">📸 Samle laget</button>
+            <button class="tab-button" data-tab="photo-challenges">🎭 Bildeoppgaver</button>
+            <button class="tab-button" data-tab="quiz">🧠 Quiz</button>
+            <button class="tab-button" data-tab="scavenger">🎯 QR Skattejakt</button>
+            <button class="tab-button" data-tab="tic-tac-toe">⭕ Tripp-Trapp-Tresko</button>
         </div>
 
-        <div id="scoreboard" class="scoreboard-grid" style="display: none;"></div>
+        <!-- Tab Contents -->
+        <div id="team-challenge" class="tab-content active">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Laster...</p>
+            </div>
+            <div class="scoreboard-grid" style="display: none;"></div>
+            <div class="no-data" style="display: none;">
+                <h2>Ingen lag har fullført denne utfordringen ennå</h2>
+            </div>
+        </div>
 
-        <div id="noData" class="no-data" style="display: none;">
-            <h2>Ingen lag har startet skattejakt ennå</h2>
-            <p style="color: #999; margin-top: 10px;">Scoreboardet oppdateres automatisk hvert 5. sekund</p>
+        <div id="photo-challenges" class="tab-content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Laster...</p>
+            </div>
+            <div class="scoreboard-grid" style="display: none;"></div>
+            <div class="no-data" style="display: none;">
+                <h2>Ingen lag har sendt inn bildeoppgaver ennå</h2>
+            </div>
+        </div>
+
+        <div id="quiz" class="tab-content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Laster...</p>
+            </div>
+            <div class="scoreboard-grid" style="display: none;"></div>
+            <div class="no-data" style="display: none;">
+                <h2>Ingen lag har fullført quiz ennå</h2>
+            </div>
+        </div>
+
+        <div id="scavenger" class="tab-content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Laster...</p>
+            </div>
+            <div class="scoreboard-grid" style="display: none;"></div>
+            <div class="no-data" style="display: none;">
+                <h2>Ingen lag har startet skattejakt ennå</h2>
+            </div>
+        </div>
+
+        <div id="tic-tac-toe" class="tab-content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Laster...</p>
+            </div>
+            <div class="scoreboard-grid" style="display: none;"></div>
+            <div class="no-data" style="display: none;">
+                <h2>Ingen har spilt Tripp-Trapp-Tresko ennå</h2>
+            </div>
         </div>
     </div>
 
     <script>
         let refreshInterval;
+        let currentTab = 'team-challenge';
 
-        async function loadScoreboard() {
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active tab button
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+
+                // Update active tab content
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                const tabId = button.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+
+                currentTab = tabId;
+                loadScoreboard(tabId);
+            });
+        });
+
+        // Load scoreboard data for a specific tab
+        async function loadScoreboard(tabId) {
+            const container = document.getElementById(tabId);
+            const loading = container.querySelector('.loading');
+            const scoreboard = container.querySelector('.scoreboard-grid');
+            const noData = container.querySelector('.no-data');
+
+            loading.style.display = 'block';
+            scoreboard.style.display = 'none';
+            noData.style.display = 'none';
+
             try {
-                const response = await fetch('/api/scavenger/live-scoreboard');
-                if (!response.ok) {
-                    throw new Error('Failed to load scoreboard');
+                let data;
+                switch(tabId) {
+                    case 'team-challenge':
+                        data = await loadTeamChallenge();
+                        renderTeamChallenge(data, container);
+                        break;
+                    case 'photo-challenges':
+                        data = await loadPhotoChallenges();
+                        renderPhotoChallenges(data, container);
+                        break;
+                    case 'quiz':
+                        data = await loadQuiz();
+                        renderQuiz(data, container);
+                        break;
+                    case 'scavenger':
+                        data = await loadScavenger();
+                        renderScavenger(data, container);
+                        break;
+                    case 'tic-tac-toe':
+                        data = await loadTicTacToe();
+                        renderTicTacToe(data, container);
+                        break;
                 }
-
-                const data = await response.json();
-                renderScoreboard(data);
 
                 // Update last updated time
                 const lastUpdated = document.getElementById('lastUpdated');
-                const time = new Date(data.timestamp).toLocaleTimeString('nb-NO');
+                const time = new Date().toLocaleTimeString('nb-NO');
                 lastUpdated.textContent = `Sist oppdatert: ${time}`;
             } catch (err) {
-                console.error('Error loading scoreboard:', err);
+                console.error(`Error loading ${tabId}:`, err);
+                loading.style.display = 'none';
+                noData.style.display = 'block';
             }
         }
 
-        function renderScoreboard(data) {
-            const loading = document.getElementById('loading');
-            const scoreboard = document.getElementById('scoreboard');
-            const noData = document.getElementById('noData');
+        // Load Team Challenge data
+        async function loadTeamChallenge() {
+            const response = await fetch('/api/team-challenge/leaderboard');
+            if (!response.ok) throw new Error('Failed to load');
+            return await response.json();
+        }
+
+        // Load Photo Challenges data
+        async function loadPhotoChallenges() {
+            const response = await fetch('/api/photo-challenges/leaderboard/teams');
+            if (!response.ok) throw new Error('Failed to load');
+            return await response.json();
+        }
+
+        // Load Quiz data
+        async function loadQuiz() {
+            const response = await fetch('/api/quiz/leaderboard');
+            if (!response.ok) throw new Error('Failed to load');
+            return await response.json();
+        }
+
+        // Load Scavenger Hunt data
+        async function loadScavenger() {
+            const response = await fetch('/api/scavenger/live-scoreboard');
+            if (!response.ok) throw new Error('Failed to load');
+            return await response.json();
+        }
+
+        // Load Tic-Tac-Toe data
+        async function loadTicTacToe() {
+            const response = await fetch('/api/tic-tac-toe/leaderboard');
+            if (!response.ok) throw new Error('Failed to load');
+            return await response.json();
+        }
+
+        // Render Team Challenge
+        function renderTeamChallenge(data, container) {
+            const loading = container.querySelector('.loading');
+            const scoreboard = container.querySelector('.scoreboard-grid');
+            const noData = container.querySelector('.no-data');
+
+            loading.style.display = 'none';
+
+            if (!data.rankedTeams || data.rankedTeams.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+
+            scoreboard.style.display = 'grid';
+            scoreboard.innerHTML = data.rankedTeams.map((team, index) => {
+                const rank = index + 1;
+                const isTop3 = rank <= 3;
+                const photoHtml = team.photo_path
+                    ? `<img src="${team.photo_path}?t=${Date.now()}" alt="${team.team_name}" class="team-photo">`
+                    : `<div class="team-photo-placeholder">📸</div>`;
+
+                return `
+                    <div class="team-card">
+                        ${photoHtml}
+                        <div class="team-rank ${isTop3 ? 'top3' : ''}">
+                            ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                        </div>
+                        <div class="team-name">${team.team_name}</div>
+                        <div>
+                            <div class="stats-badge">${formatTime(team.elapsed_seconds)}</div>
+                            <div class="stats-label">tid</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Photo Challenges
+        function renderPhotoChallenges(data, container) {
+            const loading = container.querySelector('.loading');
+            const scoreboard = container.querySelector('.scoreboard-grid');
+            const noData = container.querySelector('.no-data');
+
+            loading.style.display = 'none';
+
+            if (!data || data.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+
+            scoreboard.style.display = 'grid';
+            scoreboard.innerHTML = data.map((team, index) => {
+                const rank = index + 1;
+                const isTop3 = rank <= 3;
+
+                return `
+                    <div class="team-card">
+                        <div class="team-photo-placeholder">🎭</div>
+                        <div class="team-rank ${isTop3 ? 'top3' : ''}">
+                            ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                        </div>
+                        <div class="team-name">${team.team_name}</div>
+                        <div>
+                            <div class="stats-badge points">${team.total_points}</div>
+                            <div class="stats-label">poeng</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Quiz
+        function renderQuiz(data, container) {
+            const loading = container.querySelector('.loading');
+            const scoreboard = container.querySelector('.scoreboard-grid');
+            const noData = container.querySelector('.no-data');
+
+            loading.style.display = 'none';
+
+            if (!data.leaderboard || data.leaderboard.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+
+            scoreboard.style.display = 'grid';
+            scoreboard.innerHTML = data.leaderboard.map((team, index) => {
+                const rank = index + 1;
+                const isTop3 = rank <= 3;
+                const photoHtml = team.team_photo_path
+                    ? `<img src="${team.team_photo_path}?t=${Date.now()}" alt="${team.team_name}" class="team-photo">`
+                    : `<div class="team-photo-placeholder">🧠</div>`;
+
+                return `
+                    <div class="team-card">
+                        ${photoHtml}
+                        <div class="team-rank ${isTop3 ? 'top3' : ''}">
+                            ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                        </div>
+                        <div class="team-name">${team.team_name}</div>
+                        <div>
+                            <div class="stats-badge score">${team.score}</div>
+                            <div class="stats-label">${team.correct_answers}/${team.total_questions} riktige</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Scavenger Hunt
+        function renderScavenger(data, container) {
+            const loading = container.querySelector('.loading');
+            const scoreboard = container.querySelector('.scoreboard-grid');
+            const noData = container.querySelector('.no-data');
 
             loading.style.display = 'none';
 
             if (!data.scoreboard || data.scoreboard.length === 0) {
                 noData.style.display = 'block';
-                scoreboard.style.display = 'none';
                 return;
             }
 
-            noData.style.display = 'none';
             scoreboard.style.display = 'grid';
-
             scoreboard.innerHTML = data.scoreboard.map((team, index) => {
                 const rank = index + 1;
                 const isTop3 = rank <= 3;
                 const statusClass = team.status === 'completed' ? 'completed' : 'active';
-                const statusText = team.status === 'completed' ? 'Fullført' : 'Pågår';
-
-                // Team photo or placeholder
                 const photoHtml = team.team_photo_path
                     ? `<img src="${team.team_photo_path}?t=${Date.now()}" alt="${team.team_name}" class="team-photo">`
-                    : `<div class="team-photo-placeholder">📸</div>`;
+                    : `<div class="team-photo-placeholder">🎯</div>`;
 
                 return `
                     <div class="team-card ${statusClass}">
@@ -319,19 +626,49 @@
                             ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                         </div>
                         <div class="team-name">${team.team_name}</div>
-                        <div class="team-progress">
-                            <div class="checkpoints-badge">
-                                ${team.checkpoints_found} / ${team.total_checkpoints}
-                            </div>
-                            <div class="progress-text">sjekkpunkter</div>
+                        <div>
+                            <div class="stats-badge">${team.checkpoints_found}/${team.total_checkpoints}</div>
+                            <div class="stats-label">${formatTime(team.elapsed_seconds)}</div>
                         </div>
-                        <div class="team-time">
-                            <div class="time-badge">
-                                ${formatTime(team.elapsed_seconds)}
-                            </div>
-                            <div class="status-badge ${statusClass}">
-                                ${statusText}
-                            </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Tic-Tac-Toe
+        function renderTicTacToe(data, container) {
+            const loading = container.querySelector('.loading');
+            const scoreboard = container.querySelector('.scoreboard-grid');
+            const noData = container.querySelector('.no-data');
+
+            loading.style.display = 'none';
+
+            if (!data.leaderboard || data.leaderboard.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+
+            scoreboard.style.display = 'grid';
+            scoreboard.innerHTML = data.leaderboard.map((player, index) => {
+                const rank = index + 1;
+                const isTop3 = rank <= 3;
+                const photoHtml = player.profile_photo_path
+                    ? `<img src="${player.profile_photo_path}?t=${Date.now()}" alt="${player.name}" class="team-photo">`
+                    : `<div class="team-photo-placeholder">⭕</div>`;
+
+                return `
+                    <div class="player-card">
+                        ${photoHtml}
+                        <div class="team-rank ${isTop3 ? 'top3' : ''}">
+                            ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                        </div>
+                        <div>
+                            <div class="team-name">${player.name}</div>
+                            <div class="stats-label">${player.team}</div>
+                        </div>
+                        <div>
+                            <div class="stats-badge">${player.wins}W - ${player.draws}D - ${player.losses}L</div>
+                            <div class="stats-label">${player.win_rate}% seier</div>
                         </div>
                     </div>
                 `;
@@ -345,10 +682,12 @@
         }
 
         // Initial load
-        loadScoreboard();
+        loadScoreboard(currentTab);
 
         // Auto-refresh every 5 seconds
-        refreshInterval = setInterval(loadScoreboard, 5000);
+        refreshInterval = setInterval(() => {
+            loadScoreboard(currentTab);
+        }, 5000);
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
