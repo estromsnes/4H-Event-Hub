@@ -73,6 +73,21 @@ class ScavengerHunt {
                 participantScanBuffer = '';
             }, 100);
         });
+
+        // Also listen for Enter key (most barcode scanners send Enter after scan)
+        this.participantBarcodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (participantScanTimeout) {
+                    clearTimeout(participantScanTimeout);
+                }
+                if (participantScanBuffer.trim()) {
+                    this.handleParticipantScan(participantScanBuffer.trim());
+                }
+                participantScanBuffer = '';
+            }
+        });
+
         this.startParticipantScanBtn.addEventListener('click', () => this.toggleParticipantScanner());
         this.participantQrFileInput.addEventListener('change', (e) => this.handleParticipantFileUpload(e));
 
@@ -92,6 +107,21 @@ class ScavengerHunt {
                 checkpointScanBuffer = '';
             }, 100);
         });
+
+        // Also listen for Enter key for checkpoint scanning
+        this.barcodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (checkpointScanTimeout) {
+                    clearTimeout(checkpointScanTimeout);
+                }
+                if (checkpointScanBuffer.trim()) {
+                    this.handleScan(checkpointScanBuffer.trim());
+                }
+                checkpointScanBuffer = '';
+            }
+        });
+
         this.startCheckpointScanBtn.addEventListener('click', () => this.toggleCheckpointScanner());
         this.checkpointQrFileInput.addEventListener('change', (e) => this.handleCheckpointFileUpload(e));
 

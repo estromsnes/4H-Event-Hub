@@ -100,6 +100,20 @@ class QuizManager {
             }, 100);
         });
 
+        // Also listen for Enter key (most barcode scanners send Enter after scan)
+        this.participantBarcodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (scanTimeout) {
+                    clearTimeout(scanTimeout);
+                }
+                if (scanBuffer.trim()) {
+                    this.handleParticipantScan(scanBuffer.trim());
+                }
+                scanBuffer = '';
+            }
+        });
+
         // Scanner button
         this.startParticipantScanBtn.addEventListener('click', () => this.toggleParticipantScanner());
 
