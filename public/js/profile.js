@@ -33,6 +33,10 @@ const retakeBtn = document.getElementById('retakeBtn');
 const uploadBtn = document.getElementById('uploadBtn');
 const cameraStatus = document.getElementById('cameraStatus');
 
+const confirmBtn = document.getElementById('confirmBtn');
+const confirmationSection = document.getElementById('confirmationSection');
+const confirmedStatus = document.getElementById('confirmedStatus');
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing app...');
@@ -99,6 +103,7 @@ function initApp() {
     captureBtn.addEventListener('click', capturePhoto);
     retakeBtn.addEventListener('click', retakePhoto);
     uploadBtn.addEventListener('click', uploadPhoto);
+    confirmBtn.addEventListener('click', confirmParticipant);
 
     // Activate global barcode scanner
     globalBarcodeScanner.activate((qrData) => onScanSuccess(qrData));
@@ -366,12 +371,65 @@ function showProfileView() {
     // Load and show courses
     loadCourses(currentParticipant.participant_code);
 
+    // Show confirmation section or confirmed status
+    updateConfirmationUI();
+
     // Deactivate global barcode scanner
     globalBarcodeScanner.deactivate();
 
     // Switch views
     scannerView.classList.add('hidden');
     profileView.classList.remove('hidden');
+}
+
+// Update confirmation UI based on participant status
+function updateConfirmationUI() {
+    if (!currentParticipant) return;
+
+    if (currentParticipant.confirmed === 1) {
+        // Already confirmed - show status
+        confirmationSection.classList.add('hidden');
+        confirmedStatus.classList.remove('hidden');
+    } else {
+        // Not confirmed - show confirmation section
+        confirmationSection.classList.remove('hidden');
+        confirmedStatus.classList.add('hidden');
+    }
+}
+
+// Confirm participant information
+async function confirmParticipant() {
+    if (!currentParticipant) return;
+
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '⏳ Bekrefter...';
+
+    try {
+        const response = await fetch(`/api/participants/${currentParticipant.participant_code}/confirm`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Kunne ikke bekrefte deltaker');
+        }
+
+        const updatedParticipant = await response.json();
+        currentParticipant = updatedParticipant;
+
+        // Update UI
+        confirmBtn.textContent = '✅ Bekreftet!';
+
+        setTimeout(() => {
+            updateConfirmationUI();
+        }, 1000);
+
+    } catch (err) {
+        console.error('Error confirming participant:', err);
+        alert('Kunne ikke bekrefte informasjon: ' + err.message);
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = '✅ Bekreft informasjon';
+    }
 }
 
 // Load and display team members

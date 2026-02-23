@@ -74,6 +74,14 @@ async function getKPIs(db) {
         });
     });
 
+    // Confirmed participants
+    const confirmedParticipants = await new Promise((resolve, reject) => {
+        db.get('SELECT COUNT(*) as count FROM participants WHERE active = 1 AND confirmed = 1', [], (err, row) => {
+            if (err) reject(err);
+            else resolve(row.count);
+        });
+    });
+
     // Participants with teams
     const participantsWithTeams = await new Promise((resolve, reject) => {
         db.get('SELECT COUNT(*) as count FROM participants WHERE active = 1 AND team IS NOT NULL AND team != ""', [], (err, row) => {
@@ -143,6 +151,7 @@ async function getKPIs(db) {
 
     return {
         totalParticipants,
+        confirmedParticipants,
         participantsWithTeams,
         totalTeams,
         totalScans,

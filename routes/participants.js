@@ -378,4 +378,59 @@ router.get('/:code/scans', (req, res) => {
     );
 });
 
+// POST confirm participant (participant confirms their own information)
+router.post('/:code/confirm', (req, res) => {
+    const db = req.app.locals.db;
+    const { code } = req.params;
+
+    // Check if participant exists and is not already confirmed
+    db.get(
+        'SELECT * FROM participants WHERE participant_code = ? AND active = 1',
+        [code],
+        (err, participant) => {
+            if (err) {
+                console.error('Error fetching participant:', err);
+                return res.status(500).json({ error: 'Failed to fetch participant' });
+            }
+
+            if (!participant) {
+                return res.status(404).json({ error: 'Participant not found' });
+            }
+
+            if (participant.confirmed === 1) {
+                return res.status(400).json({ error: 'Participant already confirmed' });
+            }
+
+            // Update participant as confirmed
+            db.run(
+                'UPDATE participants SET confirmed = 1, confirmed_at = datetime("now") WHERE participant_code = ? AND active = 1',
+                [code],
+                function(err) {
+                    if (err) {
+                        console.error('Error confirming participant:', err);
+                        return res.status(500).json({ error: 'Failed to confirm participant' });
+                    }
+
+                    if (this.changes === 0) {
+                        return res.status(404).json({ error: 'Participant not found' });
+                    }
+
+                    // Fetch and return updated participant
+                    db.get(
+                        'SELECT * FROM participants WHERE participant_code = ?',
+                        [code],
+                        (err, row) => {
+                            if (err) {
+                                console.error('Error fetching confirmed participant:', err);
+                                return res.status(500).json({ error: 'Confirmed but failed to fetch' });
+                            }
+                            res.json(row);
+                        }
+                    );
+                }
+            );
+        }
+    );
+});
+
 module.exports = router;

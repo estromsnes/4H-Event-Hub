@@ -37,11 +37,21 @@ function renderStatistics(data) {
 // 1. KPI Cards
 function renderKPICards(kpis) {
     const container = document.getElementById('kpiCards');
+
+    const confirmedPercentage = kpis.totalParticipants > 0
+        ? Math.round((kpis.confirmedParticipants / kpis.totalParticipants) * 100)
+        : 0;
+
     container.innerHTML = `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
             <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">👥 Totalt deltakere</div>
             <div style="font-size: 32px; font-weight: bold;">${kpis.totalParticipants}</div>
             <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">${kpis.participantsWithTeams} med lag</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">✅ Bekreftede deltakere</div>
+            <div style="font-size: 32px; font-weight: bold;">${kpis.confirmedParticipants || 0}</div>
+            <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">${confirmedPercentage}% av totalt</div>
         </div>
         <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
             <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">🎯 Antall lag</div>

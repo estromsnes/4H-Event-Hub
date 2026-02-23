@@ -69,12 +69,25 @@
                 </div>
                 <div class="detail-info">
                     <h1 id="detailName">-</h1>
+
+                    <!-- Confirmed Badge -->
+                    <div id="detailConfirmedBadge" class="detail-confirmed-badge hidden">
+                        <span class="badge-icon">✅</span>
+                        <span class="badge-text">Bekreftet</span>
+                    </div>
+
                     <div class="detail-fields">
                         <p><strong>Alder:</strong> <span id="detailAge">-</span> år</p>
                         <p id="detailClubRow"><strong>Klubb:</strong> <span id="detailClub">-</span></p>
                         <p id="detailRoleRow"><strong>Rolle:</strong> <span id="detailRole">-</span></p>
                         <p id="detailTeamRow"><strong>Lag:</strong> <span id="detailTeam">-</span></p>
+                        <p id="detailConfirmedRow"><strong>Status:</strong> <span id="detailConfirmed">-</span></p>
                     </div>
+
+                    <!-- Admin: Confirm participant button -->
+                    <button id="adminConfirmBtn" class="admin-confirm-btn hidden">
+                        ✅ Marker som bekreftet
+                    </button>
                 </div>
 
                 <!-- Team Members Section -->

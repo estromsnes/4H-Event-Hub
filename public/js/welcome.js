@@ -187,7 +187,8 @@ async function handleQRScan(qrData) {
         const participant = await response.json();
 
         // Show welcome message with confetti
-        showScanStatus(`Velkommen ${participant.name}! 🎉`, 'success');
+        const fullName = `${participant.first_name} ${participant.last_name}`.trim();
+        showScanStatus(`Velkommen ${fullName}! 🎉`, 'success');
 
         // Store participant code and redirect to profile page
         sessionStorage.setItem('welcomeParticipantCode', participantCode);

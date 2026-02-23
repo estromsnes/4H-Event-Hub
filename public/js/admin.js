@@ -120,6 +120,8 @@ const teamPhotoModalStatus = document.getElementById('teamPhotoModalStatus');
 
 const participantsList = document.getElementById('participantsList');
 const participantCount = document.getElementById('participantCount');
+const confirmationFilter = document.getElementById('confirmationFilter');
+const filterStats = document.getElementById('filterStats');
 const teamStats = document.getElementById('teamStats');
 const autoAssignTeamsBtn = document.getElementById('autoAssignTeamsBtn');
 const autoAssignStatus = document.getElementById('autoAssignStatus');
@@ -302,6 +304,11 @@ async function initAdmin() {
     closeEditBtn.addEventListener('click', closeEditModal);
     cancelEditBtn.addEventListener('click', closeEditModal);
     autoAssignTeamsBtn.addEventListener('click', autoAssignTeams);
+
+    // Confirmation filter
+    if (confirmationFilter) {
+        confirmationFilter.addEventListener('change', renderParticipants);
+    }
     generateAllQRBtn.addEventListener('click', generateAllQRCodes);
     printQRBtn.addEventListener('click', showQRForPrint);
 
@@ -1379,13 +1386,44 @@ function renderParticipants() {
                 Ingen deltakere lagt til ennå.
             </p>
         `;
+        filterStats.textContent = '';
         return;
     }
 
-    participantsList.innerHTML = participants.map(p => `
+    // Apply confirmation filter
+    const filterValue = confirmationFilter ? confirmationFilter.value : 'all';
+    let filteredParticipants = participants;
+
+    if (filterValue === 'confirmed') {
+        filteredParticipants = participants.filter(p => p.confirmed === 1);
+    } else if (filterValue === 'unconfirmed') {
+        filteredParticipants = participants.filter(p => p.confirmed !== 1);
+    }
+
+    // Update filter stats
+    const confirmedCount = participants.filter(p => p.confirmed === 1).length;
+    const unconfirmedCount = participants.length - confirmedCount;
+    filterStats.textContent = `(${confirmedCount} bekreftet, ${unconfirmedCount} ubekreftet)`;
+
+    if (filteredParticipants.length === 0) {
+        participantsList.innerHTML = `
+            <p class="text-center" style="color: var(--text-light);">
+                Ingen deltakere matcher filteret.
+            </p>
+        `;
+        return;
+    }
+
+    participantsList.innerHTML = filteredParticipants.map(p => `
         <div class="participant-item">
             <div class="participant-info">
-                <h3>${p.first_name} ${p.last_name}</h3>
+                <h3>
+                    ${p.first_name} ${p.last_name}
+                    ${p.confirmed === 1
+                        ? '<span class="confirmed-badge" title="Bekreftet">✅</span>'
+                        : '<span class="unconfirmed-badge" title="Ikke bekreftet">⏳</span>'
+                    }
+                </h3>
                 <p>
                     ${p.age ? p.age + ' år' : ''}
                     ${p.home_location ? '• ' + p.home_location : ''}
@@ -1395,9 +1433,17 @@ function renderParticipants() {
                 </p>
                 <p style="font-size: 12px; color: #999;">
                     ${p.participant_code}
+                    ${p.confirmed === 1 && p.confirmed_at
+                        ? ` • Bekreftet ${new Date(p.confirmed_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                        : ''
+                    }
                 </p>
             </div>
             <div class="participant-actions">
+                ${p.confirmed !== 1
+                    ? `<button class="button primary btn-small" onclick="confirmParticipant('${p.participant_code}')" title="Bekreft deltaker">✅</button>`
+                    : ''
+                }
                 <button class="button secondary btn-small" onclick="editParticipant('${p.participant_code}')">✏️</button>
                 ${p.qr_code_path
                     ? `<button class="button secondary btn-small" onclick="viewQR('${p.participant_code}')">👁️ QR</button>`
@@ -1514,6 +1560,38 @@ async function generateQR(participantCode, showAlert = true) {
  */
 function viewQR(participantCode) {
     window.open(`/api/qr/${participantCode}`, '_blank');
+}
+
+/**
+ * Confirm participant
+ */
+async function confirmParticipant(participantCode) {
+    const participant = participants.find(p => p.participant_code === participantCode);
+    if (!participant) return;
+
+    const confirmed = confirm(
+        `Bekreft ${participant.first_name} ${participant.last_name}?\n\nDette vil markere deltakeren som bekreftet.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/api/participants/${participantCode}/confirm`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Kunne ikke bekrefte deltaker');
+        }
+
+        alert(`${participant.first_name} ${participant.last_name} er nå bekreftet!`);
+        await loadParticipants();
+
+    } catch (err) {
+        console.error('Error confirming participant:', err);
+        alert('Kunne ikke bekrefte deltaker: ' + err.message);
+    }
 }
 
 /**

@@ -552,3 +552,61 @@
         font-size: 28px;
     }
 }
+
+
+/* Confirmed Badge in Detail Modal */
+.detail-confirmed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border: 2px solid #28a745;
+    border-radius: 25px;
+    padding: 10px 20px;
+    margin: 15px 0;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+}
+
+.detail-confirmed-badge .badge-icon {
+    font-size: 20px;
+}
+
+.detail-confirmed-badge .badge-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #155724;
+}
+
+/* Admin Confirm Button */
+.admin-confirm-btn {
+    width: 100%;
+    padding: 15px 25px;
+    margin-top: 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.admin-confirm-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+}
+
+.admin-confirm-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.admin-confirm-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+

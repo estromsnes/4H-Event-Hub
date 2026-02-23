@@ -31,6 +31,12 @@ class ParticipantInfo {
         this.resetBtn.addEventListener('click', () => this.reset());
         this.closeModalBtn.addEventListener('click', () => this.closeModal());
 
+        // Admin confirm button
+        const adminConfirmBtn = document.getElementById('adminConfirmBtn');
+        if (adminConfirmBtn) {
+            adminConfirmBtn.addEventListener('click', () => this.adminConfirmParticipant());
+        }
+
         // Close modal on backdrop click
         this.detailModal.addEventListener('click', (e) => {
             if (e.target === this.detailModal) {
@@ -214,6 +220,9 @@ class ParticipantInfo {
         const participant = this.participants.find(p => p.id === participantId);
         if (!participant) return;
 
+        // Store current participant for admin confirm
+        this.currentParticipant = participant;
+
         // Update modal content
         const detailPhoto = document.getElementById('detailPhoto');
         const detailPhotoPlaceholder = document.getElementById('detailPhotoPlaceholder');
@@ -225,6 +234,10 @@ class ParticipantInfo {
         const detailClubRow = document.getElementById('detailClubRow');
         const detailRoleRow = document.getElementById('detailRoleRow');
         const detailTeamRow = document.getElementById('detailTeamRow');
+        const detailConfirmed = document.getElementById('detailConfirmed');
+        const detailConfirmedRow = document.getElementById('detailConfirmedRow');
+        const detailConfirmedBadge = document.getElementById('detailConfirmedBadge');
+        const adminConfirmBtn = document.getElementById('adminConfirmBtn');
 
         // Photo
         if (participant.photo_path) {
@@ -262,11 +275,69 @@ class ParticipantInfo {
             detailTeamRow.classList.add('hidden');
         }
 
+        // Confirmed status
+        if (participant.confirmed === 1) {
+            detailConfirmed.textContent = '✅ Bekreftet';
+            detailConfirmed.style.color = '#28a745';
+            detailConfirmedBadge.classList.remove('hidden');
+            adminConfirmBtn.classList.add('hidden');
+        } else {
+            detailConfirmed.textContent = '⏳ Ikke bekreftet';
+            detailConfirmed.style.color = '#6c757d';
+            detailConfirmedBadge.classList.add('hidden');
+            adminConfirmBtn.classList.remove('hidden');
+        }
+        detailConfirmedRow.classList.remove('hidden');
+
         // Show team members
         this.showTeamMembers(participant);
 
         // Show modal
         this.detailModal.classList.remove('hidden');
+    }
+
+    async adminConfirmParticipant() {
+        if (!this.currentParticipant) return;
+
+        const adminConfirmBtn = document.getElementById('adminConfirmBtn');
+        adminConfirmBtn.disabled = true;
+        adminConfirmBtn.textContent = '⏳ Bekrefter...';
+
+        try {
+            const response = await fetch(`/api/participants/${this.currentParticipant.participant_code}/confirm`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Kunne ikke bekrefte deltaker');
+            }
+
+            const updatedParticipant = await response.json();
+
+            // Update participant in list
+            const index = this.participants.findIndex(p => p.id === this.currentParticipant.id);
+            if (index !== -1) {
+                this.participants[index] = {
+                    ...this.participants[index],
+                    confirmed: updatedParticipant.confirmed,
+                    confirmed_at: updatedParticipant.confirmed_at
+                };
+            }
+
+            // Update modal
+            adminConfirmBtn.textContent = '✅ Bekreftet!';
+            setTimeout(() => {
+                this.closeModal();
+                this.renderParticipants();
+            }, 1000);
+
+        } catch (err) {
+            console.error('Error confirming participant:', err);
+            alert('Kunne ikke bekrefte deltaker: ' + err.message);
+            adminConfirmBtn.disabled = false;
+            adminConfirmBtn.textContent = '✅ Marker som bekreftet';
+        }
     }
 
     showTeamMembers(participant) {

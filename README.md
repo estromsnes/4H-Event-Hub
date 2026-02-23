@@ -19,11 +19,21 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 
 ### For Deltakere
 
+#### 🎉 Velkomstside
+- **Dedikert velkomstside** for deltakere når de ankommer arrangementet
+- Skann QR-kode med strekkodeskanner eller webkamera
+- Automatisk redirect til profilside etter scanning
+- Vennlig velkommen-melding med deltakers navn
+- Enkel og rask onboarding-opplevelse
+
 #### 📱 Min Profil
 - Skann QR-kode med strekkodeskanner eller webkamera
 - Vis deltakerprofil (navn, alder, hjemsted, klubb, rolle, lag)
+- **Bekreft informasjon**: Deltakere kan bekrefte at informasjonen stemmer (engangsoperasjon)
+- Se bekreftelsesstatus med grønn badge når bekreftet
 - Ta selfie med webkamera og lagre på profil
 - Se lagkamerater og lagets medlemmer
+- Se kurs du er påmeldt
 
 #### 🏆 Lag & Konkurranser
 - **Lagutfordring**: Ta bilder av laget som oppfyller forskjellige oppgaver
@@ -62,6 +72,11 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 - Manuelt opprett og rediger deltakere
 - Generer og print QR-koder
 - Tildel deltakere til lag (automatisk eller manuelt)
+- **Bekreftelsesstatus**: Se ✅ (bekreftet) eller ⏳ (ikke bekreftet) på hver deltaker
+- **Filtrer deltakere**: Vis kun bekreftede eller ubekreftede deltakere
+- **Bekreft deltaker manuelt**: Klikk ✅-knapp for å bekrefte deltaker
+- **Bekreftet tidsstempel**: Se når deltaker ble bekreftet
+- **Live statistikk**: Se antall bekreftede vs ubekreftede i deltakerlisten
 - Eksporter deltakerliste
 
 #### 🏆 Lag
@@ -204,6 +219,7 @@ node database/migrate-add-program.js
 node database/migrate-add-courses.js
 node database/migrate-add-photo-challenges.js
 node database/migrate-add-feedback.js
+node database/migrate-add-participant-confirmed.js
 ```
 
 *Tips: Du kan kjøre alle migrasjonene på en gang uten feil - skript som allerede er kjørt vil bli hoppet over.*
@@ -269,6 +285,7 @@ Server running on port 3000
 ### Åpne Applikasjonen
 
 - **Hovedside**: http://localhost:3000
+- **Velkomstside**: http://localhost:3000/welcome.html *(ny deltaker-onboarding)*
 - **Min Profil**: http://localhost:3000/profile.html
 - **Admin Panel**: http://localhost:3000/admin.html
 - **Quiz**: http://localhost:3000/quiz.html
@@ -293,14 +310,27 @@ Server running on port 3000
 6. **🧠 Quiz** - Administrer spørsmål, se leaderboard
 7. **📅 Program** - Opprett program for arrangementet
 8. **💬 Tilbakemeldinger** - Se og administrer tilbakemeldinger fra deltakere
-9. **📊 Statistikk** - Oversikt og analyse
+9. **📊 Statistikk** - Oversikt, analyse og bekreftelsestatistikk (KPI-kort med bekreftede/ubekreftede deltakere)
 10. **🗄️ Database** - Last testdata, nullstill database
 
 ## 📖 Bruksanvisning
 
 ### For Deltakere
 
-#### Skanne QR-kode
+#### Velkommen til arrangementet (Første gang)
+
+**Anbefalt for nye deltakere:**
+1. Åpne Velkomstsiden: http://localhost:3000/welcome.html
+2. Skann din QR-kode med strekkodeskanner eller webkamera
+3. Du blir ønsket velkommen med navn! 🎉
+4. Automatisk videreført til profilsiden
+
+**Fordeler med velkomstsiden:**
+- Enkel og vennlig førstegangsopplevelse
+- Tydelig instruksjon for scanning
+- Automatisk flyt til profilside
+
+#### Skanne QR-kode (Vanlig vei)
 
 **Metode 1: Strekkodeskanner (Anbefalt for arrangementer)**
 1. Åpne Min Profil: http://localhost:3000/profile.html
@@ -314,6 +344,19 @@ Server running on port 3000
 3. Gi kamera-tillatelse
 4. Hold QR-koden foran kameraet
 5. Profilen vises automatisk
+
+#### Bekrefte informasjon
+
+**Første gang du ser profilen din:**
+1. Les gjennom informasjonen (navn, alder, klubb, rolle, lag)
+2. Sjekk at alt stemmer
+3. Klikk **"✅ Bekreft informasjon"** hvis alt er riktig
+4. Du får en grønn badge: "✅ Informasjon bekreftet"
+
+**Viktig:**
+- Dette er en engangsoperasjon - du kan bare bekrefte én gang
+- Hvis noe er feil, kontakt arrangør før du bekrefter
+- Arrangører kan se i admin hvem som har bekreftet
 
 #### Ta Selfie
 
@@ -416,6 +459,35 @@ Server running on port 3000
 3. Velg lag fra dropdown
 4. Klikk **"Oppdater Deltaker"**
 
+#### Administrere Deltaker-bekreftelser
+
+**Se bekreftelsesstatus:**
+1. Gå til **Deltakere** fanen i admin
+2. Hver deltaker viser status:
+   - ✅ = Bekreftet (grønn badge)
+   - ⏳ = Ikke bekreftet (grå badge)
+3. Tidsstempel vises for når deltaker bekreftet (hvis bekreftet)
+
+**Filtrere deltakere:**
+1. Bruk dropdown-filteret over deltakerlisten
+2. Velg:
+   - **Alle deltakere** - Vis alle
+   - **✅ Kun bekreftede** - Vis bare de som har bekreftet
+   - **⏳ Kun ubekreftede** - Vis bare de som ikke har bekreftet
+3. Se live statistikk: "(X bekreftet, Y ubekreftet)"
+
+**Manuelt bekrefte deltaker:**
+1. Finn deltaker som ikke er bekreftet (⏳)
+2. Klikk på ✅-knappen til høyre for deltakeren
+3. Bekreft i dialog-boksen
+4. Deltakeren markeres som bekreftet med tidsstempel
+
+**Bruksscenarier:**
+- Hjelpe deltakere som har tekniske problemer
+- Bekrefte deltakere som ikke har tilgang til QR/telefon
+- Kvalitetssikre før arrangement starter
+- Rask oversikt over hvem som har sjekket inn
+
 #### Print QR-koder
 
 **For Deltakere:**
@@ -441,6 +513,25 @@ Server running on port 3000
    - Dag-nummer
 4. Klikk **"Lagre"**
 
+#### Se og bekrefte deltakere
+
+1. Gå til **Deltakere** i hovedmenyen (ikke admin)
+2. Søk etter deltaker ved å skrive navn
+3. Klikk på deltaker for å se detaljer i modal:
+   - Profilbilde
+   - Navn, alder, klubb, rolle, lag
+   - **Bekreftelsesstatus**:
+     - ✅ Bekreftet (grønn badge)
+     - ⏳ Ikke bekreftet (grå tekst)
+4. **Manuelt bekrefte deltaker** (hvis ikke bekreftet):
+   - Klikk **"✅ Marker som bekreftet"**
+   - Deltakeren er nå bekreftet som om de selv gjorde det
+
+**Bruk dette for:**
+- Hjelpe deltakere som ikke finner bekreft-knappen
+- Bekrefte deltakere som ikke har smarttelefon/QR-tilgang
+- Kvalitetssikre at alle har bekreftet før arrangement starter
+
 #### Administrere Tilbakemeldinger
 
 1. Gå til **Tilbakemeldinger** fanen
@@ -460,6 +551,26 @@ Server running on port 3000
 6. Handlinger:
    - **Merk som lest/ulest** - Endre status
    - **Slett** - Fjern tilbakemelding (permanent)
+
+#### Se bekreftelsestatistikk
+
+1. Gå til **Statistikk** fanen i admin
+2. Se KPI-kort med bekreftelsesinformasjon:
+   - **👥 Totalt deltakere** - Totalt antall påmeldte
+   - **✅ Bekreftede deltakere** - Antall og prosent som har bekreftet
+   - **⏳ Ubekreftede deltakere** - Antall og prosent som ikke har bekreftet (vises implisitt)
+3. KPI-kortene har fargekodede gradienter for enkel avlesning
+4. Statistikken oppdateres i sanntid når du klikker "🔄 Oppdater"
+
+**Eksempel på KPI-visning:**
+- **Bekreftede**: "47 deltakere (75% av totalt)" - grønn gradient
+- **Ubekreftede**: "16 deltakere (25% av totalt)" - rosa gradient
+
+**Bruk dette for:**
+- Overvåke hvor mange som har sjekket inn
+- Planlegge når arrangement kan starte
+- Identifisere deltakere som trenger hjelp
+- Få raskt overblikk over oppmøte-status
 
 ## 💻 Hardware Setup
 
@@ -519,6 +630,7 @@ For utskrift av QR-koder:
 - `PUT /api/participants/:code` - Oppdater deltaker
 - `DELETE /api/participants/:code` - Slett deltaker
 - `POST /api/participants/:code/photo` - Last opp selfie
+- `POST /api/participants/:code/confirm` - Bekreft deltaker (engangsoperasjon)
 
 ### Lag (Teams)
 - `GET /api/teams` - Hent alle lag
@@ -678,7 +790,8 @@ For utskrift av QR-koder:
 │   └── admin.js             # Admin API
 ├── public/
 │   ├── index.html           # Hovedside med navigasjon
-│   ├── profile.html         # Profilside (QR-scan + selfie)
+│   ├── welcome.html         # Velkomstside for nye deltakere
+│   ├── profile.html         # Profilside (QR-scan + selfie + bekreft)
 │   ├── admin.html           # Admin panel
 │   ├── quiz.html            # Quiz
 │   ├── scavenger-hunt.html  # QR Skattejakt

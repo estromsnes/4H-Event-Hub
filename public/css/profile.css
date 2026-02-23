@@ -659,3 +659,105 @@
     color: var(--text-light);
     font-size: 18px;
 }
+
+/* Confirmation Section */
+.confirmation-section {
+    width: 100%;
+    max-width: 500px;
+    margin: 20px auto;
+}
+
+.confirmation-card {
+    background: linear-gradient(135deg, #fff8e1, #ffffff);
+    border: 2px solid #ffd54f;
+    border-radius: var(--border-radius);
+    padding: 30px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.confirmation-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+}
+
+.confirmation-card h3 {
+    color: var(--text-dark);
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.confirmation-card p {
+    color: var(--text-light);
+    margin-bottom: 25px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.confirmation-card .button {
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    font-size: 20px;
+    padding: 18px 30px;
+}
+
+/* Confirmed Status Badge */
+.confirmed-status {
+    width: 100%;
+    max-width: 500px;
+    margin: 20px auto;
+}
+
+.confirmed-badge {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border: 2px solid #28a745;
+    border-radius: var(--border-radius);
+    padding: 20px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: var(--shadow);
+}
+
+.confirmed-icon {
+    font-size: 32px;
+}
+
+.confirmed-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #155724;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .confirmation-card {
+        padding: 25px 20px;
+    }
+
+    .confirmation-icon {
+        font-size: 48px;
+    }
+
+    .confirmation-card h3 {
+        font-size: 20px;
+    }
+
+    .confirmation-card p {
+        font-size: 15px;
+    }
+
+    .confirmed-badge {
+        padding: 15px 20px;
+    }
+
+    .confirmed-icon {
+        font-size: 28px;
+    }
+
+    .confirmed-text {
+        font-size: 18px;
+    }
+}
