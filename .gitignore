@@ -15,6 +15,7 @@ uploads/photo-challenges/*
 uploads/profile-photos/*
 uploads/qr-codes/*
 uploads/quiz-images/*
+uploads/selfie-chain/*
 uploads/team-photos/*
 
 # Keep directory structure
@@ -23,6 +24,7 @@ uploads/team-photos/*
 !uploads/profile-photos/.gitkeep
 !uploads/qr-codes/.gitkeep
 !uploads/quiz-images/.gitkeep
+!uploads/selfie-chain/.gitkeep
 !uploads/team-photos/.gitkeep
 
 # Logs

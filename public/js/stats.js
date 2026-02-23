@@ -93,21 +93,23 @@ function renderActivityDistribution(distribution) {
     statsCharts.activityDistribution = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Quiz', 'Samle laget', 'Bildeoppgaver', 'QR Skattejakt', 'Tripp-Trapp-Tresko'],
+            labels: ['Quiz', 'Samle laget', 'Bildeoppgaver', 'QR Skattejakt', 'Tripp-Trapp-Tresko', 'Selfie-kjedet'],
             datasets: [{
                 data: [
                     distribution.quiz,
                     distribution.teamChallenge,
                     distribution.photoChallenges,
                     distribution.scavenger,
-                    distribution.ticTacToe
+                    distribution.ticTacToe,
+                    distribution.selfieChain || 0
                 ],
                 backgroundColor: [
                     '#667eea',
                     '#f093fb',
                     '#4facfe',
                     '#43e97b',
-                    '#fa709a'
+                    '#fa709a',
+                    '#ff6b6b'
                 ],
                 borderWidth: 2,
                 borderColor: '#fff'
@@ -244,23 +246,43 @@ function renderTeamComparison(teams) {
         statsCharts.teamComparison.destroy();
     }
 
-    // Take top 5 teams for readability
-    const topTeams = teams.slice(0, 5);
+    // Filter out teams with no activity (all zeros)
+    const activeTeams = teams.filter(team => {
+        return team.quizScore > 0 ||
+               team.photoPoints > 0 ||
+               team.teamChallengeTime > 0 ||
+               team.scavengerCheckpoints > 0 ||
+               team.ticTacToeWinRate > 0 ||
+               (team.selfieChainPoints && team.selfieChainPoints > 0);
+    });
 
-    const datasets = topTeams.map((team, index) => {
+    // Show all active teams (not just top 5)
+    const displayTeams = activeTeams;
+
+    const datasets = displayTeams.map((team, index) => {
         const colors = [
             'rgba(102, 126, 234, 0.6)',
             'rgba(240, 147, 251, 0.6)',
             'rgba(79, 172, 254, 0.6)',
             'rgba(67, 233, 123, 0.6)',
-            'rgba(250, 112, 154, 0.6)'
+            'rgba(250, 112, 154, 0.6)',
+            'rgba(255, 107, 107, 0.6)',
+            'rgba(78, 205, 196, 0.6)',
+            'rgba(255, 195, 18, 0.6)',
+            'rgba(168, 85, 247, 0.6)',
+            'rgba(245, 158, 11, 0.6)'
         ];
         const borderColors = [
             'rgb(102, 126, 234)',
             'rgb(240, 147, 251)',
             'rgb(79, 172, 254)',
             'rgb(67, 233, 123)',
-            'rgb(250, 112, 154)'
+            'rgb(250, 112, 154)',
+            'rgb(255, 107, 107)',
+            'rgb(78, 205, 196)',
+            'rgb(255, 195, 18)',
+            'rgb(168, 85, 247)',
+            'rgb(245, 158, 11)'
         ];
 
         return {
@@ -270,7 +292,8 @@ function renderTeamComparison(teams) {
                 team.photoPoints,
                 team.teamChallengeTime,
                 team.scavengerCheckpoints * 10, // Scale up for visibility
-                team.ticTacToeWinRate
+                team.ticTacToeWinRate,
+                team.selfieChainPoints || 0
             ],
             backgroundColor: colors[index % colors.length],
             borderColor: borderColors[index % borderColors.length],
@@ -281,7 +304,7 @@ function renderTeamComparison(teams) {
     statsCharts.teamComparison = new Chart(ctx, {
         type: 'radar',
         data: {
-            labels: ['Quiz Score', 'Bildepoeng', 'Samle laget', 'Skattejakt', 'TTT Win %'],
+            labels: ['Quiz Score', 'Bildepoeng', 'Samle laget', 'Skattejakt', 'TTT Win %', 'Selfie-kjede'],
             datasets: datasets
         },
         options: {
@@ -535,22 +558,35 @@ function renderTicTacToeStats(stats) {
     const container = document.getElementById('ticTacToeStats');
 
     let html = `
-        <div style="margin-bottom: 15px;">
-            <strong>🎮 Totalt spill:</strong> ${stats.totalGames || 0}
-        </div>
-        <div style="margin-bottom: 15px;">
-            <strong>🤝 Uavgjorte:</strong> ${stats.totalDraws || 0}
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px;">
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #9C27B0, #7B1FA2); border-radius: 10px; color: white;">
+                <div style="font-size: 32px; font-weight: bold;">${stats.totalGames || 0}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Totalt spill</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #FF9800, #F57C00); border-radius: 10px; color: white;">
+                <div style="font-size: 32px; font-weight: bold;">${stats.totalDraws || 0}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Uavgjorte</div>
+            </div>
         </div>
     `;
 
-    if (stats.topPlayer) {
+    if (stats.topPlayers && stats.topPlayers.length > 0) {
         html += `
             <div>
-                <strong>🏆 Flest seire:</strong><br>
-                ${stats.topPlayer.name}<br>
-                <span style="font-size: 12px; color: #999;">${stats.topPlayer.wins || 0} seire</span>
+                <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">🏆 Topp 5</h4>
+                ${stats.topPlayers.map((player, index) => `
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: ${index === 0 ? '#ffd700' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : '#f5f5f5'}; border-radius: 8px; margin-bottom: 8px;">
+                        <div style="font-size: 20px; font-weight: bold; min-width: 30px; text-align: center;">${index + 1}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold;">${player.name}</div>
+                            <div style="font-size: 13px; color: #666;">${player.wins} seire • ${player.draws} uavgjort • ${player.total_games} spill</div>
+                        </div>
+                    </div>
+                `).join('')}
             </div>
         `;
+    } else {
+        html += '<p style="text-align: center; color: #999; margin-top: 20px;">Ingen data ennå</p>';
     }
 
     container.innerHTML = html;

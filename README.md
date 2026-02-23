@@ -43,6 +43,36 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 - **Quiz**: Svar på quiz-spørsmål som lag og konkurer om beste tid
 - **QR Skattejakt**: Skann QR-koder på forskjellige steder og konkurer om best tid
 
+#### 🤳 Selfie-kjedet
+En sosial aktivitet hvor deltakere møter hverandre og tar selfies sammen!
+
+**Slik fungerer det:**
+1. Skann din deltaker-QR for å registrere deg
+2. Få et oppdrag å finne en bestemt person
+3. Finn personen og skann deres QR-kode for å verifisere
+4. Ta en morsom selfie sammen
+5. Få et nytt oppdrag og fortsett kjeden!
+
+**Poeng:**
+- Fullføre selfie: 50 poeng (konfigurerbart)
+- Kreativ selfie: opptil 20 bonuspoeng
+- Rask (under 5 min): +10 poeng
+
+**Varianter:**
+
+- **🔗 Lineær kjede**: Hver deltaker får en forhåndsdefinert kjede av personer å møte. Alle følger sin egen unike sti gjennom nettverket. Dette gir kontrollert flyt og sikrer at alle deltakere møter et spesifikt antall personer. Perfekt for strukturerte arrangementer hvor du vil sikre at alle får like mange møter.
+
+- **🎲 Tilfeldig**: Hver deltaker får tilfeldig tildelt neste person å møte blant de som ikke er møtt ennå. Dette gir mer variasjon og uforutsigbarhet, men krever at systemet holder oversikt over hvem som har møtt hvem. Godt for å skape spontane møter og unngå forutsigbare mønstre.
+
+- **🕸️ Nettverk**: Alle kan møte alle i valgfri rekkefølge. Deltakere velger selv hvem de vil møte neste, så lenge de ikke har møtt personen før. Dette gir maksimal fleksibilitet og sosial frihet. Ideelt for arrangementer hvor deltakerne kjenner hverandre og kan ta egne valg.
+
+**Funksjoner:**
+- QR-verifisering av både deltaker og målperson
+- Selfie med webkamera eller opplasting
+- "Min kjede" - se alle møtene dine
+- Sanntids statistikk (møter, poeng, tid igjen)
+- Tidsgrense konfigurerbar i admin
+
 #### 📅 Program
 - Se arrangementets program dag for dag
 - Oversikt over aktiviteter med klokkeslett og sted
@@ -112,6 +142,17 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 - Gi poeng til innsendte bilder (0 til max)
 - Godkjenn eller avvis innsendte bilder
 - Se leaderboard for bildeoppgaver
+
+#### 🤳 Selfie-kjedet
+- Konfigurer aktivitet (aktiv/inaktiv, tidsgrense, poeng per selfie)
+- Velg variant:
+  - **Lineær kjede**: Forhåndsdefinerte møter for kontrollert flyt
+  - **Tilfeldig**: System tildeler tilfeldige møter
+  - **Nettverk**: Deltakere velger selv hvem de møter
+- Se statistikk (deltakere startet, totalt møter, totalt poeng)
+- Se topp 10 deltakere med flest møter
+- Se møte-nettverk (hvem har møtt hvem)
+- Nullstill aktivitet (slett alle data)
 
 #### 📅 Program
 - Opprett programpunkter med tid, tittel, sted og beskrivelse
@@ -312,10 +353,11 @@ Server running on port 3000
 4. **🎯 QR Skattejakt** - Opprett sjekkpunkter, se leaderboard
 5. **🎮 Tripp-Trapp-Tresko** - Se spill, nullstill
 6. **🧠 Quiz** - Administrer spørsmål, se leaderboard
-7. **📅 Program** - Opprett program for arrangementet
-8. **💬 Tilbakemeldinger** - Se og administrer tilbakemeldinger fra deltakere
-9. **📊 Statistikk** - Oversikt, analyse og bekreftelsestatistikk (KPI-kort med bekreftede/ubekreftede deltakere)
-10. **🗄️ Database** - Last testdata, nullstill database
+7. **🤳 Selfie-kjedet** - Konfigurer varianter, se statistikk og nettverk
+8. **📅 Program** - Opprett program for arrangementet
+9. **💬 Tilbakemeldinger** - Se og administrer tilbakemeldinger fra deltakere
+10. **📊 Statistikk** - Oversikt, analyse og bekreftelsestatistikk (KPI-kort med bekreftede/ubekreftede deltakere)
+11. **🗄️ Database** - Last testdata, nullstill database
 
 ## 📖 Bruksanvisning
 

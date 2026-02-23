@@ -321,6 +321,7 @@
             <button class="tab-button" data-tab="quiz">🧠 Quiz</button>
             <button class="tab-button" data-tab="scavenger">🎯 QR Skattejakt</button>
             <button class="tab-button" data-tab="tic-tac-toe">⭕ Tripp-Trapp-Tresko</button>
+            <button class="tab-button" data-tab="selfie-chain">🤳 Selfie-kjedet</button>
         </div>
 
         <!-- Tab Contents -->
@@ -399,6 +400,17 @@
             <div class="scoreboard-grid" style="display: none;"></div>
             <div class="no-data" style="display: none;">
                 <h2>Ingen har spilt Tripp-Trapp-Tresko ennå</h2>
+            </div>
+        </div>
+
+        <div id="selfie-chain" class="tab-content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Laster...</p>
+            </div>
+            <div class="scoreboard-grid" style="display: none;"></div>
+            <div class="no-data" style="display: none;">
+                <h2>Ingen har startet Selfie-kjedet ennå</h2>
             </div>
         </div>
     </div>
@@ -504,6 +516,10 @@
                         data = await loadTicTacToe();
                         renderTicTacToe(data, container);
                         break;
+                    case 'selfie-chain':
+                        data = await loadSelfieChain();
+                        renderSelfieChain(data, container);
+                        break;
                 }
 
                 // Update last updated time
@@ -557,6 +573,13 @@
         // Load Tic-Tac-Toe data
         async function loadTicTacToe() {
             const response = await fetch('/api/tic-tac-toe/leaderboard');
+            if (!response.ok) throw new Error('Failed to load');
+            return await response.json();
+        }
+
+        // Load Selfie Chain data
+        async function loadSelfieChain() {
+            const response = await fetch('/api/selfie-chain/leaderboard');
             if (!response.ok) throw new Error('Failed to load');
             return await response.json();
         }
@@ -798,6 +821,46 @@
             }).join('');
         }
 
+        // Render Selfie Chain
+        function renderSelfieChain(data, container) {
+            const loading = container.querySelector('.loading');
+            const scoreboard = container.querySelector('.scoreboard-grid');
+            const noData = container.querySelector('.no-data');
+
+            loading.style.display = 'none';
+
+            if (!data.leaderboard || data.leaderboard.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+
+            scoreboard.style.display = 'grid';
+            scoreboard.innerHTML = data.leaderboard.map((participant, index) => {
+                const rank = index + 1;
+                const isTop3 = rank <= 3;
+                const photoHtml = participant.profile_photo_path
+                    ? `<img src="${participant.profile_photo_path}?t=${Date.now()}" alt="${participant.name}" class="team-photo">`
+                    : `<div class="team-photo-placeholder">🤳</div>`;
+
+                return `
+                    <div class="player-card">
+                        ${photoHtml}
+                        <div class="team-rank ${isTop3 ? 'top3' : ''}">
+                            ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
+                        </div>
+                        <div>
+                            <div class="team-name">${participant.name}</div>
+                            <div class="stats-label">${participant.team || 'Ingen lag'}</div>
+                        </div>
+                        <div>
+                            <div class="stats-badge points">${participant.total_points}</div>
+                            <div class="stats-label">${participant.meetings_completed} møter</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         function formatTime(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
@@ -807,7 +870,7 @@
         // Check URL hash to open specific tab
         function initializeFromHash() {
             const hash = window.location.hash.substring(1); // Remove the # character
-            const validTabs = ['team-challenge', 'photo-challenges', 'quiz', 'scavenger', 'tic-tac-toe'];
+            const validTabs = ['team-challenge', 'photo-challenges', 'quiz', 'scavenger', 'tic-tac-toe', 'selfie-chain'];
 
             if (hash && validTabs.includes(hash)) {
                 // Update current tab

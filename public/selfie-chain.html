@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📸 Selfie-kjedet - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/selfie-chain.css">
+</head>
+<body>
+    <!-- Back Button -->
+    <button class="back-btn" onclick="window.location.href='/participant.html'">← Tilbake</button>
+
+    <!-- Settings Icon -->
+    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="page-header">
+            <h1>📸 Selfie-kjedet</h1>
+        </header>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Participant Scan View (initial screen) -->
+            <div id="participantScanView" class="view">
+                <div class="scan-card">
+                    <div class="scan-icon">🤳</div>
+                    <h2>Skann din deltaker-QR</h2>
+                    <p style="color: var(--text-light); margin-bottom: 30px;">
+                        Hold QR-koden foran kameraet eller bruk strekkodeskanneren for å starte
+                    </p>
+
+                    <div id="participantQrReader" class="qr-reader-container" style="margin-bottom: 20px;"></div>
+
+                    <button id="startParticipantScanBtn" class="button primary large" style="width: 100%; margin-bottom: 15px;">
+                        📷 Start Kamera-Skanning
+                    </button>
+
+                    <label for="participantQrFileInput" class="button secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin: 0;">
+                        🖼️ Last opp bilde av QR
+                    </label>
+                    <input type="file" id="participantQrFileInput" accept="image/*" style="display: none;">
+
+                    <div id="participantScanStatus" class="alert hidden"></div>
+                </div>
+            </div>
+
+            <!-- Participant Header (hidden until identified) -->
+            <div id="participantHeader" class="participant-header hidden">
+                <div class="participant-photo-container">
+                    <img id="headerParticipantPhoto" src="" alt="Deltakerbilde" class="participant-photo">
+                    <div id="headerPhotoPlaceholder" class="header-photo-placeholder">👤</div>
+                </div>
+                <div class="participant-header-info">
+                    <h2 id="headerParticipantName" class="participant-header-name">-</h2>
+                </div>
+            </div>
+
+            <!-- Status Bar (hidden until started) -->
+            <div id="statusBar" class="status-bar hidden">
+                <div class="stat">
+                    <div class="stat-value" id="meetingsCount">0</div>
+                    <div class="stat-label">Møter</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="totalPoints">0</div>
+                    <div class="stat-label">Poeng</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="timeRemaining">--</div>
+                    <div class="stat-label">Tid igjen</div>
+                </div>
+            </div>
+
+            <!-- My Chain Button (hidden until started) -->
+            <div id="myChainButton" class="my-chain-button hidden" onclick="app.showMyChain()">
+                <div class="my-chain-icon">🔗</div>
+                <div class="my-chain-text">
+                    <div class="my-chain-title">Min kjede</div>
+                    <div class="my-chain-subtitle">Se alle møtene dine</div>
+                </div>
+                <div class="my-chain-arrow">›</div>
+            </div>
+
+            <!-- Instructions View (hidden until QR scanned) -->
+            <div id="instructionsView" class="view hidden">
+                <div class="instructions-card">
+                    <div class="participant-welcome">
+                        <h2>Hei <span id="welcomeParticipantName">-</span>! 👋</h2>
+                        <p style="color: var(--text-light); margin-bottom: 0;">Velkommen til Selfie-kjedet</p>
+                    </div>
+
+                    <div class="welcome-stats">
+                        <div class="welcome-stat">
+                            <div class="welcome-stat-value" id="welcomeMeetings">0</div>
+                            <div class="welcome-stat-label">Møter</div>
+                        </div>
+                        <div class="welcome-stat">
+                            <div class="welcome-stat-value" id="welcomePoints">0</div>
+                            <div class="welcome-stat-label">Poeng</div>
+                        </div>
+                    </div>
+
+                    <div class="instructions-content">
+                        <p><strong>Slik fungerer det:</strong></p>
+                        <ol>
+                            <li>Du får et oppdrag å finne en bestemt person</li>
+                            <li>Finn personen og skann hennes/hans QR-kode</li>
+                            <li>Ta en morsom selfie sammen (50 poeng)</li>
+                            <li>Få et nytt oppdrag og fortsett kjeden!</li>
+                        </ol>
+
+                        <div class="info-box">
+                            <p>💡 <strong>Tips:</strong> Vær kreativ med posene deres!</p>
+                        </div>
+                    </div>
+
+                    <button class="button primary large" id="startBtn" onclick="startSelfieChain()">
+                        🚀 Start Selfie-kjedet!
+                    </button>
+
+                    <div id="startStatus" class="alert hidden"></div>
+                </div>
+            </div>
+
+            <!-- Mission View (when you have a target) -->
+            <div id="missionView" class="view hidden">
+                <div class="mission-card">
+                    <div class="mission-intro">
+                        <p>Ditt oppdrag er nå å finne:</p>
+                    </div>
+
+                    <div class="target-info">
+                        <div id="targetPhoto" class="target-photo">
+                            <div class="photo-placeholder">👤</div>
+                        </div>
+
+                        <div class="target-details">
+                            <div class="target-name" id="targetName">-</div>
+                            <div class="target-hint" id="targetHint">-</div>
+                        </div>
+                    </div>
+
+                    <div class="mission-hint">
+                        <p>💡 Finn personen, skann hennes/hans QR kode og ta en morsom selfie sammen for å fortsette kjeden!</p>
+                    </div>
+
+                    <!-- QR Scanner Section -->
+                    <div id="qrScanSection" class="qr-scan-inline">
+                        <h3 style="text-align: center; margin-bottom: 15px; color: var(--primary);">
+                            Skann <span id="targetNameInScanner">personens</span> QR-kode
+                        </h3>
+                        <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                            Hold QR-koden foran kameraet eller bruk strekkodeskanneren
+                        </p>
+
+                        <div id="targetQrReader" class="qr-reader-container" style="margin-bottom: 20px;"></div>
+
+                        <div class="action-buttons">
+                            <button id="startTargetScanBtn" class="button primary large" style="width: 100%; margin-bottom: 15px;">
+                                📷 Start Kamera-Skanning
+                            </button>
+
+                            <label for="targetQrFileInput" class="button secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 15px;">
+                                🖼️ Last opp bilde av QR
+                            </label>
+                            <input type="file" id="targetQrFileInput" accept="image/*" style="display: none;">
+                        </div>
+
+                        <div id="targetScanStatus" class="alert hidden"></div>
+                    </div>
+
+                    <!-- Selfie Button (hidden until QR scanned) -->
+                    <div id="selfieButtonSection" class="hidden">
+                        <button id="takeSelfieBtn" class="button success large" onclick="openCamera()" style="width: 100%;">
+                            📷 Ta Selfie
+                        </button>
+                    </div>
+
+                    <div id="missionStatus" class="alert hidden"></div>
+                </div>
+            </div>
+
+            <!-- Camera View -->
+            <div id="cameraView" class="view hidden">
+                <div class="camera-container">
+                    <h2>📸 Ta Selfie</h2>
+
+                    <video id="cameraVideo" class="camera-video" autoplay playsinline></video>
+                    <canvas id="photoCanvas" class="photo-canvas hidden"></canvas>
+                    <img id="capturedPhoto" class="captured-photo hidden" alt="Captured selfie">
+
+                    <div class="camera-controls">
+                        <button id="captureBtn" class="button primary large" onclick="capturePhoto()">
+                            📸 Ta bilde
+                        </button>
+                        <button id="retakeBtn" class="button secondary hidden" onclick="retakePhoto()">
+                            🔄 Ta på nytt
+                        </button>
+                        <button id="confirmBtn" class="button success large hidden" onclick="confirmSelfie()">
+                            ✓ Bruk dette bildet
+                        </button>
+                        <button class="button secondary" onclick="closeCameraView()">
+                            Avbryt
+                        </button>
+                    </div>
+
+                    <div id="cameraStatus" class="alert hidden"></div>
+                </div>
+            </div>
+
+            <!-- Success View (after completing a selfie) -->
+            <div id="successView" class="view hidden">
+                <div class="success-card">
+                    <div class="success-icon">🎉</div>
+                    <h2>Selfie fullført!</h2>
+
+                    <div class="success-details">
+                        <div class="completed-photo">
+                            <img id="completedPhotoImg" src="" alt="Completed selfie">
+                        </div>
+
+                        <div class="points-earned">
+                            <div class="points-value">+<span id="pointsEarned">50</span>p</div>
+                            <div class="points-label">Poeng opptjent!</div>
+                        </div>
+
+                        <div class="stats-update">
+                            <p>Totalt: <strong><span id="updatedPoints">0</span> poeng</strong></p>
+                            <p>Møter: <strong><span id="updatedMeetings">0</span></strong></p>
+                        </div>
+                    </div>
+
+                    <div class="next-mission">
+                        <h3>🎯 Neste Oppdrag:</h3>
+                        <div class="next-target" id="nextTargetInfo">
+                            <div class="next-target-name">-</div>
+                            <div class="next-target-hint">-</div>
+                        </div>
+                    </div>
+
+                    <div class="success-actions">
+                        <button class="button primary large" onclick="continueToNextMission()">
+                            🚀 Finn neste person!
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complete View (when no more targets) -->
+            <div id="completeView" class="view hidden">
+                <div class="complete-card">
+                    <div class="complete-icon">🏆</div>
+                    <h2>Gratulerer!</h2>
+                    <p>Du har møtt alle tilgjengelige personer!</p>
+
+                    <div class="final-stats">
+                        <div class="final-stat">
+                            <div class="final-stat-value" id="finalMeetings">0</div>
+                            <div class="final-stat-label">Møter</div>
+                        </div>
+                        <div class="final-stat">
+                            <div class="final-stat-value" id="finalPoints">0</div>
+                            <div class="final-stat-label">Poeng</div>
+                        </div>
+                    </div>
+
+                    <div class="complete-actions">
+                        <button class="button primary" onclick="showMyChain()">
+                            🔗 Se min kjede
+                        </button>
+                        <button class="button secondary" onclick="showLeaderboard()">
+                            🏆 Se Leaderboard
+                        </button>
+                        <button class="button secondary" onclick="window.location.href='/index.html'">
+                            🏠 Tilbake til Hjem
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time Up View (when time runs out) -->
+            <div id="timeUpView" class="view hidden">
+                <div class="complete-card">
+                    <div class="complete-icon">⏰</div>
+                    <h2>Tiden er ute!</h2>
+                    <p>Du klarte ikke å fullføre alle møtene innen tidsfristen.</p>
+
+                    <div class="final-stats">
+                        <div class="final-stat">
+                            <div class="final-stat-value" id="timeUpMeetings">0</div>
+                            <div class="final-stat-label">Møter fullført</div>
+                        </div>
+                        <div class="final-stat">
+                            <div class="final-stat-value" id="timeUpPoints">0</div>
+                            <div class="final-stat-label">Poeng opptjent</div>
+                        </div>
+                    </div>
+
+                    <div class="complete-actions">
+                        <button class="button primary" onclick="selfieChainApp.showMyChain()">
+                            🔗 Se min kjede
+                        </button>
+                        <button class="button secondary" onclick="window.location.href='/participant.html'">
+                            🏠 Tilbake til Aktiviteter
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Chain Modal -->
+            <div id="myChainModal" class="modal hidden">
+                <div class="modal-content">
+                    <button class="close-btn" onclick="closeMyChain()">✕</button>
+                    <h2>🔗 Min Selfie-kjede</h2>
+
+                    <div class="chain-stats">
+                        <p>Lengde: <strong><span id="chainLength">0</span></strong> møter</p>
+                    </div>
+
+                    <div id="chainList" class="chain-list">
+                        <p class="loading">Laster...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Include QR Scanner library -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <!-- QR Scanner wrapper -->
+    <script src="/js/scanner.js"></script>
+
+    <!-- Barcode scanner global (for decoding keyboard layout issues) -->
+    <script src="/js/barcode-scanner-global.js"></script>
+
+    <!-- Selfie Chain script -->
+    <script src="/js/selfie-chain.js"></script>
+</body>
+</html>

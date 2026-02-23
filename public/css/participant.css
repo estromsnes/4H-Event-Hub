@@ -173,6 +173,10 @@ body {
     --card-color: #9B59B6;
 }
 
+.selfie-card {
+    --card-color: #FFB347;
+}
+
 .quiz-card {
     --card-color: #FF6B6B;
 }

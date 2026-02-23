@@ -52,6 +52,7 @@ const photoChallengesRouter = require('./routes/photo-challenges');
 const adminRouter = require('./routes/admin');
 const statisticsRouter = require('./routes/statistics');
 const feedbackRouter = require('./routes/feedback');
+const selfieChainRouter = require('./routes/selfie-chain');
 
 // Set admin credentials for auth router
 authRouter.setAdminCredentials(ADMIN_ACCESS_KEY, ADMIN_PIN);
@@ -74,6 +75,7 @@ app.use('/api/photo-challenges', photoChallengesRouter);
 app.use('/api/admin', requireAdminToken, adminRouter); // Protected with admin token
 app.use('/api/statistics', statisticsRouter);
 app.use('/api/feedback', feedbackRouter);
+app.use('/api/selfie-chain', selfieChainRouter);
 
 // Root redirect to profile page (main interface)
 app.get('/', (req, res) => {

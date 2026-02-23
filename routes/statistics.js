@@ -206,12 +206,20 @@ async function getActivityDistribution(db) {
         });
     });
 
+    const selfieChainParticipants = await new Promise((resolve, reject) => {
+        db.get('SELECT COUNT(DISTINCT participant_code) as count FROM selfie_chain_stats WHERE started_at IS NOT NULL', [], (err, row) => {
+            if (err) reject(err);
+            else resolve(row ? row.count : 0);
+        });
+    });
+
     return {
         quiz: quizParticipants,
         teamChallenge: teamChallengeParticipants,
         scavenger: scavengerParticipants,
         ticTacToe: ticTacToeParticipants,
-        photoChallenges: photoParticipants
+        photoChallenges: photoParticipants,
+        selfieChain: selfieChainParticipants
     };
 }
 
@@ -463,19 +471,22 @@ async function getScavengerHuntStats(db) {
 }
 
 async function getTicTacToeStats(db) {
-    // Player with most wins
-    const topPlayer = await new Promise((resolve, reject) => {
-        db.get(`SELECT
+    // Top 5 players with most wins
+    const topPlayers = await new Promise((resolve, reject) => {
+        db.all(`SELECT
             p.first_name || ' ' || p.last_name as name,
-            COUNT(CASE WHEN g.winner_code = p.participant_code THEN 1 END) as wins
+            COUNT(CASE WHEN g.winner_code = p.participant_code THEN 1 END) as wins,
+            COUNT(CASE WHEN g.result = 'draw' THEN 1 END) as draws,
+            COUNT(*) as total_games
             FROM participants p
             LEFT JOIN tic_tac_toe_games g ON (g.player1_code = p.participant_code OR g.player2_code = p.participant_code)
             WHERE g.status = 'completed'
             GROUP BY p.participant_code
-            ORDER BY wins DESC
-            LIMIT 1`, [], (err, row) => {
+            HAVING wins > 0
+            ORDER BY wins DESC, total_games DESC
+            LIMIT 5`, [], (err, rows) => {
             if (err) reject(err);
-            else resolve(row);
+            else resolve(rows || []);
         });
     });
 
@@ -496,7 +507,7 @@ async function getTicTacToeStats(db) {
     });
 
     return {
-        topPlayer,
+        topPlayers,
         totalDraws,
         totalGames
     };
@@ -688,6 +699,25 @@ async function getLiveFeed(db) {
         });
     });
 
+    // Selfie-chain meetings
+    const selfieChainActivities = await new Promise((resolve, reject) => {
+        db.all(`SELECT
+            p1.first_name || ' ' || p1.last_name as from_name,
+            p2.first_name || ' ' || p2.last_name as to_name,
+            a.points_earned,
+            a.completed_at as timestamp,
+            'selfie_chain' as activity_type
+            FROM selfie_chain_assignments a
+            JOIN participants p1 ON a.participant_code = p1.participant_code
+            JOIN participants p2 ON a.target_code = p2.participant_code
+            WHERE a.completed = 1
+            ORDER BY a.completed_at DESC
+            LIMIT 5`, [], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
+
     // Combine and sort all activities
     const allActivities = [
         ...quizActivities.map(a => ({ ...a, message: `${a.name} (${a.team}) fullførte quiz med ${a.score} poeng!` })),
@@ -695,9 +725,10 @@ async function getLiveFeed(db) {
         ...ticTacToeActivities.map(a => ({
             ...a,
             message: a.result === 'draw'
-                ? `${a.player1} spilte uavgjort mot ${a.player2} i Tripp-Trapp-Tresko`
-                : `${a.winner} vant mot ${a.result === 'player1_win' ? a.player2 : a.player1} i Tripp-Trapp-Tresko!`
-        }))
+                ? `${a.player1} vs ${a.player2} - Uavgjort i Tripp-Trapp-Tresko`
+                : `${a.player1} vs ${a.player2} - ${a.winner} vant! ⭕`
+        })),
+        ...selfieChainActivities.map(a => ({ ...a, message: `${a.from_name} møtte ${a.to_name} i Selfie-kjedet og fikk ${a.points_earned} poeng! 🤳` }))
     ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
 
     return allActivities;
@@ -806,13 +837,22 @@ async function getTeamComparison(db) {
                         GROUP BY p.team`, [team], (e, r) => e ? rej(e) : res(r && r.total > 0 ? (r.wins / r.total) * 100 : 0));
                 });
 
+                // Selfie-chain average points per participant
+                const selfieChainPoints = await new Promise((res, rej) => {
+                    db.get(`SELECT AVG(s.total_points) as avg
+                        FROM selfie_chain_stats s
+                        JOIN participants p ON s.participant_code = p.participant_code
+                        WHERE p.team = ? AND s.started_at IS NOT NULL`, [team], (e, r) => e ? rej(e) : res(r && r.avg ? r.avg : 0));
+                });
+
                 comparison.push({
                     team,
                     quizScore,
                     photoPoints,
                     teamChallengeTime,
                     scavengerCheckpoints,
-                    ticTacToeWinRate
+                    ticTacToeWinRate,
+                    selfieChainPoints
                 });
             }
 
