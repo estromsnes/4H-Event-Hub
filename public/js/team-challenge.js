@@ -257,17 +257,35 @@ class TeamChallengeManager {
 
     updateTeamMemberList(members) {
         const list = document.getElementById('teamMemberList');
-        list.innerHTML = members.map(member => `
-            <div class="team-member-item ${member.scanned ? 'scanned' : ''}">
-                <div class="member-checkbox ${member.scanned ? 'checked' : ''}">
-                    ${member.scanned ? '✓' : ''}
-                </div>
-                <div class="member-info">
-                    <div class="member-name">${member.first_name} ${member.last_name}</div>
-                    <div class="member-code">${member.participant_code}</div>
-                </div>
-            </div>
-        `).join('');
+        list.innerHTML = members.map(member => {
+            if (member.no_show) {
+                // No-show member - different styling
+                return `
+                    <div class="team-member-item no-show-member">
+                        <div class="member-checkbox no-show">
+                            ❌
+                        </div>
+                        <div class="member-info">
+                            <div class="member-name">${member.first_name} ${member.last_name}</div>
+                            <div class="member-code">Ikke til stede</div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Regular member
+                return `
+                    <div class="team-member-item ${member.scanned ? 'scanned' : ''}">
+                        <div class="member-checkbox ${member.scanned ? 'checked' : ''}">
+                            ${member.scanned ? '✓' : ''}
+                        </div>
+                        <div class="member-info">
+                            <div class="member-name">${member.first_name} ${member.last_name}</div>
+                            <div class="member-code">${member.participant_code}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
     }
 
     onChallengeComplete(data) {

@@ -739,14 +739,20 @@ function populateTeamMembers(teamName) {
     }
 
     teamMembersList.innerHTML = teamMembers.map(member => `
-        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: #f9f9f9; border-radius: 8px; border-left: 3px solid var(--primary-color);">
+        <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: ${member.no_show === 1 ? 'linear-gradient(135deg, #fff5f5, #ffe5e5)' : '#f9f9f9'}; border-radius: 8px; border-left: 3px solid ${member.no_show === 1 ? '#dc3545' : 'var(--primary-color)'}; opacity: ${member.no_show === 1 ? '0.75' : '1'};">
             ${member.profile_photo_path
                 ? `<img src="${member.profile_photo_path}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd;" alt="${member.first_name}">`
                 : '<div style="width: 50px; height: 50px; border-radius: 50%; background: #ddd; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 2px solid #ccc;">👤</div>'
             }
             <div style="flex: 1; min-width: 0;">
-                <div style="font-weight: 600; font-size: 16px;">${member.first_name} ${member.last_name}</div>
-                <div style="font-size: 14px; color: var(--text-light);">${member.participant_code}</div>
+                <div style="font-weight: 600; font-size: 16px;">
+                    ${member.first_name} ${member.last_name}
+                    ${member.no_show === 1 ? '<span style="color: #dc3545; margin-left: 6px;" title="Ikke møtt opp">❌</span>' : ''}
+                </div>
+                <div style="font-size: 14px; color: var(--text-light);">
+                    ${member.participant_code}
+                    ${member.no_show === 1 ? ' • No-show' : ''}
+                </div>
             </div>
             <button class="button secondary btn-small" onclick="removeParticipantFromTeam('${member.participant_code}', '${teamName}')" style="flex-shrink: 0;">
                 🗑️ Fjern
@@ -1395,15 +1401,18 @@ function renderParticipants() {
     let filteredParticipants = participants;
 
     if (filterValue === 'confirmed') {
-        filteredParticipants = participants.filter(p => p.confirmed === 1);
+        filteredParticipants = participants.filter(p => p.confirmed === 1 && p.no_show !== 1);
     } else if (filterValue === 'unconfirmed') {
-        filteredParticipants = participants.filter(p => p.confirmed !== 1);
+        filteredParticipants = participants.filter(p => p.confirmed !== 1 && p.no_show !== 1);
+    } else if (filterValue === 'no-show') {
+        filteredParticipants = participants.filter(p => p.no_show === 1);
     }
 
     // Update filter stats
-    const confirmedCount = participants.filter(p => p.confirmed === 1).length;
-    const unconfirmedCount = participants.length - confirmedCount;
-    filterStats.textContent = `(${confirmedCount} bekreftet, ${unconfirmedCount} ubekreftet)`;
+    const confirmedCount = participants.filter(p => p.confirmed === 1 && p.no_show !== 1).length;
+    const unconfirmedCount = participants.filter(p => p.confirmed !== 1 && p.no_show !== 1).length;
+    const noShowCount = participants.filter(p => p.no_show === 1).length;
+    filterStats.textContent = `(${confirmedCount} bekreftet, ${unconfirmedCount} ubekreftet, ${noShowCount} no-show)`;
 
     if (filteredParticipants.length === 0) {
         participantsList.innerHTML = `
@@ -1415,13 +1424,15 @@ function renderParticipants() {
     }
 
     participantsList.innerHTML = filteredParticipants.map(p => `
-        <div class="participant-item">
+        <div class="participant-item ${p.no_show === 1 ? 'no-show-item' : ''}">
             <div class="participant-info">
                 <h3>
                     ${p.first_name} ${p.last_name}
-                    ${p.confirmed === 1
-                        ? '<span class="confirmed-badge" title="Bekreftet">✅</span>'
-                        : '<span class="unconfirmed-badge" title="Ikke bekreftet">⏳</span>'
+                    ${p.no_show === 1
+                        ? '<span class="no-show-badge" title="Ikke møtt opp">❌</span>'
+                        : p.confirmed === 1
+                            ? '<span class="confirmed-badge" title="Bekreftet">✅</span>'
+                            : '<span class="unconfirmed-badge" title="Ikke bekreftet">⏳</span>'
                     }
                 </h3>
                 <p>
@@ -1437,10 +1448,18 @@ function renderParticipants() {
                         ? ` • Bekreftet ${new Date(p.confirmed_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
                         : ''
                     }
+                    ${p.no_show === 1 && p.no_show_marked_at
+                        ? ` • No-show ${new Date(p.no_show_marked_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                        : ''
+                    }
                 </p>
             </div>
             <div class="participant-actions">
-                ${p.confirmed !== 1
+                ${p.no_show === 1
+                    ? `<button class="button success btn-small" onclick="removeNoShow('${p.participant_code}')" title="Marker som møtt opp">✓ Møtt opp</button>`
+                    : `<button class="button danger btn-small" onclick="markNoShow('${p.participant_code}')" title="Marker som no-show">❌</button>`
+                }
+                ${p.confirmed !== 1 && p.no_show !== 1
                     ? `<button class="button primary btn-small" onclick="confirmParticipant('${p.participant_code}')" title="Bekreft deltaker">✅</button>`
                     : ''
                 }
@@ -1591,6 +1610,70 @@ async function confirmParticipant(participantCode) {
     } catch (err) {
         console.error('Error confirming participant:', err);
         alert('Kunne ikke bekrefte deltaker: ' + err.message);
+    }
+}
+
+/**
+ * Mark participant as no-show
+ */
+async function markNoShow(participantCode) {
+    const participant = participants.find(p => p.participant_code === participantCode);
+    if (!participant) return;
+
+    const confirmed = confirm(
+        `Marker ${participant.first_name} ${participant.last_name} som no-show?\n\nDette vil markere deltakeren som ikke møtt opp.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/api/participants/${participantCode}/no-show`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Kunne ikke markere deltaker som no-show');
+        }
+
+        alert(`${participant.first_name} ${participant.last_name} er markert som no-show`);
+        await loadParticipants();
+
+    } catch (err) {
+        console.error('Error marking no-show:', err);
+        alert('Kunne ikke markere no-show: ' + err.message);
+    }
+}
+
+/**
+ * Remove no-show status from participant
+ */
+async function removeNoShow(participantCode) {
+    const participant = participants.find(p => p.participant_code === participantCode);
+    if (!participant) return;
+
+    const confirmed = confirm(
+        `Marker ${participant.first_name} ${participant.last_name} som møtt opp?\n\nDette vil fjerne no-show status.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/api/participants/${participantCode}/no-show`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Kunne ikke fjerne no-show status');
+        }
+
+        alert(`${participant.first_name} ${participant.last_name} er nå markert som møtt opp`);
+        await loadParticipants();
+
+    } catch (err) {
+        console.error('Error removing no-show:', err);
+        alert('Kunne ikke fjerne no-show status: ' + err.message);
     }
 }
 

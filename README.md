@@ -76,7 +76,10 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 - **Filtrer deltakere**: Vis kun bekreftede eller ubekreftede deltakere
 - **Bekreft deltaker manuelt**: Klikk ✅-knapp for å bekrefte deltaker
 - **Bekreftet tidsstempel**: Se når deltaker ble bekreftet
-- **Live statistikk**: Se antall bekreftede vs ubekreftede i deltakerlisten
+- **No-show status**: Marker deltaker som ❌ (ikke møtt opp)
+- **Fjern no-show**: Klikk "✓ Møtt opp" for å fjerne no-show status
+- **Filtrer no-show**: Vis kun deltakere som ikke har møtt opp
+- **Live statistikk**: Se antall bekreftede, ubekreftede og no-show i deltakerlisten
 - Eksporter deltakerliste
 
 #### 🏆 Lag
@@ -220,6 +223,7 @@ node database/migrate-add-courses.js
 node database/migrate-add-photo-challenges.js
 node database/migrate-add-feedback.js
 node database/migrate-add-participant-confirmed.js
+node database/migrate-add-no-show.js
 ```
 
 *Tips: Du kan kjøre alle migrasjonene på en gang uten feil - skript som allerede er kjørt vil bli hoppet over.*
@@ -488,6 +492,38 @@ Server running on port 3000
 - Kvalitetssikre før arrangement starter
 - Rask oversikt over hvem som har sjekket inn
 
+#### Administrere No-Show
+
+**Markere deltaker som no-show:**
+1. Gå til **Deltakere** fanen i admin
+2. Finn deltaker som ikke har møtt opp
+3. Klikk på ❌-knappen til høyre for deltakeren
+4. Bekreft i dialog-boksen
+5. Deltakeren markeres med rød ❌ badge og tidsstempel
+
+**Fjerne no-show status:**
+1. Finn deltaker som er markert som no-show (❌)
+2. Klikk på **"✓ Møtt opp"** knappen
+3. Bekreft i dialog-boksen
+4. No-show status fjernes og deltaker vises normalt
+
+**Filtrere no-show:**
+1. Bruk dropdown-filteret over deltakerlisten
+2. Velg **❌ Kun no-show** for å se bare deltakere som ikke har møtt opp
+3. Live statistikk viser: "(X bekreftet, Y ubekreftet, Z no-show)"
+
+**Visning:**
+- No-show deltakere har rød bakgrunn i listen
+- ❌ badge vises på deltaker som ikke har møtt opp
+- Tidsstempel vises for når deltaker ble markert som no-show
+- No-show statistikk vises på statistikk-siden
+
+**Bruksscenarier:**
+- Holde oversikt over deltakere som ikke har møtt opp
+- Frigjøre ledig plass til andre deltakere
+- Rapportering og oppfølging etter arrangement
+- Statistikk over fremmøte
+
 #### Print QR-koder
 
 **For Deltakere:**
@@ -558,16 +594,19 @@ Server running on port 3000
 2. Se KPI-kort med bekreftelsesinformasjon:
    - **👥 Totalt deltakere** - Totalt antall påmeldte
    - **✅ Bekreftede deltakere** - Antall og prosent som har bekreftet
+   - **❌ No-show deltakere** - Antall og prosent som ikke har møtt opp
    - **⏳ Ubekreftede deltakere** - Antall og prosent som ikke har bekreftet (vises implisitt)
 3. KPI-kortene har fargekodede gradienter for enkel avlesning
 4. Statistikken oppdateres i sanntid når du klikker "🔄 Oppdater"
 
 **Eksempel på KPI-visning:**
 - **Bekreftede**: "47 deltakere (75% av totalt)" - grønn gradient
+- **No-show**: "3 deltakere (5% av totalt)" - rød gradient
 - **Ubekreftede**: "16 deltakere (25% av totalt)" - rosa gradient
 
 **Bruk dette for:**
 - Overvåke hvor mange som har sjekket inn
+- Holde oversikt over deltakere som ikke har møtt opp
 - Planlegge når arrangement kan starte
 - Identifisere deltakere som trenger hjelp
 - Få raskt overblikk over oppmøte-status
@@ -631,6 +670,8 @@ For utskrift av QR-koder:
 - `DELETE /api/participants/:code` - Slett deltaker
 - `POST /api/participants/:code/photo` - Last opp selfie
 - `POST /api/participants/:code/confirm` - Bekreft deltaker (engangsoperasjon)
+- `POST /api/participants/:code/no-show` - Marker deltaker som no-show (admin)
+- `DELETE /api/participants/:code/no-show` - Fjern no-show status (admin)
 
 ### Lag (Teams)
 - `GET /api/teams` - Hent alle lag

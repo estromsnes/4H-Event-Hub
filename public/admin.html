@@ -156,6 +156,17 @@
             color: #6c757d;
         }
 
+        .no-show-badge {
+            font-size: 18px;
+            color: #dc3545;
+        }
+
+        .no-show-item {
+            background: linear-gradient(135deg, #fff5f5, #ffe5e5);
+            border-left: 4px solid #dc3545;
+            opacity: 0.85;
+        }
+
         .participant-info p {
             margin: 0;
             font-size: 14px;
@@ -843,6 +854,7 @@
                     <option value="all">Alle deltakere</option>
                     <option value="confirmed">✅ Kun bekreftede</option>
                     <option value="unconfirmed">⏳ Kun ubekreftede</option>
+                    <option value="no-show">❌ Kun no-show</option>
                 </select>
                 <span id="filterStats" style="margin-left: 15px; color: var(--text-light); font-size: 14px;"></span>
             </div>

@@ -465,20 +465,23 @@ async function loadTeamMembers(teamName, currentParticipantCode) {
         // Render team members
         teamMembersList.innerHTML = teamMembers.map(member => {
             const isCurrentUser = member.participant_code === currentParticipantCode;
+            const isNoShow = member.no_show === 1;
             const photoHtml = member.profile_photo_path
-                ? `<img src="${member.profile_photo_path}" class="team-member-photo" alt="${member.first_name}">`
-                : `<div class="team-member-photo-placeholder">👤</div>`;
+                ? `<img src="${member.profile_photo_path}" class="team-member-photo ${isNoShow ? 'no-show-photo' : ''}" alt="${member.first_name}">`
+                : `<div class="team-member-photo-placeholder ${isNoShow ? 'no-show-photo' : ''}">👤</div>`;
 
             const details = [];
             if (member.age) details.push(`${member.age} år`);
             if (member.club) details.push(member.club);
+            if (isNoShow) details.push('<span style="color: #dc3545; font-weight: 600;">Ikke møtt opp</span>');
 
             return `
-                <div class="team-member-card ${isCurrentUser ? 'current-user' : ''}">
+                <div class="team-member-card ${isCurrentUser ? 'current-user' : ''} ${isNoShow ? 'no-show-member' : ''}">
                     ${photoHtml}
                     <div class="team-member-info">
                         <div class="team-member-name">
                             ${member.first_name} ${member.last_name}
+                            ${isNoShow ? '<span style="color: #dc3545; margin-left: 6px;" title="Ikke møtt opp">❌</span>' : ''}
                         </div>
                         <div class="team-member-details">
                             ${details.join(' • ')}

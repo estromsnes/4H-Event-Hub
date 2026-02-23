@@ -407,6 +407,12 @@
     background: linear-gradient(135deg, #e8f5e9, white);
 }
 
+.detail-team-member-card.no-show-member {
+    background: linear-gradient(135deg, #fff5f5, #ffe5e5);
+    border-left: 4px solid #dc3545;
+    opacity: 0.85;
+}
+
 .detail-team-member-photo {
     width: 60px;
     height: 60px;
@@ -414,6 +420,12 @@
     object-fit: cover;
     border: 3px solid var(--background);
     flex-shrink: 0;
+}
+
+.detail-team-member-photo.no-show-photo,
+.detail-team-member-photo-placeholder.no-show-photo {
+    opacity: 0.6;
+    filter: grayscale(50%);
 }
 
 .detail-team-member-photo-placeholder {

@@ -366,22 +366,29 @@ class ParticipantInfo {
 
         // Render team members
         teamMembersList.innerHTML = teamMembers.map(member => {
+            const isNoShow = member.no_show === 1;
+            const photoClass = isNoShow ? ' no-show-photo' : '';
             const photoHtml = member.photo_path
-                ? `<img src="${member.photo_path}" alt="${member.name}" class="detail-team-member-photo">`
-                : `<div class="detail-team-member-photo-placeholder">👤</div>`;
+                ? `<img src="${member.photo_path}" alt="${member.name}" class="detail-team-member-photo${photoClass}">`
+                : `<div class="detail-team-member-photo-placeholder${photoClass}">👤</div>`;
 
             const details = [];
             if (member.age) details.push(`${member.age} år`);
             if (member.club) details.push(member.club);
+            if (isNoShow) details.push('<span style="color: #dc3545; font-weight: 600;">Ikke møtt opp</span>');
 
             const isCurrentUser = member.id === participant.id;
             const currentUserClass = isCurrentUser ? ' current-user' : '';
+            const noShowClass = isNoShow ? ' no-show-member' : '';
 
             return `
-                <div class="detail-team-member-card${currentUserClass}" data-member-id="${member.id}">
+                <div class="detail-team-member-card${currentUserClass}${noShowClass}" data-member-id="${member.id}">
                     ${photoHtml}
                     <div class="detail-team-member-info">
-                        <div class="detail-team-member-name">${member.name}${isCurrentUser ? ' (deg)' : ''}</div>
+                        <div class="detail-team-member-name">
+                            ${member.name}${isCurrentUser ? ' (deg)' : ''}
+                            ${isNoShow ? '<span style="color: #dc3545; margin-left: 6px;" title="Ikke møtt opp">❌</span>' : ''}
+                        </div>
                         <div class="detail-team-member-details">${details.join(' • ')}</div>
                     </div>
                 </div>

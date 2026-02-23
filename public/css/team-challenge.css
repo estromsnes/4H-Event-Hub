@@ -140,6 +140,12 @@
     animation: slideIn 0.3s ease;
 }
 
+.team-member-item.no-show-member {
+    background: linear-gradient(135deg, #fff5f5, #ffe5e5);
+    border-left-color: #dc3545;
+    opacity: 0.75;
+}
+
 @keyframes slideIn {
     from {
         transform: translateX(-10px);
@@ -168,6 +174,12 @@
     background: #4CAF50;
     border-color: #4CAF50;
     color: white;
+}
+
+.member-checkbox.no-show {
+    background: #fff;
+    border-color: #dc3545;
+    color: #dc3545;
 }
 
 .member-info {

@@ -101,13 +101,14 @@ router.post('/start', async (req, res) => {
         if (validSession) {
             const scans = await getSessionScans(db, validSession.id);
             const teamMembers = await getTeamMembersWithStatus(db, teamName, scans);
+            const activeMembers = teamMembers.filter(m => !m.no_show);
 
             console.log(`[Team Challenge] Resuming existing valid session ${validSession.id}`);
             return res.json({
                 session_id: validSession.id,
                 team_name: teamName,
                 status: 'in_progress',
-                scans_required: teamMembers.length,
+                scans_required: activeMembers.length,
                 scans_completed: scans.length,
                 time_limit_seconds: validSession.time_limit_seconds,
                 team_members: teamMembers,
@@ -145,12 +146,13 @@ router.post('/start', async (req, res) => {
         // Get team members with scan status
         const scans = await getSessionScans(db, sessionId);
         const teamMembers = await getTeamMembersWithStatus(db, teamName, scans);
+        const activeMembers = teamMembers.filter(m => !m.no_show);
 
         res.status(201).json({
             session_id: sessionId,
             team_name: teamName,
             status: 'in_progress',
-            scans_required: teamMembers.length,
+            scans_required: activeMembers.length,
             scans_completed: 1,
             time_limit_seconds: 120,
             team_members: teamMembers,
@@ -286,8 +288,9 @@ router.post('/scan', async (req, res) => {
         const updatedScans = await getSessionScans(db, session_id);
         const teamMembers = await getTeamMembersWithStatus(db, session.team_name, updatedScans);
 
-        // Check if all team members have scanned
-        const allScanned = teamMembers.length > 0 && teamMembers.every(member => member.scanned);
+        // Check if all non-no-show team members have scanned
+        const activeMembers = teamMembers.filter(m => !m.no_show);
+        const allScanned = activeMembers.length > 0 && activeMembers.every(member => member.scanned);
 
         if (allScanned) {
             // Calculate elapsed time
@@ -315,7 +318,7 @@ router.post('/scan', async (req, res) => {
                 success: true,
                 session_status: 'completed',
                 scans_completed: updatedScans.length,
-                scans_required: teamMembers.length,
+                scans_required: activeMembers.length,
                 elapsed_time_seconds: elapsedSeconds,
                 team_members: teamMembers,
                 challenge_completed: true
@@ -335,7 +338,7 @@ router.post('/scan', async (req, res) => {
             success: true,
             session_status: 'in_progress',
             scans_completed: updatedScans.length,
-            scans_required: teamMembers.length,
+            scans_required: activeMembers.length,
             time_remaining_seconds: timeRemaining,
             elapsed_time_seconds: session.timer_start_time
                 ? (Date.now() - new Date(session.timer_start_time).getTime()) / 1000
@@ -375,6 +378,7 @@ router.get('/session/:session_id', async (req, res) => {
 
         const scans = await getSessionScans(db, session_id);
         const teamMembers = await getTeamMembersWithStatus(db, session.team_name, scans);
+        const activeMembers = teamMembers.filter(m => !m.no_show);
 
         // Calculate time remaining if timer has started
         let timeRemaining = null;
@@ -405,7 +409,7 @@ router.get('/session/:session_id', async (req, res) => {
             team_name: session.team_name,
             status: session.status,
             scans_completed: scans.length,
-            scans_required: teamMembers.length,
+            scans_required: activeMembers.length,
             time_limit_seconds: session.time_limit_seconds,
             time_remaining_seconds: timeRemaining,
             elapsed_time_seconds: session.elapsed_time_seconds,
@@ -776,7 +780,9 @@ async function getSessionScans(db, sessionId) {
 async function getTeamMembersWithStatus(db, teamName, scans) {
     return new Promise((resolve, reject) => {
         db.all(
-            `SELECT * FROM participants WHERE team = ? AND active = 1 AND role = 'Deltaker' ORDER BY first_name, last_name`,
+            `SELECT * FROM participants WHERE team = ? AND active = 1 AND role = 'Deltaker' ORDER BY
+                CASE WHEN no_show = 1 THEN 1 ELSE 0 END,
+                first_name, last_name`,
             [teamName],
             (err, rows) => {
                 if (err) {
@@ -784,11 +790,13 @@ async function getTeamMembersWithStatus(db, teamName, scans) {
                     reject(err);
                 } else {
                     const scannedCodes = new Set(scans.map(s => s.participant_code));
+                    // Include all participants, but mark no-show status
                     const members = rows.map(p => ({
                         participant_code: p.participant_code,
                         first_name: p.first_name,
                         last_name: p.last_name,
                         profile_photo_path: p.profile_photo_path,
+                        no_show: p.no_show === 1,
                         scanned: scannedCodes.has(p.participant_code)
                     }));
                     resolve(members);

@@ -42,6 +42,10 @@ function renderKPICards(kpis) {
         ? Math.round((kpis.confirmedParticipants / kpis.totalParticipants) * 100)
         : 0;
 
+    const noShowPercentage = kpis.totalParticipants > 0
+        ? Math.round((kpis.noShowParticipants / kpis.totalParticipants) * 100)
+        : 0;
+
     container.innerHTML = `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
             <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">👥 Totalt deltakere</div>
@@ -52,6 +56,11 @@ function renderKPICards(kpis) {
             <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">✅ Bekreftede deltakere</div>
             <div style="font-size: 32px; font-weight: bold;">${kpis.confirmedParticipants || 0}</div>
             <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">${confirmedPercentage}% av totalt</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">❌ No-show deltakere</div>
+            <div style="font-size: 32px; font-weight: bold;">${kpis.noShowParticipants || 0}</div>
+            <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">${noShowPercentage}% av totalt</div>
         </div>
         <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
             <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">🎯 Antall lag</div>

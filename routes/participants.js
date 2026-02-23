@@ -378,6 +378,108 @@ router.get('/:code/scans', (req, res) => {
     );
 });
 
+// POST mark participant as no-show (admin only)
+router.post('/:code/no-show', (req, res) => {
+    const db = req.app.locals.db;
+    const { code } = req.params;
+
+    // Check if participant exists
+    db.get(
+        'SELECT * FROM participants WHERE participant_code = ? AND active = 1',
+        [code],
+        (err, participant) => {
+            if (err) {
+                console.error('Error fetching participant:', err);
+                return res.status(500).json({ error: 'Failed to fetch participant' });
+            }
+
+            if (!participant) {
+                return res.status(404).json({ error: 'Participant not found' });
+            }
+
+            // Mark participant as no-show
+            db.run(
+                'UPDATE participants SET no_show = 1, no_show_marked_at = datetime("now") WHERE participant_code = ? AND active = 1',
+                [code],
+                function(err) {
+                    if (err) {
+                        console.error('Error marking participant as no-show:', err);
+                        return res.status(500).json({ error: 'Failed to mark participant as no-show' });
+                    }
+
+                    if (this.changes === 0) {
+                        return res.status(404).json({ error: 'Participant not found' });
+                    }
+
+                    // Fetch and return updated participant
+                    db.get(
+                        'SELECT * FROM participants WHERE participant_code = ?',
+                        [code],
+                        (err, row) => {
+                            if (err) {
+                                console.error('Error fetching updated participant:', err);
+                                return res.status(500).json({ error: 'Marked as no-show but failed to fetch' });
+                            }
+                            res.json(row);
+                        }
+                    );
+                }
+            );
+        }
+    );
+});
+
+// DELETE remove no-show status (admin only)
+router.delete('/:code/no-show', (req, res) => {
+    const db = req.app.locals.db;
+    const { code } = req.params;
+
+    // Check if participant exists
+    db.get(
+        'SELECT * FROM participants WHERE participant_code = ? AND active = 1',
+        [code],
+        (err, participant) => {
+            if (err) {
+                console.error('Error fetching participant:', err);
+                return res.status(500).json({ error: 'Failed to fetch participant' });
+            }
+
+            if (!participant) {
+                return res.status(404).json({ error: 'Participant not found' });
+            }
+
+            // Remove no-show status
+            db.run(
+                'UPDATE participants SET no_show = 0, no_show_marked_at = NULL WHERE participant_code = ? AND active = 1',
+                [code],
+                function(err) {
+                    if (err) {
+                        console.error('Error removing no-show status:', err);
+                        return res.status(500).json({ error: 'Failed to remove no-show status' });
+                    }
+
+                    if (this.changes === 0) {
+                        return res.status(404).json({ error: 'Participant not found' });
+                    }
+
+                    // Fetch and return updated participant
+                    db.get(
+                        'SELECT * FROM participants WHERE participant_code = ?',
+                        [code],
+                        (err, row) => {
+                            if (err) {
+                                console.error('Error fetching updated participant:', err);
+                                return res.status(500).json({ error: 'Removed no-show but failed to fetch' });
+                            }
+                            res.json(row);
+                        }
+                    );
+                }
+            );
+        }
+    );
+});
+
 // POST confirm participant (participant confirms their own information)
 router.post('/:code/confirm', (req, res) => {
     const db = req.app.locals.db;
