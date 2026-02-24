@@ -1039,4 +1039,33 @@ router.get('/stats', async (req, res) => {
     }
 });
 
+// GET /api/selfie-chain/participant/:code/stats - Get participant selfie-chain stats
+router.get('/participant/:code/stats', async (req, res) => {
+    const db = req.app.locals.db;
+    const { code } = req.params;
+
+    try {
+        const stats = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT
+                    COUNT(*) as chainLength,
+                    SUM(points_earned) as points
+                FROM selfie_chain_meetings
+                WHERE from_participant = ? OR to_participant = ?`,
+                [code, code],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { chainLength: 0, points: 0 });
+                }
+            );
+        });
+
+        res.json(stats);
+
+    } catch (err) {
+        console.error('Error fetching participant selfie-chain stats:', err);
+        res.status(500).json({ error: 'Kunne ikke hente statistikk' });
+    }
+});
+
 module.exports = router;

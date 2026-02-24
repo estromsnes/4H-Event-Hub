@@ -77,7 +77,7 @@
                 </div>
             </div>
 
-            <!-- Confirmation Section -->
+			<!-- Confirmation Section -->
             <div id="confirmationSection" class="confirmation-section">
                 <div class="confirmation-card">
                     <div class="confirmation-icon">✅</div>
@@ -86,6 +86,21 @@
                     <button id="confirmBtn" class="button primary large-button">
                         ✅ Bekreft informasjon
                     </button>
+                </div>
+            </div>
+			
+            <!-- Stats Dashboard -->
+            <div class="stats-dashboard">
+                <h2 class="stats-title">📊 Din statistikk</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statsActivities">0</div>
+                        <div class="stat-label">Aktiviteter</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statsPoints">0</div>
+                        <div class="stat-label">Poeng</div>
+                    </div>
                 </div>
             </div>
 
@@ -148,6 +163,79 @@
             </div>
 
             <div id="cameraStatus" class="camera-status"></div>
+        </div>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="welcome-modal hidden">
+        <div class="welcome-modal-content">
+            <div class="welcome-header">
+                <div class="welcome-icon">🎉</div>
+                <h2 id="welcomeTitle">Velkommen til 4H Event Hub!</h2>
+                <p>Flott at du er med!</p>
+            </div>
+
+            <div class="welcome-activities">
+                <h3>Før du starter:</h3>
+                <div class="welcome-activity-list">
+                    <div class="welcome-activity-item" style="background: linear-gradient(135deg, #fff9e6, #fffaeb); border-left: 4px solid #FFC107;">
+                        <div class="welcome-activity-icon">✅</div>
+                        <div>
+                            <strong>Bekreft informasjonen din</strong>
+                            <p>Klikk "Kom i gang!" og bekreft at navn, alder og andre opplysninger stemmer på neste side</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="welcome-activities">
+                <h3>Deretter kan du:</h3>
+                <div class="welcome-activity-list">
+                    <div class="welcome-activity-item">
+                        <div class="welcome-activity-icon">📸</div>
+                        <div>
+                            <strong>Samle laget</strong>
+                            <p>Ta lagbilde med alle medlemmene</p>
+                        </div>
+                    </div>
+                    <div class="welcome-activity-item">
+                        <div class="welcome-activity-icon">🤳</div>
+                        <div>
+                            <strong>Selfie-kjedet</strong>
+                            <p>Finn andre deltakere og ta selfies sammen</p>
+                        </div>
+                    </div>
+                    <div class="welcome-activity-item">
+                        <div class="welcome-activity-icon">🧠</div>
+                        <div>
+                            <strong>Quiz</strong>
+                            <p>Test kunnskapen din alene eller med laget</p>
+                        </div>
+                    </div>
+                    <div class="welcome-activity-item">
+                        <div class="welcome-activity-icon">🎯</div>
+                        <div>
+                            <strong>QR Skattejakt</strong>
+                            <p>Finn alle sjekkpunktene rundt på stedet</p>
+                        </div>
+                    </div>
+                    <div class="welcome-activity-item">
+                        <div class="welcome-activity-icon">⭕</div>
+                        <div>
+                            <strong>Tripp-Trapp-Tresko</strong>
+                            <p>Spill mot andre deltakere eller lag</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="welcome-tip">
+                💡 <strong>Tips:</strong> Alle aktiviteter gir poeng! Se din statistikk på profilen din.
+            </div>
+
+            <button id="welcomeCloseBtn" class="welcome-close-btn">
+                ✅ Kom i gang!
+            </button>
         </div>
     </div>
 

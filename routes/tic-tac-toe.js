@@ -556,4 +556,35 @@ function checkWinner(board) {
     return null; // No winner
 }
 
+// GET /api/tic-tac-toe/participant/:code/stats - Get participant tic-tac-toe stats
+router.get('/participant/:code/stats', async (req, res) => {
+    const db = req.app.locals.db;
+    const { code } = req.params;
+
+    try {
+        const stats = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT
+                    COUNT(*) as totalGames,
+                    COUNT(CASE WHEN winner_code = ? THEN 1 END) as wins,
+                    COUNT(CASE WHEN result = 'draw' THEN 1 END) as draws,
+                    COUNT(CASE WHEN winner_code IS NOT NULL AND winner_code != ? THEN 1 END) as losses
+                FROM tic_tac_toe_games
+                WHERE (player1_code = ? OR player2_code = ?) AND status = 'completed'`,
+                [code, code, code, code],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { totalGames: 0, wins: 0, draws: 0, losses: 0 });
+                }
+            );
+        });
+
+        res.json(stats);
+
+    } catch (err) {
+        console.error('Error fetching participant tic-tac-toe stats:', err);
+        res.status(500).json({ error: 'Kunne ikke hente statistikk' });
+    }
+});
+
 module.exports = router;

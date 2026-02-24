@@ -882,4 +882,52 @@ router.get('/leaderboard', async (req, res) => {
     }
 });
 
+// GET /api/quiz/participant/:code/stats - Get participant quiz stats
+router.get('/participant/:code/stats', async (req, res) => {
+    const db = req.app.locals.db;
+    const { code } = req.params;
+
+    try {
+        // First get participant's team
+        const participant = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT team FROM participants WHERE participant_code = ?',
+                [code],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                }
+            );
+        });
+
+        if (!participant || !participant.team) {
+            return res.json({ totalAttempts: 0, highestScore: 0, averageScore: 0, bestCorrectAnswers: 0 });
+        }
+
+        // Get quiz stats for the team
+        const stats = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT
+                    COUNT(*) as totalAttempts,
+                    MAX(score) as highestScore,
+                    AVG(score) as averageScore,
+                    MAX(correct_answers) as bestCorrectAnswers
+                FROM quiz_sessions
+                WHERE team_name = ? AND status = 'completed'`,
+                [participant.team],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { totalAttempts: 0, highestScore: 0, averageScore: 0, bestCorrectAnswers: 0 });
+                }
+            );
+        });
+
+        res.json(stats);
+
+    } catch (err) {
+        console.error('Error fetching participant quiz stats:', err);
+        res.status(500).json({ error: 'Kunne ikke hente statistikk' });
+    }
+});
+
 module.exports = router;

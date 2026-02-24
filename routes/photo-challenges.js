@@ -365,4 +365,33 @@ router.get('/leaderboard/teams', (req, res) => {
     );
 });
 
+// GET /api/photo-challenges/participant/:code/stats - Get participant photo challenge stats
+router.get('/participant/:code/stats', async (req, res) => {
+    const db = req.app.locals.db;
+    const { code } = req.params;
+
+    try {
+        const stats = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT
+                    COUNT(DISTINCT ps.challenge_id) as completedChallenges,
+                    SUM(CASE WHEN ps.points_awarded IS NOT NULL THEN ps.points_awarded ELSE 0 END) as totalPoints
+                FROM photo_submissions ps
+                WHERE ps.participant_code = ?`,
+                [code],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { completedChallenges: 0, totalPoints: 0 });
+                }
+            );
+        });
+
+        res.json(stats);
+
+    } catch (err) {
+        console.error('Error fetching participant photo challenge stats:', err);
+        res.status(500).json({ error: 'Kunne ikke hente statistikk' });
+    }
+});
+
 module.exports = router;

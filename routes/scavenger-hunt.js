@@ -643,4 +643,50 @@ async function getActiveCheckpoints(db) {
     });
 }
 
+// GET /api/scavenger-hunt/participant/:code/stats - Get participant scavenger hunt stats
+router.get('/participant/:code/stats', async (req, res) => {
+    const db = req.app.locals.db;
+    const { code } = req.params;
+
+    try {
+        // First get participant's team
+        const participant = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT team FROM participants WHERE participant_code = ?',
+                [code],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                }
+            );
+        });
+
+        if (!participant || !participant.team) {
+            return res.json({ checkpointsFound: 0 });
+        }
+
+        // Get scavenger hunt stats for the team
+        const stats = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT
+                    COUNT(DISTINCT sc.checkpoint_id) as checkpointsFound
+                FROM scavenger_scans sc
+                JOIN scavenger_sessions ss ON sc.session_id = ss.id
+                WHERE ss.team_name = ?`,
+                [participant.team],
+                (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row || { checkpointsFound: 0 });
+                }
+            );
+        });
+
+        res.json(stats);
+
+    } catch (err) {
+        console.error('Error fetching participant scavenger hunt stats:', err);
+        res.status(500).json({ error: 'Kunne ikke hente statistikk' });
+    }
+});
+
 module.exports = router;

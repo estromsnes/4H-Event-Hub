@@ -37,6 +37,15 @@ const confirmBtn = document.getElementById('confirmBtn');
 const confirmationSection = document.getElementById('confirmationSection');
 const confirmedStatus = document.getElementById('confirmedStatus');
 
+const welcomeModal = document.getElementById('welcomeModal');
+const welcomeCloseBtn = document.getElementById('welcomeCloseBtn');
+const welcomeTitle = document.getElementById('welcomeTitle');
+const statsActivities = document.getElementById('statsActivities');
+const statsPoints = document.getElementById('statsPoints');
+
+// Store event name for welcome modal
+let currentEventName = null;
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing app...');
@@ -104,6 +113,7 @@ function initApp() {
     retakeBtn.addEventListener('click', retakePhoto);
     uploadBtn.addEventListener('click', uploadPhoto);
     confirmBtn.addEventListener('click', confirmParticipant);
+    welcomeCloseBtn.addEventListener('click', closeWelcomeModal);
 
     // Activate global barcode scanner
     globalBarcodeScanner.activate((qrData) => onScanSuccess(qrData));
@@ -134,6 +144,11 @@ async function loadEventInfo() {
         const response = await fetch('/api/event');
         if (response.ok) {
             const event = await response.json();
+
+            // Store event name for welcome modal
+            if (event.event_name) {
+                currentEventName = event.event_name;
+            }
 
             // Update navbar title
             const navTitle = document.getElementById('navEventName');
@@ -304,6 +319,8 @@ async function loadParticipantByCode(participantCode) {
         captureBtn.addEventListener('click', capturePhoto);
         retakeBtn.addEventListener('click', retakePhoto);
         uploadBtn.addEventListener('click', uploadPhoto);
+        confirmBtn.addEventListener('click', confirmParticipant);
+        welcomeCloseBtn.addEventListener('click', closeWelcomeModal);
 
         showProfileView();
         console.log('Participant loaded from welcome page');
@@ -371,8 +388,14 @@ function showProfileView() {
     // Load and show courses
     loadCourses(currentParticipant.participant_code);
 
+    // Load participant stats
+    loadParticipantStats();
+
     // Show confirmation section or confirmed status
     updateConfirmationUI();
+
+    // Check and show welcome modal if first visit
+    checkAndShowWelcomeModal();
 
     // Deactivate global barcode scanner
     globalBarcodeScanner.deactivate();
@@ -662,4 +685,111 @@ async function refreshProfile() {
     } catch (err) {
         console.error('Error refreshing profile:', err);
     }
+}
+
+// Load participant statistics
+async function loadParticipantStats() {
+    if (!currentParticipant) return;
+
+    try {
+        // Fetch participant stats from various endpoints
+        const [quizResponse, photoResponse, scavengerResponse, selfieResponse, ticTacToeResponse] = await Promise.all([
+            fetch(`/api/quiz/participant/${currentParticipant.participant_code}/stats`).catch(() => null),
+            fetch(`/api/photo-challenges/participant/${currentParticipant.participant_code}/stats`).catch(() => null),
+            fetch(`/api/scavenger-hunt/participant/${currentParticipant.participant_code}/stats`).catch(() => null),
+            fetch(`/api/selfie-chain/participant/${currentParticipant.participant_code}/stats`).catch(() => null),
+            fetch(`/api/tic-tac-toe/participant/${currentParticipant.participant_code}/stats`).catch(() => null)
+        ]);
+
+        let totalActivities = 0;
+        let totalPoints = 0;
+
+        // Quiz stats
+        if (quizResponse && quizResponse.ok) {
+            const quizData = await quizResponse.json();
+            if (quizData.totalAttempts > 0) {
+                totalActivities++;
+                totalPoints += quizData.highestScore || 0;
+            }
+        }
+
+        // Photo challenges stats
+        if (photoResponse && photoResponse.ok) {
+            const photoData = await photoResponse.json();
+            if (photoData.completedChallenges > 0) {
+                totalActivities += photoData.completedChallenges;
+                totalPoints += photoData.totalPoints || 0;
+            }
+        }
+
+        // Scavenger hunt stats
+        if (scavengerResponse && scavengerResponse.ok) {
+            const scavengerData = await scavengerResponse.json();
+            if (scavengerData.checkpointsFound > 0) {
+                totalActivities++;
+                totalPoints += scavengerData.checkpointsFound * 10; // 10 points per checkpoint
+            }
+        }
+
+        // Selfie chain stats
+        if (selfieResponse && selfieResponse.ok) {
+            const selfieData = await selfieResponse.json();
+            if (selfieData.chainLength > 0) {
+                totalActivities++;
+                totalPoints += selfieData.points || 0;
+            }
+        }
+
+        // Tic-tac-toe stats
+        if (ticTacToeResponse && ticTacToeResponse.ok) {
+            const ticTacToeData = await ticTacToeResponse.json();
+            if (ticTacToeData.totalGames > 0) {
+                totalActivities += ticTacToeData.totalGames;
+                totalPoints += (ticTacToeData.wins * 10) + (ticTacToeData.draws * 5); // 10 points per win, 5 per draw
+            }
+        }
+
+        // Update stats display
+        statsActivities.textContent = totalActivities;
+        statsPoints.textContent = totalPoints;
+
+    } catch (err) {
+        console.error('Error loading participant stats:', err);
+        statsActivities.textContent = '0';
+        statsPoints.textContent = '0';
+    }
+}
+
+// Check and show welcome modal if first visit
+function checkAndShowWelcomeModal() {
+    if (!currentParticipant) return;
+
+    const welcomeKey = `welcomeShown_${currentParticipant.participant_code}`;
+    const hasSeenWelcome = localStorage.getItem(welcomeKey);
+
+    // Show welcome modal if:
+    // 1. User hasn't seen it before
+    // 2. User is NOT yet confirmed (first time visiting profile)
+    if (!hasSeenWelcome && currentParticipant.confirmed !== 1) {
+        // Update welcome title with event name
+        if (currentEventName && welcomeTitle) {
+            welcomeTitle.textContent = `Velkommen til ${currentEventName}!`;
+        }
+
+        // Show modal after a short delay for better UX
+        setTimeout(() => {
+            welcomeModal.classList.remove('hidden');
+        }, 500);
+    }
+}
+
+// Close welcome modal and mark as shown
+function closeWelcomeModal() {
+    if (!currentParticipant) return;
+
+    welcomeModal.classList.add('hidden');
+
+    // Mark welcome as shown for this participant
+    const welcomeKey = `welcomeShown_${currentParticipant.participant_code}`;
+    localStorage.setItem(welcomeKey, 'true');
 }
