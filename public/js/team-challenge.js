@@ -25,7 +25,7 @@ class TeamChallengeManager {
             instructions: document.getElementById('instructionsView'),
             scanner: document.getElementById('scannerView'),
             success: document.getElementById('successView'),
-            failure: document.getElementById('failureView')
+            partial: document.getElementById('partialView')
         };
     }
 
@@ -57,18 +57,13 @@ class TeamChallengeManager {
         document.getElementById('takeTeamPhotoBtn')
             .addEventListener('click', () => this.openCameraModal());
 
-        document.getElementById('newChallengeBtn')
-            .addEventListener('click', () => this.resetChallenge());
+        document.getElementById('continueScanning')
+            .addEventListener('click', () => this.continueScanning());
 
-        document.getElementById('tryAgainBtn')
-            .addEventListener('click', () => this.resetChallenge());
+        document.getElementById('finishPartialBtn')
+            .addEventListener('click', () => this.finishPartial());
 
-        document.getElementById('backToHomeBtn')
-            .addEventListener('click', () => {
-                window.location.href = '/index.html';
-            });
-
-        document.getElementById('cancelChallengeBtn')
+        document.getElementById('cancelPartialBtn')
             .addEventListener('click', () => this.resetChallenge());
 
         // Camera modal buttons
@@ -179,11 +174,13 @@ class TeamChallengeManager {
         document.getElementById('teamHeader').classList.remove('hidden');
         document.getElementById('progressSection').classList.remove('hidden');
 
-        // Start timer immediately after first scan
-        this.startTimer();
+        // Update points display
+        document.getElementById('currentPoints').textContent = data.points || 0;
+        const breakdownText = `${data.scans_completed} av ${data.scans_required} medlemmer`;
+        document.getElementById('pointsBreakdown').textContent = breakdownText;
 
         this.updateTeamMemberList(data.team_members);
-        this.showScanFeedback('✅ Første skanning! Tidtaker er startet - dere har 2 minutter!', 'success');
+        this.showScanFeedback(`✅ Første skanning! ${data.scans_completed} av ${data.scans_required} medlemmer`, 'success');
     }
 
     async recordScan(participantCode) {
@@ -205,6 +202,12 @@ class TeamChallengeManager {
 
         // Update UI
         this.updateTeamMemberList(data.team_members);
+
+        // Update points display
+        document.getElementById('currentPoints').textContent = data.points || 0;
+        const breakdownText = `${data.scans_completed} av ${data.scans_required} medlemmer`;
+        document.getElementById('pointsBreakdown').textContent = breakdownText;
+
         this.showScanFeedback(
             `✅ ${data.scans_completed} av ${data.scans_required} skannet!`,
             'success'
@@ -213,14 +216,14 @@ class TeamChallengeManager {
         // Check if completed
         if (data.challenge_completed) {
             this.onChallengeComplete(data);
-        } else if (data.time_expired) {
-            this.onChallengeTimeout(data.scans_completed, data.scans_required);
         }
     }
 
     startTimer() {
-        this.timerStartTime = Date.now();
         const timerDisplay = document.getElementById('timerDisplay');
+        if (!timerDisplay) return; // Timer not enabled in this version
+
+        this.timerStartTime = Date.now();
         timerDisplay.classList.remove('hidden');
 
         this.timerInterval = setInterval(() => {
@@ -239,11 +242,13 @@ class TeamChallengeManager {
     }
 
     updateTimerDisplay(remainingSeconds) {
+        const timerValue = document.getElementById('timerValue');
+        if (!timerValue) return; // Timer not enabled
+
         const minutes = Math.floor(remainingSeconds / 60);
         const seconds = Math.floor(remainingSeconds % 60);
         const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
-        const timerValue = document.getElementById('timerValue');
         timerValue.textContent = display;
 
         // Visual warnings
@@ -329,10 +334,33 @@ class TeamChallengeManager {
         // Show success view
         this.showView('success');
         document.getElementById('successTeamName').textContent = this.teamName;
-        document.getElementById('completionTime').textContent =
-            this.formatTime(data.elapsed_time_seconds);
-        document.getElementById('memberCount').textContent =
-            data.scans_required;
+        document.getElementById('memberCount').textContent = data.scans_completed;
+
+        // Update total points
+        document.getElementById('totalPoints').textContent = data.points || 0;
+
+        // Update detailed points breakdown
+        const breakdownDiv = document.getElementById('detailedPointsBreakdown');
+        const basePoints = data.scans_completed * 20;
+        const allScannedBonus = (data.scans_completed === data.scans_required && data.scans_required > 0) ? 50 : 0;
+
+        let breakdownHtml = `
+            <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                <span>💰 ${data.scans_completed} medlemmer skannet (20p hver)</span>
+                <strong>${basePoints}p</strong>
+            </div>
+        `;
+
+        if (allScannedBonus > 0) {
+            breakdownHtml += `
+                <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                    <span>🎯 Alle medlemmer skannet - bonus!</span>
+                    <strong>${allScannedBonus}p</strong>
+                </div>
+            `;
+        }
+
+        breakdownDiv.innerHTML = breakdownHtml;
     }
 
     onChallengeTimeout(scannedCount = 0, requiredCount = 0) {
@@ -347,11 +375,15 @@ class TeamChallengeManager {
             this.scanner.stop();
         }
 
-        // Show failure view
-        this.showView('failure');
-        document.getElementById('failureTeamName').textContent = this.teamName;
-        document.getElementById('scannedCount').textContent = scannedCount;
-        document.getElementById('requiredCount').textContent = requiredCount;
+        // Show partial completion view
+        this.showView('partial');
+        document.getElementById('partialTeamName').textContent = this.teamName;
+        document.getElementById('partialScanned').textContent = scannedCount;
+        document.getElementById('partialTotal').textContent = requiredCount;
+
+        // Calculate partial points (20 per member, no bonuses)
+        const partialPoints = scannedCount * 20;
+        document.getElementById('partialPoints').textContent = partialPoints;
     }
 
     stopTimer() {
@@ -364,7 +396,7 @@ class TeamChallengeManager {
     showScanFeedback(message, type) {
         const feedback = document.getElementById('scanFeedback');
         feedback.textContent = message;
-        feedback.className = `scan-feedback ${type}`;
+        feedback.className = `scan-status ${type}`;
         feedback.classList.remove('hidden');
 
         setTimeout(() => {
@@ -619,6 +651,52 @@ class TeamChallengeManager {
         document.getElementById('leaderboardModal').classList.add('hidden');
     }
 
+    continueScanning() {
+        // Go back to scanner view and resume scanning
+        this.showView('scanner');
+        this.isScanning = true;
+
+        // Reactivate global barcode scanner
+        globalBarcodeScanner.activate((qrData) => this.handleScan(qrData));
+    }
+
+    async finishPartial() {
+        // Show success view with current stats
+        if (!this.sessionId) return;
+
+        try {
+            // Fetch latest session data
+            const response = await fetch(`/api/team-challenge/session/${this.sessionId}`);
+            if (!response.ok) throw new Error('Could not fetch session data');
+
+            const data = await response.json();
+
+            // Update the success view with partial completion data
+            this.showView('success');
+            document.getElementById('successTeamName').textContent = this.teamName;
+            document.getElementById('memberCount').textContent = `${data.scans_completed} av ${data.scans_required}`;
+
+            // Update total points display
+            document.getElementById('totalPoints').textContent = data.points || (data.scans_completed * 20);
+
+            // Update points breakdown
+            const breakdownDiv = document.getElementById('detailedPointsBreakdown');
+            const basePoints = data.scans_completed * 20;
+            breakdownDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin: 8px 0;">
+                    <span>💰 ${data.scans_completed} medlemmer skannet (20p hver)</span>
+                    <strong>${basePoints}p</strong>
+                </div>
+            `;
+
+        } catch (err) {
+            console.error('Error finishing partial:', err);
+            // Still show success view with what we have
+            this.showView('success');
+            document.getElementById('successTeamName').textContent = this.teamName;
+        }
+    }
+
     resetChallenge() {
         this.sessionId = null;
         this.teamName = null;
@@ -636,7 +714,8 @@ class TeamChallengeManager {
         // Reset UI
         document.getElementById('teamHeader').classList.add('hidden');
         document.getElementById('progressSection').classList.add('hidden');
-        document.getElementById('timerDisplay').classList.add('hidden');
+        const timerDisplay = document.getElementById('timerDisplay');
+        if (timerDisplay) timerDisplay.classList.add('hidden');
         document.getElementById('scanFeedback').classList.add('hidden');
 
         this.showView('instructions');

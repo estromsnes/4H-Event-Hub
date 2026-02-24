@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/index.css">
     <link rel="stylesheet" href="/css/qr-scanner.css">
+    <link rel="stylesheet" href="/css/profile.css">
     <link rel="stylesheet" href="/css/team-challenge.css">
     <!-- Confetti library -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -34,16 +35,26 @@
             <div class="instructions-icon">🏆</div>
             <h1>Samle laget</h1>
             <div class="instructions-box">
-                <p class="instructions-intro">Samle hele laget ditt og skann så raskt som mulig!</p>
+                <p class="instructions-intro">Samle hele laget ditt og skann QR-kodene til alle!</p>
+
+                <div class="points-info" style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-left: 4px solid var(--primary-green); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <h3 style="margin: 0 0 10px 0; color: var(--dark-green);">💰 Poeng:</h3>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="margin: 8px 0;">✅ <strong>20 poeng</strong> per lagmedlem som skanner</li>
+                        <li style="margin: 8px 0;">🎯 <strong>+50 poeng bonus</strong> hvis alle skanner</li>
+                        <li style="margin: 8px 0;">📸 <strong>+30 poeng bonus</strong> for lagbilde</li>
+                    </ul>
+                </div>
+
                 <ul class="instructions-list">
-                    <li>👤 Første lagmedlem skanner først</li>
-                    <li>⏱️ Andre lagmedlem starter tidtakeren</li>
-                    <li>🏃 Alle må skanne innen 2 minutter</li>
-                    <li>📸 Ta lagbilde når dere er ferdige!</li>
+                    <li>👥 Samle alle lagmedlemmene</li>
+                    <li>📱 Hver person skanner sin QR-kode</li>
+                    <li>✅ Når alle har skannet, ta lagbilde!</li>
+                    <li>🏆 Jo flere som deltar, desto mer poeng!</li>
                 </ul>
             </div>
             <button id="startChallengeBtn" class="button primary large-button">
-                🚀 Start
+                🚀 Start Skanning
             </button>
         </div>
     </div>
@@ -53,22 +64,23 @@
         <div class="container">
             <div class="team-selector">
                 <h1>🏆</h1>
-                <h2>Skann din QR-kode</h2>
+                <h2>Skann QR-kodene</h2>
                 <p style="color: var(--text-light); margin-bottom: 30px;">Bruk strekkodeskanneren eller hold QR-koden foran kameraet</p>
 
                 <!-- Team Info Header (shown after first scan) -->
                 <div id="teamHeader" class="team-header hidden" style="margin-bottom: 20px;">
                     <h2 id="teamName" class="team-name">-</h2>
-                    <div id="timerDisplay" class="timer-display hidden">
-                        <span class="timer-icon">⏱️</span>
-                        <span id="timerValue" class="timer-value">2:00</span>
+                    <div id="pointsDisplay" class="points-display" style="background: linear-gradient(135deg, #4CAF50, #2c5f2d); color: white; padding: 15px; border-radius: 10px; text-align: center; margin-top: 15px;">
+                        <div style="font-size: 14px; opacity: 0.9;">Poeng så langt:</div>
+                        <div id="currentPoints" style="font-size: 36px; font-weight: bold; margin: 5px 0;">0</div>
+                        <div id="pointsBreakdown" style="font-size: 12px; opacity: 0.8;"></div>
                     </div>
                 </div>
 
                 <!-- Progress Section (shown after first scan) -->
                 <div id="progressSection" class="progress-section hidden" style="margin-bottom: 20px;">
                     <div class="progress-header">
-                        <span id="progressText">Venter på neste skanning...</span>
+                        <span id="progressText">Skann neste person...</span>
                     </div>
 
                     <!-- Team Member Checklist -->
@@ -83,16 +95,12 @@
                     📷 Start Kamera-Skanning
                 </button>
 
-                <label for="qrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 15px;">
+                <label for="qrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
                     🖼️ Last opp bilde av QR
                 </label>
                 <input type="file" id="qrFileInput" accept="image/*" style="display: none;">
 
-                <div id="scanFeedback" class="scan-feedback hidden"></div>
-
-                <button id="cancelChallengeBtn" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px;">
-                    ← Tilbake til Start
-                </button>
+                <div id="scanFeedback" class="scan-status hidden"></div>
             </div>
         </div>
     </div>
@@ -101,53 +109,69 @@
     <div id="successView" class="view hidden">
         <div class="success-container">
             <div class="success-icon">🎉</div>
-            <h1 class="success-title">Gratulerer!</h1>
+            <h1 class="success-title">Strålende!</h1>
             <p class="success-message">
-                <strong id="successTeamName">Laget</strong> fullførte utfordringen!
+                <strong id="successTeamName">Laget</strong> har samlet alle!
             </p>
             <div class="completion-stats">
-                <div class="stat-box">
-                    <span class="stat-icon">⏱️</span>
-                    <span class="stat-value" id="completionTime">--:--</span>
-                    <span class="stat-label">Tid brukt</span>
+                <div class="stat-box" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
+                    <span class="stat-icon">💰</span>
+                    <span class="stat-value" id="totalPoints" style="color: white;">0</span>
+                    <span class="stat-label" style="color: white;">Totale poeng</span>
                 </div>
                 <div class="stat-box">
                     <span class="stat-icon">👥</span>
                     <span class="stat-value" id="memberCount">-</span>
-                    <span class="stat-label">Lagmedlemmer</span>
+                    <span class="stat-label">Lagmedlemmer skannet</span>
                 </div>
             </div>
 
+            <div id="pointsBreakdownBox" style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: left;">
+                <h3 style="margin: 0 0 15px 0; text-align: center;">📊 Poengfordeling:</h3>
+                <div id="detailedPointsBreakdown"></div>
+            </div>
+
             <button id="takeTeamPhotoBtn" class="button primary large-button">
-                📸 Ta Lagbilde
-            </button>
-
-            <a href="/live-scoreboard.html#team-challenge" class="button secondary" style="text-decoration: none; display: block; text-align: center;">
-                🏆 Se Resultattavle
-            </a>
-
-            <button id="newChallengeBtn" class="button secondary">
-                🔄 Ny Utfordring
+                📸 Ta Lagbilde (+30 poeng!)
             </button>
         </div>
     </div>
 
-    <!-- Failure View -->
-    <div id="failureView" class="view hidden">
-        <div class="failure-container">
-            <div class="failure-icon">⏰</div>
-            <h1 class="failure-title">Tiden løp ut!</h1>
-            <p class="failure-message">
-                Dessverre klarte ikke <strong id="failureTeamName">laget</strong> å skanne alle innen tiden.
+    <!-- Partial Completion View (not all members scanned) -->
+    <div id="partialView" class="view hidden">
+        <div class="success-container">
+            <div class="success-icon" style="font-size: 80px;">👍</div>
+            <h1 class="success-title">Bra jobbet!</h1>
+            <p class="success-message">
+                <strong id="partialTeamName">Laget</strong> har skannet noen medlemmer!
             </p>
-            <div class="failure-stats">
-                <p><span id="scannedCount">-</span> av <span id="requiredCount">-</span> medlemmer skannet</p>
+            <div class="completion-stats">
+                <div class="stat-box" style="background: linear-gradient(135deg, #FFD700, #FFA500);">
+                    <span class="stat-icon">💰</span>
+                    <span class="stat-value" id="partialPoints" style="color: white;">0</span>
+                    <span class="stat-label" style="color: white;">Poeng så langt</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-icon">👥</span>
+                    <span class="stat-value"><span id="partialScanned">-</span> av <span id="partialTotal">-</span></span>
+                    <span class="stat-label">Medlemmer skannet</span>
+                </div>
             </div>
-            <button id="tryAgainBtn" class="button primary">
-                🔄 Prøv Igjen
+
+            <div style="background: #fff9e6; border-left: 4px solid #FFC107; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                💡 <strong>Tips:</strong> Skann alle lagmedlemmene for å få +50 poeng bonus!
+            </div>
+
+            <button id="continueScanning" class="button primary large-button">
+                📱 Fortsett Skanning
             </button>
-            <button id="backToHomeBtn" class="button secondary">
-                🏠 Tilbake til Start
+
+            <button id="finishPartialBtn" class="button secondary">
+                ✓ Fullfør og Ta Lagbilde
+            </button>
+
+            <button id="cancelPartialBtn" class="button secondary">
+                ← Tilbake til Start
             </button>
         </div>
     </div>
@@ -183,11 +207,11 @@
             </div>
             <div class="modal-body">
                 <div class="leaderboard-tabs">
-                    <button id="tabFastest" class="tab-button active" data-sort="fastest">
-                        ⚡ Kjappeste lag
+                    <button id="tabHighest" class="tab-button active" data-sort="highest">
+                        💰 Mest poeng
                     </button>
                     <button id="tabFirst" class="tab-button" data-sort="first">
-                        🥇 Første lag
+                        🥇 Første lag ferdig
                     </button>
                 </div>
                 <div id="leaderboardContent" class="leaderboard-content">

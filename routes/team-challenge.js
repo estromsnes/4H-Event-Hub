@@ -52,76 +52,48 @@ router.post('/start', async (req, res) => {
 
         const teamName = participant.team;
 
-        // Check if team already has any active sessions and clean up expired ones
-        const activeSessions = await new Promise((resolve, reject) => {
-            db.all(
+        // Check if team already has an active session
+        const activeSession = await new Promise((resolve, reject) => {
+            db.get(
                 `SELECT * FROM team_challenge_sessions
                  WHERE team_name = ? AND status = 'active'
-                 ORDER BY created_at DESC`,
+                 ORDER BY created_at DESC
+                 LIMIT 1`,
                 [teamName],
-                (err, rows) => {
+                (err, row) => {
                     if (err) reject(err);
-                    else resolve(rows || []);
+                    else resolve(row);
                 }
             );
         });
 
-        // Check each active session and clean up expired ones
-        let validSession = null;
-        for (const session of activeSessions) {
-            if (session.timer_start_time) {
-                const timerStart = new Date(session.timer_start_time).getTime();
-                const now = Date.now();
-                const elapsedSeconds = (now - timerStart) / 1000;
-
-                if (elapsedSeconds > session.time_limit_seconds) {
-                    // Session has expired, mark it as failed
-                    console.log(`[Team Challenge] Existing session ${session.id} has expired (${Math.round(elapsedSeconds)}s). Marking as failed.`);
-                    await new Promise((resolve, reject) => {
-                        db.run(
-                            `UPDATE team_challenge_sessions SET status = 'failed' WHERE id = ?`,
-                            [session.id],
-                            (err) => {
-                                if (err) reject(err);
-                                else resolve();
-                            }
-                        );
-                    });
-                } else if (!validSession) {
-                    // This session is still valid - use it
-                    validSession = session;
-                }
-            } else if (!validSession) {
-                // Timer hasn't started yet - this is valid
-                validSession = session;
-            }
-        }
-
-        // If we found a valid session, return it
-        if (validSession) {
-            const scans = await getSessionScans(db, validSession.id);
+        // If we found an active session, return it
+        if (activeSession) {
+            const scans = await getSessionScans(db, activeSession.id);
             const teamMembers = await getTeamMembersWithStatus(db, teamName, scans);
             const activeMembers = teamMembers.filter(m => !m.no_show);
 
-            console.log(`[Team Challenge] Resuming existing valid session ${validSession.id}`);
+            // Calculate current points
+            const currentPoints = calculatePoints(scans.length, activeMembers.length, false);
+
+            console.log(`[Team Challenge] Resuming existing active session ${activeSession.id}`);
             return res.json({
-                session_id: validSession.id,
+                session_id: activeSession.id,
                 team_name: teamName,
                 status: 'in_progress',
                 scans_required: activeMembers.length,
                 scans_completed: scans.length,
-                time_limit_seconds: validSession.time_limit_seconds,
-                team_members: teamMembers,
-                timer_started: validSession.timer_start_time !== null
+                points: currentPoints,
+                team_members: teamMembers
             });
         }
 
-        // Create new session with 2 minute time limit
+        // Create new session (no time limit)
         const sessionId = await new Promise((resolve, reject) => {
             db.run(
                 `INSERT INTO team_challenge_sessions (
-                    team_name, started_by, session_start_time, timer_start_time, time_limit_seconds
-                ) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), strftime('%Y-%m-%dT%H:%M:%fZ', 'now'), 120)`,
+                    team_name, started_by, session_start_time
+                ) VALUES (?, ?, strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`,
                 [teamName, participant_code],
                 function(err) {
                     if (err) reject(err);
@@ -148,15 +120,17 @@ router.post('/start', async (req, res) => {
         const teamMembers = await getTeamMembersWithStatus(db, teamName, scans);
         const activeMembers = teamMembers.filter(m => !m.no_show);
 
+        // Calculate current points
+        const currentPoints = calculatePoints(scans.length, activeMembers.length, false);
+
         res.status(201).json({
             session_id: sessionId,
             team_name: teamName,
             status: 'in_progress',
             scans_required: activeMembers.length,
             scans_completed: 1,
-            time_limit_seconds: 120,
-            team_members: teamMembers,
-            timer_started: true
+            points: currentPoints,
+            team_members: teamMembers
         });
 
     } catch (err) {
@@ -242,35 +216,6 @@ router.post('/scan', async (req, res) => {
         const scans = await getSessionScans(db, session_id);
         const scanOrder = scans.length + 1;
 
-        // Check if timer has expired (if timer has started)
-        if (session.timer_start_time) {
-            const timerStart = new Date(session.timer_start_time).getTime();
-            const now = Date.now();
-            const elapsedSeconds = (now - timerStart) / 1000;
-
-            if (elapsedSeconds > session.time_limit_seconds) {
-                // Timer expired, fail the session
-                await new Promise((resolve, reject) => {
-                    db.run(
-                        `UPDATE team_challenge_sessions
-                         SET status = 'failed'
-                         WHERE id = ?`,
-                        [session_id],
-                        (err) => {
-                            if (err) reject(err);
-                            else resolve();
-                        }
-                    );
-                });
-
-                return res.status(400).json({
-                    error: 'Tiden er ute!',
-                    session_status: 'failed',
-                    time_expired: true
-                });
-            }
-        }
-
         // Record scan
         await new Promise((resolve, reject) => {
             db.run(
@@ -293,20 +238,18 @@ router.post('/scan', async (req, res) => {
         const allScanned = activeMembers.length > 0 && activeMembers.every(member => member.scanned);
 
         if (allScanned) {
-            // Calculate elapsed time
-            const startTime = new Date(session.timer_start_time || session.session_start_time).getTime();
-            const now = Date.now();
-            const elapsedSeconds = (now - startTime) / 1000;
+            // Calculate points (no photo yet, so hasPhoto = false)
+            const finalPoints = calculatePoints(updatedScans.length, activeMembers.length, false);
 
-            // Mark session as completed
+            // Mark session as completed and store points
             await new Promise((resolve, reject) => {
                 db.run(
                     `UPDATE team_challenge_sessions
                      SET status = 'completed',
                          completion_time = strftime('%Y-%m-%dT%H:%M:%fZ', 'now'),
-                         elapsed_time_seconds = ?
+                         points = ?
                      WHERE id = ?`,
-                    [elapsedSeconds, session_id],
+                    [finalPoints, session_id],
                     (err) => {
                         if (err) reject(err);
                         else resolve();
@@ -319,30 +262,21 @@ router.post('/scan', async (req, res) => {
                 session_status: 'completed',
                 scans_completed: updatedScans.length,
                 scans_required: activeMembers.length,
-                elapsed_time_seconds: elapsedSeconds,
+                points: finalPoints,
                 team_members: teamMembers,
                 challenge_completed: true
             });
         }
 
-        // Calculate time remaining
-        let timeRemaining = null;
-        if (session.timer_start_time) {
-            const timerStart = new Date(session.timer_start_time).getTime();
-            const now = Date.now();
-            const elapsedSeconds = (now - timerStart) / 1000;
-            timeRemaining = Math.max(0, session.time_limit_seconds - elapsedSeconds);
-        }
+        // Calculate current points (no photo yet)
+        const currentPoints = calculatePoints(updatedScans.length, activeMembers.length, false);
 
         const response = {
             success: true,
             session_status: 'in_progress',
             scans_completed: updatedScans.length,
             scans_required: activeMembers.length,
-            time_remaining_seconds: timeRemaining,
-            elapsed_time_seconds: session.timer_start_time
-                ? (Date.now() - new Date(session.timer_start_time).getTime()) / 1000
-                : null,
+            points: currentPoints,
             team_members: teamMembers,
             challenge_completed: false
         };
@@ -380,29 +314,9 @@ router.get('/session/:session_id', async (req, res) => {
         const teamMembers = await getTeamMembersWithStatus(db, session.team_name, scans);
         const activeMembers = teamMembers.filter(m => !m.no_show);
 
-        // Calculate time remaining if timer has started
-        let timeRemaining = null;
-        if (session.timer_start_time && session.status === 'active') {
-            const timerStart = new Date(session.timer_start_time).getTime();
-            const now = Date.now();
-            const elapsedSeconds = (now - timerStart) / 1000;
-            timeRemaining = Math.max(0, session.time_limit_seconds - elapsedSeconds);
-
-            // Check if timer expired
-            if (timeRemaining === 0 && session.status === 'active') {
-                await new Promise((resolve, reject) => {
-                    db.run(
-                        `UPDATE team_challenge_sessions SET status = 'failed' WHERE id = ?`,
-                        [session_id],
-                        (err) => {
-                            if (err) reject(err);
-                            else resolve();
-                        }
-                    );
-                });
-                session.status = 'failed';
-            }
-        }
+        // Calculate current points
+        const hasPhoto = session.team_photo_path !== null;
+        const currentPoints = session.points || calculatePoints(scans.length, activeMembers.length, hasPhoto);
 
         res.json({
             session_id: session.id,
@@ -410,13 +324,10 @@ router.get('/session/:session_id', async (req, res) => {
             status: session.status,
             scans_completed: scans.length,
             scans_required: activeMembers.length,
-            time_limit_seconds: session.time_limit_seconds,
-            time_remaining_seconds: timeRemaining,
-            elapsed_time_seconds: session.elapsed_time_seconds,
+            points: currentPoints,
             completion_time: session.completion_time,
             team_photo_path: session.team_photo_path,
-            team_members: teamMembers,
-            timer_started: session.timer_start_time !== null
+            team_members: teamMembers
         });
 
     } catch (err) {
@@ -488,11 +399,14 @@ router.post('/session/:session_id/photo', upload.single('photo'), async (req, re
             );
         });
 
-        // Also update the session for backwards compatibility
+        // Add 30 points bonus for team photo
+        const newPoints = (session.points || 0) + 30;
+
+        // Update the session with photo path and bonus points
         await new Promise((resolve, reject) => {
             db.run(
-                'UPDATE team_challenge_sessions SET team_photo_path = ? WHERE id = ?',
-                [photoPath, session_id],
+                'UPDATE team_challenge_sessions SET team_photo_path = ?, points = ? WHERE id = ?',
+                [photoPath, newPoints, session_id],
                 (err) => {
                     if (err) reject(err);
                     else resolve();
@@ -502,7 +416,9 @@ router.post('/session/:session_id/photo', upload.single('photo'), async (req, re
 
         res.json({
             message: 'Lagbilde lastet opp!',
-            photo_path: photoPath
+            photo_path: photoPath,
+            points_earned: 30,
+            total_points: newPoints
         });
 
     } catch (err) {
@@ -514,7 +430,7 @@ router.post('/session/:session_id/photo', upload.single('photo'), async (req, re
 // GET /api/team-challenge/leaderboard - Get leaderboard
 router.get('/leaderboard', async (req, res) => {
     const db = req.app.locals.db;
-    const sortBy = req.query.sortBy || 'fastest'; // 'fastest' or 'first'
+    const sortBy = req.query.sortBy || 'highest'; // 'highest' (points) or 'first' (completion time)
 
     try {
         // Get event start datetime
@@ -583,7 +499,7 @@ router.get('/leaderboard', async (req, res) => {
             rankedTeams.push({
                 team_name: session.team_name,
                 completion_time: session.completion_time,
-                elapsed_time_seconds: session.elapsed_time_seconds,
+                points: session.points || 0,
                 team_photo_path: session.team_photo_path,
                 member_count: teamMembers,
                 minutes_after_start: minutesAfterStart
@@ -591,9 +507,9 @@ router.get('/leaderboard', async (req, res) => {
         }
 
         // Sort based on criteria
-        if (sortBy === 'fastest') {
-            // Sort by elapsed_time_seconds (fastest scan time) - ascending
-            rankedTeams.sort((a, b) => a.elapsed_time_seconds - b.elapsed_time_seconds);
+        if (sortBy === 'highest') {
+            // Sort by points (highest first) - descending
+            rankedTeams.sort((a, b) => b.points - a.points);
         } else {
             // Sort by completion_time (first to complete) - ascending
             rankedTeams.sort((a, b) => new Date(a.completion_time) - new Date(b.completion_time));
@@ -804,6 +720,17 @@ async function getTeamMembersWithStatus(db, teamName, scans) {
             }
         );
     });
+}
+
+// Helper function: Calculate points for team challenge
+// 20 points per person who scans
+// +50 bonus if all team members scan
+// +30 bonus for team photo
+function calculatePoints(scannedCount, totalMembers, hasPhoto) {
+    const basePoints = scannedCount * 20;
+    const allScannedBonus = (scannedCount === totalMembers && totalMembers > 0) ? 50 : 0;
+    const photoBonus = hasPhoto ? 30 : 0;
+    return basePoints + allScannedBonus + photoBonus;
 }
 
 module.exports = router;
