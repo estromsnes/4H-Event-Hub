@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const { exec } = require('child_process');
+const os = require('os');
 
 // POST reset all data
 router.post('/reset', async (req, res) => {
@@ -921,6 +923,58 @@ router.post('/bulk-create-teams', async (req, res) => {
         console.error('❌ Error creating teams:', err);
         res.status(500).json({ error: 'Kunne ikke opprette lag' });
     }
+});
+
+// POST /api/admin/print-test - Test printer (proof of concept)
+router.post('/print-test', async (req, res) => {
+    const db = req.app.locals.db;
+    const { text } = req.body;
+
+    if (!text) {
+        return res.status(400).json({ error: 'Text er påkrevd' });
+    }
+
+    // Only run on Linux
+    if (os.platform() !== 'linux') {
+        return res.status(400).json({ error: 'Printer støttes kun på Linux' });
+    }
+
+    // Get event name
+    db.get('SELECT event_name FROM event_info WHERE active = 1 LIMIT 1', [], (err, event) => {
+        const eventName = event && event.event_name ? event.event_name : '4H Event Hub';
+
+        try {
+            // Path to printer script (adjust based on actual user home directory)
+            const printerScript = '/home/kasse/print_receipt.py';
+            const pythonPath = '/home/kasse/printer_env/bin/python3';
+
+            // Build print content with event name header
+            const printContent = `${eventName}\n${'='.repeat(32)}\n\n${text}`;
+
+            // Execute print command
+            const command = `echo "${printContent.replace(/"/g, '\\"')}" | sudo ${pythonPath} ${printerScript}`;
+
+            exec(command, (error, stdout, stderr) => {
+                if (error) {
+                    console.error('Print error:', error);
+                    return res.status(500).json({
+                        error: 'Utskrift feilet',
+                        details: error.message
+                    });
+                }
+
+                console.log('✅ Print successful:', text);
+                res.json({
+                    message: 'Utskrift vellykket',
+                    printed: text
+                });
+            });
+
+        } catch (err) {
+            console.error('❌ Error printing:', err);
+            res.status(500).json({ error: 'Kunne ikke skrive ut' });
+        }
+    });
 });
 
 module.exports = router;

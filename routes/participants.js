@@ -4,6 +4,8 @@ const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
+const os = require('os');
 
 // Configure multer for photo uploads
 const storage = multer.memoryStorage(); // Use memory storage for processing with sharp
@@ -533,6 +535,97 @@ router.post('/:code/confirm', (req, res) => {
             );
         }
     );
+});
+
+// POST /api/participants/:code/print - Print participant info to receipt printer
+router.post('/:code/print', (req, res) => {
+    const db = req.app.locals.db;
+    const { code } = req.params;
+
+    // Only run on Linux
+    if (os.platform() !== 'linux') {
+        return res.status(400).json({ error: 'Printer støttes kun på Linux' });
+    }
+
+    // Get event name first
+    db.get('SELECT event_name FROM event_info WHERE active = 1 LIMIT 1', [], (err, event) => {
+        const eventName = event && event.event_name ? event.event_name : '4H Event Hub';
+
+        // Get participant info
+        db.get(
+            `SELECT participant_code, first_name, last_name, age, club, role, team
+             FROM participants
+             WHERE participant_code = ? AND active = 1`,
+            [code],
+            (err, participant) => {
+            if (err) {
+                console.error('Error fetching participant:', err);
+                return res.status(500).json({ error: 'Kunne ikke hente deltaker' });
+            }
+
+            if (!participant) {
+                return res.status(404).json({ error: 'Deltaker ikke funnet' });
+            }
+
+            // Get participant's courses
+            db.all(
+                `SELECT c.name, c.instructor, c.location
+                 FROM courses c
+                 JOIN participant_courses pc ON c.id = pc.course_id
+                 WHERE pc.participant_code = ? AND c.active = 1
+                 ORDER BY c.name`,
+                [code],
+                (err, courses) => {
+                    if (err) {
+                        console.error('Error fetching courses:', err);
+                        // Continue without courses rather than failing
+                        courses = [];
+                    }
+
+                    // Prepare data for printing
+                    const printData = {
+                        event_name: eventName,
+                        participant_code: participant.participant_code,
+                        first_name: participant.first_name,
+                        last_name: participant.last_name,
+                        age: participant.age,
+                        club: participant.club,
+                        role: participant.role,
+                        team: participant.team,
+                        courses: courses || []
+                    };
+
+                    // Execute print command
+                    const pythonPath = '/home/kasse/printer_env/bin/python3';
+                    const printerScript = '/home/kasse/print_participant.py';
+                    const jsonData = JSON.stringify(printData);
+
+                    const command = `echo '${jsonData.replace(/'/g, "'\\''")}' | sudo ${pythonPath} ${printerScript}`;
+
+                    exec(command, (error, stdout, stderr) => {
+                        if (error) {
+                            console.error('Print error:', error);
+                            console.error('stderr:', stderr);
+                            return res.status(500).json({
+                                error: 'Utskrift feilet',
+                                details: stderr || error.message
+                            });
+                        }
+
+                        console.log('✅ Printed participant:', participant.first_name, participant.last_name);
+                        res.json({
+                            message: 'Deltaker skrevet ut',
+                            participant: {
+                                name: `${participant.first_name} ${participant.last_name}`,
+                                code: participant.participant_code
+                            }
+                        });
+                    });
+                }
+            );
+        }
+    );
+    });
 });
 
 module.exports = router;

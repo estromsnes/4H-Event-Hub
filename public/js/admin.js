@@ -1472,6 +1472,7 @@ function renderParticipants() {
                     ? `<button class="button secondary btn-small" onclick="viewPhoto('${p.participant_code}', '${p.profile_photo_path}')">📷 Bilde</button>`
                     : ''
                 }
+                <button class="button primary btn-small" onclick="printParticipant('${p.participant_code}')" title="Skriv ut profil">🖨️</button>
                 <button class="button secondary btn-small" onclick="deleteParticipant('${p.participant_code}')">🗑️</button>
             </div>
         </div>
@@ -1674,6 +1675,40 @@ async function removeNoShow(participantCode) {
     } catch (err) {
         console.error('Error removing no-show:', err);
         alert('Kunne ikke fjerne no-show status: ' + err.message);
+    }
+}
+
+/**
+ * Print participant profile to receipt printer
+ */
+async function printParticipant(participantCode) {
+    const participant = participants.find(p => p.participant_code === participantCode);
+    if (!participant) return;
+
+    if (!confirm(`Skriv ut profil for ${participant.first_name} ${participant.last_name}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/participants/${participantCode}/print`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Admin-Token': getAdminToken()
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Utskrift feilet');
+        }
+
+        alert('✅ ' + data.message);
+
+    } catch (error) {
+        console.error('Print error:', error);
+        alert('❌ Feil: ' + error.message);
     }
 }
 
