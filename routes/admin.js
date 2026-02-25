@@ -934,9 +934,12 @@ router.post('/print-test', async (req, res) => {
         return res.status(400).json({ error: 'Text er påkrevd' });
     }
 
-    // Only run on Linux
-    if (os.platform() !== 'linux') {
-        return res.status(400).json({ error: 'Printer støttes kun på Linux' });
+    // Check platform
+    const isWindows = os.platform() === 'win32';
+    const isLinux = os.platform() === 'linux';
+
+    if (!isWindows && !isLinux) {
+        return res.status(400).json({ error: 'Printer støttes kun på Windows og Linux' });
     }
 
     // Get event name
@@ -944,15 +947,29 @@ router.post('/print-test', async (req, res) => {
         const eventName = event && event.event_name ? event.event_name : '4H Event Hub';
 
         try {
-            // Path to printer script (adjust based on actual user home directory)
-            const printerScript = '/home/kasse/print_receipt.py';
-            const pythonPath = '/home/kasse/printer_env/bin/python3';
-
             // Build print content with event name header
             const printContent = `${eventName}\n${'='.repeat(32)}\n\n${text}`;
 
-            // Execute print command
-            const command = `echo "${printContent.replace(/"/g, '\\"')}" | sudo ${pythonPath} ${printerScript}`;
+            let command;
+
+            if (isLinux) {
+                // Linux command
+                const printerScript = '/home/kasse/print_receipt.py';
+                const pythonPath = '/home/kasse/printer_env/bin/python3';
+                command = `echo "${printContent.replace(/"/g, '\\"')}" | sudo ${pythonPath} ${printerScript}`;
+
+            } else {
+                // Windows command
+                const path = require('path');
+                const printerScript = path.join(__dirname, '..', 'utils', 'print_receipt_win.py');
+                const pythonPath = process.env.VIRTUAL_ENV
+                    ? path.join(process.env.VIRTUAL_ENV, 'Scripts', 'python.exe')
+                    : 'python';
+
+                // Escape quotes for Windows
+                const escapedContent = printContent.replace(/"/g, '\\"');
+                command = `echo "${escapedContent}" | ${pythonPath} "${printerScript}"`;
+            }
 
             exec(command, (error, stdout, stderr) => {
                 if (error) {

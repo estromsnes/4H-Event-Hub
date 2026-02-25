@@ -542,9 +542,12 @@ router.post('/:code/print', (req, res) => {
     const db = req.app.locals.db;
     const { code } = req.params;
 
-    // Only run on Linux
-    if (os.platform() !== 'linux') {
-        return res.status(400).json({ error: 'Printer støttes kun på Linux' });
+    // Check platform
+    const isWindows = os.platform() === 'win32';
+    const isLinux = os.platform() === 'linux';
+
+    if (!isWindows && !isLinux) {
+        return res.status(400).json({ error: 'Printer støttes kun på Windows og Linux' });
     }
 
     // Get event name first
@@ -596,11 +599,26 @@ router.post('/:code/print', (req, res) => {
                     };
 
                     // Execute print command
-                    const pythonPath = '/home/kasse/printer_env/bin/python3';
-                    const printerScript = '/home/kasse/print_participant.py';
                     const jsonData = JSON.stringify(printData);
+                    let command;
 
-                    const command = `echo '${jsonData.replace(/'/g, "'\\''")}' | sudo ${pythonPath} ${printerScript}`;
+                    if (isLinux) {
+                        // Linux command
+                        const pythonPath = '/home/kasse/printer_env/bin/python3';
+                        const printerScript = '/home/kasse/print_participant.py';
+                        command = `echo '${jsonData.replace(/'/g, "'\\''")}' | sudo ${pythonPath} ${printerScript}`;
+
+                    } else {
+                        // Windows command
+                        const printerScript = path.join(__dirname, '..', 'utils', 'print_participant_win.py');
+                        const pythonPath = process.env.VIRTUAL_ENV
+                            ? path.join(process.env.VIRTUAL_ENV, 'Scripts', 'python.exe')
+                            : 'python';
+
+                        // Escape quotes for Windows
+                        const escapedJson = jsonData.replace(/"/g, '\\"');
+                        command = `echo "${escapedJson}" | ${pythonPath} "${printerScript}"`;
+                    }
 
                     exec(command, (error, stdout, stderr) => {
                         if (error) {
