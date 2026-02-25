@@ -682,6 +682,21 @@ router.post('/admin/update-config', requireAdminToken, async (req, res) => {
             return res.status(404).json({ error: 'No configuration found' });
         }
 
+        // Calculate if old start_time has expired (if exists)
+        let shouldResetStartTime = false;
+        if (active === 1 && currentConfig.start_time && currentConfig.time_limit_minutes) {
+            const startTime = new Date(currentConfig.start_time).getTime();
+            const now = Date.now();
+            const elapsedMinutes = (now - startTime) / 60000;
+            const timeRemaining = currentConfig.time_limit_minutes - elapsedMinutes;
+
+            // If time has expired, we should set a new start_time
+            if (timeRemaining <= 0) {
+                shouldResetStartTime = true;
+                console.log('[Selfie Chain] Old session expired, setting new start_time');
+            }
+        }
+
         // Update configuration
         await new Promise((resolve, reject) => {
             db.run(
@@ -690,7 +705,11 @@ router.post('/admin/update-config', requireAdminToken, async (req, res) => {
                      time_limit_minutes = ?,
                      points_per_selfie = ?,
                      variant = ?,
-                     start_time = CASE WHEN ? = 1 AND active = 0 THEN datetime('now') ELSE start_time END,
+                     start_time = CASE
+                         WHEN ? = 1 AND active = 0 THEN datetime('now')
+                         WHEN ? = 1 THEN datetime('now')
+                         ELSE start_time
+                     END,
                      end_time = CASE WHEN ? = 0 AND active = 1 THEN datetime('now') ELSE end_time END
                  WHERE id = ?`,
                 [
@@ -699,6 +718,7 @@ router.post('/admin/update-config', requireAdminToken, async (req, res) => {
                     points_per_selfie !== undefined ? points_per_selfie : currentConfig.points_per_selfie,
                     variant !== undefined ? variant : currentConfig.variant,
                     active,
+                    shouldResetStartTime ? 1 : 0,
                     active,
                     currentConfig.id
                 ],

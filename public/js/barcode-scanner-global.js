@@ -141,9 +141,10 @@ class GlobalBarcodeScanner {
             '§': ','
         };
 
+        let decoded = input;
+
         // Detect if this looks like garbled JSON
         if (input.includes('Å') || input.includes('Æ') || input.includes('Ø')) {
-            let decoded = input;
             for (const [garbled, correct] of Object.entries(charMap)) {
                 decoded = decoded.split(garbled).join(correct);
             }
@@ -156,12 +157,13 @@ class GlobalBarcodeScanner {
                 console.warn('JSON missing closing brace, adding it');
                 decoded += '}';
             }
-
-            return decoded;
         }
 
-        // Also replace + with - for participant codes (SK+2026+004 → SK-2026-004)
-        return input.replace(/\+/g, '-');
+        // Always replace + with - for participant codes (SK+2026+004 → SK-2026-004)
+        // This happens regardless of whether Norwegian keyboard decoding occurred
+        decoded = decoded.replace(/\+/g, '-');
+
+        return decoded;
     }
 
     /**

@@ -45,6 +45,14 @@ class SelfieChainApp {
             }
         );
 
+        // Activate global barcode scanner for physical scanners
+        if (window.globalBarcodeScanner) {
+            globalBarcodeScanner.activate((qrData) => {
+                console.log('[Selfie Chain] Physical scanner data:', qrData);
+                this.handleParticipantScan(qrData);
+            });
+        }
+
         // Camera scanning toggle
         startBtn.addEventListener('click', async () => {
             if (this.isParticipantScannerActive) {
@@ -143,6 +151,11 @@ class SelfieChainApp {
         statusDiv.className = 'alert success';
         statusDiv.classList.remove('hidden');
 
+        // Deactivate global barcode scanner (will be reactivated for target scanning)
+        if (window.globalBarcodeScanner) {
+            globalBarcodeScanner.deactivate();
+        }
+
         // Save participant code (only in memory, not sessionStorage)
         this.participantCode = participantCode;
 
@@ -195,7 +208,32 @@ class SelfieChainApp {
 
             // Update UI based on status
             const meetingsCompleted = this.currentStatus.stats?.meetings_completed || 0;
-            const timeRemaining = this.currentStatus.time_remaining_minutes;
+
+            // Calculate time remaining in real-time (don't use stale server data)
+            let timeRemaining = null;
+            console.log('[Selfie Chain] Config:', {
+                start_time: this.config?.start_time,
+                time_limit_minutes: this.config?.time_limit_minutes,
+                active: this.config?.active
+            });
+
+            if (this.config && this.config.time_limit_minutes && this.config.start_time) {
+                const startTimeStr = this.config.start_time.endsWith('Z') ? this.config.start_time : this.config.start_time + 'Z';
+                const startTime = new Date(startTimeStr).getTime();
+                const now = Date.now();
+                const elapsedMinutes = (now - startTime) / 60000;
+                timeRemaining = this.config.time_limit_minutes - elapsedMinutes;
+
+                console.log('[Selfie Chain] Time calculation:', {
+                    startTime: new Date(startTime).toISOString(),
+                    now: new Date(now).toISOString(),
+                    elapsedMinutes: elapsedMinutes.toFixed(2),
+                    timeLimit: this.config.time_limit_minutes,
+                    timeRemaining: timeRemaining.toFixed(2)
+                });
+            } else {
+                console.log('[Selfie Chain] No time limit active or start_time not set');
+            }
 
             if (meetingsCompleted === 0 && !this.currentStatus.has_started) {
                 // First time - show instructions view
@@ -345,6 +383,12 @@ class SelfieChainApp {
             this.showMessage('missionStatus', '❌ Du må skanne personens QR-kode først!', 'error');
             return;
         }
+
+        // Deactivate barcode scanner while taking selfie
+        if (window.globalBarcodeScanner) {
+            globalBarcodeScanner.deactivate();
+        }
+
         this.showView('cameraView');
         this.startCamera();
     }
@@ -440,12 +484,29 @@ class SelfieChainApp {
             return;
         }
 
-        // Check if time has expired
-        const timeRemaining = this.currentStatus?.time_remaining_minutes;
-        if (timeRemaining !== null && timeRemaining !== undefined && timeRemaining <= 0) {
-            this.stopCamera();
-            this.showTimeUpView();
-            return;
+        // Check if time has expired (calculate in real-time, don't use stale data)
+        if (this.config && this.config.time_limit_minutes && this.config.start_time) {
+            const startTimeStr = this.config.start_time.endsWith('Z') ? this.config.start_time : this.config.start_time + 'Z';
+            const startTime = new Date(startTimeStr).getTime();
+            const now = Date.now();
+            const elapsedMinutes = (now - startTime) / 60000;
+            const timeRemaining = this.config.time_limit_minutes - elapsedMinutes;
+
+            console.log('[Selfie Chain] confirmSelfie time check:', {
+                startTime: new Date(startTime).toISOString(),
+                now: new Date(now).toISOString(),
+                elapsedMinutes: elapsedMinutes.toFixed(2),
+                timeLimit: this.config.time_limit_minutes,
+                timeRemaining: timeRemaining.toFixed(2),
+                isExpired: timeRemaining <= 0
+            });
+
+            if (timeRemaining <= 0) {
+                console.log('[Selfie Chain] TIME EXPIRED - Showing time up view');
+                this.stopCamera();
+                this.showTimeUpView();
+                return;
+            }
         }
 
         const confirmBtn = document.getElementById('confirmBtn');
@@ -634,8 +695,13 @@ class SelfieChainApp {
             }
         };
 
-        // Note: Global barcode scanner (keyboard wedge) works automatically
-        // No need to explicitly start listening - it captures keyboard input globally
+        // Activate global barcode scanner for physical scanners (target verification)
+        if (window.globalBarcodeScanner) {
+            globalBarcodeScanner.activate((qrData) => {
+                console.log('[Selfie Chain] Physical scanner (target):', qrData);
+                this.handleTargetScan(qrData);
+            });
+        }
     }
 
     async handleTargetScan(qrData) {
@@ -775,16 +841,18 @@ class SelfieChainApp {
             return;
         }
 
-        // Get started_at time (SQLite returns UTC, so append 'Z')
-        const startedAt = this.currentStatus.stats?.started_at;
-        if (!startedAt) {
+        // Use GLOBAL start_time from config (not per-participant started_at)
+        // This matches the server-side validation
+        if (!this.config.start_time) {
             document.getElementById('timeRemaining').textContent = '--';
             return;
         }
 
-        const startTimeStr = startedAt.endsWith('Z') ? startedAt : startedAt + 'Z';
+        const startTimeStr = this.config.start_time.endsWith('Z') ? this.config.start_time : this.config.start_time + 'Z';
         const startTime = new Date(startTimeStr);
         const endTime = new Date(startTime.getTime() + (this.config.time_limit_minutes * 60 * 1000));
+
+        console.log('[Selfie Chain] Timer - Global start:', startTime, 'End:', endTime);
 
         // Update immediately first time
         this.updateTimerDisplay(endTime);
@@ -932,5 +1000,9 @@ window.addEventListener('beforeunload', () => {
     selfieChainApp.stopTimer();
     if (selfieChainApp.qrScanner) {
         selfieChainApp.qrScanner.stop().catch(() => {});
+    }
+    // Deactivate global barcode scanner
+    if (window.globalBarcodeScanner) {
+        globalBarcodeScanner.deactivate();
     }
 });

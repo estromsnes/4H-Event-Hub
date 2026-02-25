@@ -472,20 +472,23 @@ async function handleSaveEventInfo(e) {
 
             if (logoResponse.ok) {
                 const logoResult = await logoResponse.json();
-                currentEvent.logo_path = logoResult.logo_path;
 
-                // Update preview with new logo path
-                logoPreviewImg.src = currentEvent.logo_path + '?t=' + Date.now();
-                logoPreview.classList.remove('hidden');
+                // Reload event info to get the updated logo_path from database
+                await loadEventInfo();
 
                 // Clear file input
                 eventLogoInput.value = '';
-            } else {
-                console.error('Failed to upload logo');
-            }
-        }
 
-        showEventStatus('Arrangement-informasjon lagret!', 'success');
+                showEventStatus('Arrangement-informasjon og logo lagret!', 'success');
+            } else {
+                const error = await logoResponse.json();
+                console.error('Failed to upload logo:', error);
+                showEventStatus('Arrangement lagret, men logo-opplasting feilet: ' + (error.error || 'Ukjent feil'), 'error');
+                return; // Don't show success message if logo failed
+            }
+        } else {
+            showEventStatus('Arrangement-informasjon lagret!', 'success');
+        }
     } catch (err) {
         console.error('Error saving event info:', err);
         showEventStatus(err.message, 'error');

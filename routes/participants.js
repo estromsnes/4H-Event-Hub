@@ -93,7 +93,10 @@ router.get('/stats/roles', (req, res) => {
 // GET specific participant by code
 router.get('/:code', (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+
+    // Decode URL encoding and handle plus signs (SK+2026+001 → SK-2026-001)
+    code = decodeURIComponent(code).replace(/\+/g, '-');
 
     db.get(
         'SELECT * FROM participants WHERE participant_code = ? AND active = 1',
@@ -183,7 +186,8 @@ router.post('/', (req, res) => {
 // PUT update participant
 router.put('/:code', (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
     const { first_name, last_name, age, home_location, club, role, team, notes } = req.body;
 
     db.run(
@@ -227,7 +231,8 @@ router.put('/:code', (req, res) => {
 // DELETE (soft delete) participant
 router.delete('/:code', (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
 
     db.run(
         'UPDATE participants SET active = 0 WHERE participant_code = ? AND active = 1',
@@ -250,7 +255,8 @@ router.delete('/:code', (req, res) => {
 // POST upload profile photo
 router.post('/:code/photo', upload.single('photo'), async (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
 
     if (!req.file) {
         return res.status(400).json({ error: 'No photo file provided' });
@@ -312,7 +318,8 @@ router.post('/:code/photo', upload.single('photo'), async (req, res) => {
 // DELETE participant photo
 router.delete('/:code/photo', async (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
 
     try {
         // Get participant to find photo path
@@ -365,7 +372,8 @@ router.delete('/:code/photo', async (req, res) => {
 // GET scan history for a participant
 router.get('/:code/scans', (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
 
     db.all(
         'SELECT * FROM scan_log WHERE participant_code = ? ORDER BY scan_timestamp DESC LIMIT 50',
@@ -383,7 +391,8 @@ router.get('/:code/scans', (req, res) => {
 // POST mark participant as no-show (admin only)
 router.post('/:code/no-show', (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
 
     // Check if participant exists
     db.get(
@@ -434,7 +443,8 @@ router.post('/:code/no-show', (req, res) => {
 // DELETE remove no-show status (admin only)
 router.delete('/:code/no-show', (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
 
     // Check if participant exists
     db.get(
@@ -485,7 +495,8 @@ router.delete('/:code/no-show', (req, res) => {
 // POST confirm participant (participant confirms their own information)
 router.post('/:code/confirm', (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
 
     // Check if participant exists and is not already confirmed
     db.get(
@@ -540,7 +551,8 @@ router.post('/:code/confirm', (req, res) => {
 // POST /api/participants/:code/print - Print participant info to receipt printer
 router.post('/:code/print', (req, res) => {
     const db = req.app.locals.db;
-    const { code } = req.params;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
 
     // Check platform
     const isWindows = os.platform() === 'win32';
