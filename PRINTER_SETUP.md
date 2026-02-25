@@ -129,24 +129,16 @@ pip install python-escpos
 
 # Installer pyusb for USB-kommunikasjon
 pip install pyusb
-
-# Installer Pillow for bildebehandling
-pip install Pillow
-
-# Installer ascii-magic for ASCII art konvertering
-pip install ascii-magic
 ```
 
 ### 4. Verifiser installasjon
 
 ```bash
-pip list | grep -E "escpos|pyusb|Pillow|ascii"
+pip list | grep -E "escpos|pyusb"
 ```
 
 Du skal se:
 ```
-ascii-magic        x.x.x
-Pillow             x.x.x
 python-escpos      x.x.x
 pyusb              x.x.x
 ```
@@ -165,13 +157,17 @@ import sys
 from escpos.printer import Usb
 
 # Koble til skriver
-p = Usb(0x154f, 0x154f, out_ep=0x02, in_ep=0x82)
+p = Usb(0x154f, 0x154f, out_ep=0x02, in_ep=0x82, profile="default")
 
-# Les tekst fra argument eller stdin
-if len(sys.argv) > 1:
-    text = " ".join(sys.argv[1:])
-else:
-    text = sys.stdin.read()
+# Sett tegnkoding for norske tegn (æøå)
+# Code page 2 = PC850 (Multilingual)
+try:
+    p._raw(b'\x1b\x74\x02')  # ESC t 2 - Velg code page 2 (PC850)
+except:
+    pass
+
+# Les tekst fra stdin
+text = sys.stdin.read()
 
 # Skriv ut
 p.text(text)
@@ -184,7 +180,7 @@ Gjør den kjørbar:
 chmod +x ~/print_receipt.py
 ```
 
-### Script 2: print_participant.py (Med ASCII foto)
+### Script 2: print_participant.py (Deltaker-profil)
 
 Lag `/home/kasse/print_participant.py`:
 
@@ -193,85 +189,66 @@ Lag `/home/kasse/print_participant.py`:
 import sys
 import json
 from escpos.printer import Usb
-from PIL import Image
-import os
-
-def image_to_ascii(image_path, width=32, height=16):
-    """Convert image to ASCII art suitable for thermal printer"""
-    try:
-        # ASCII characters from darkest to lightest
-        ascii_chars = ['@', '#', 'S', '%', '?', '*', '+', ';', ':', ',', '.', ' ']
-
-        # Open and convert image
-        img = Image.open(image_path)
-
-        # Convert to grayscale
-        img = img.convert('L')
-
-        # Resize to fit printer width
-        aspect_ratio = img.height / img.width
-        new_height = int(width * aspect_ratio * 0.5)  # 0.5 to compensate for character aspect ratio
-        if new_height > height:
-            new_height = height
-
-        img = img.resize((width, new_height))
-
-        # Convert to ASCII
-        ascii_art = []
-        for y in range(img.height):
-            line = ''
-            for x in range(img.width):
-                pixel = img.getpixel((x, y))
-                # Map pixel value (0-255) to ASCII character
-                char_index = int((pixel / 255) * (len(ascii_chars) - 1))
-                line += ascii_chars[char_index]
-            ascii_art.append(line)
-
-        return '\n'.join(ascii_art)
-    except Exception as e:
-        print(f"Error converting image: {e}", file=sys.stderr)
-        return None
 
 def print_participant(data):
-    """Print participant info with ASCII photo"""
+    """Print participant info to thermal receipt printer"""
     # Connect to printer
-    p = Usb(0x154f, 0x154f, out_ep=0x02, in_ep=0x82)
+    p = Usb(0x154f, 0x154f, out_ep=0x02, in_ep=0x82, profile="default")
 
-    # Print header
-    p.set(align='center', text_type='B', width=2, height=2)
-    p.text("4H EVENT HUB\n")
-    p.set(align='center', text_type='normal')
-    p.text("=" * 32 + "\n")
+    # Sett tegnkoding for norske tegn (æøå)
+    # Code page 2 = PC850 (Multilingual)
+    try:
+        p._raw(b'\x1b\x74\x02')  # ESC t 2 - Velg code page 2 (PC850)
+    except:
+        pass
 
-    # Print ASCII photo if available
-    if 'photo_path' in data and data['photo_path'] and os.path.exists(data['photo_path']):
-        ascii_art = image_to_ascii(data['photo_path'])
-        if ascii_art:
-            p.set(align='center')
-            p.text(ascii_art + "\n")
-            p.text("-" * 32 + "\n")
+    # Print header with event name
+    event_name = data.get('event_name', '4H Event Hub')
+    p.set(align='center', bold=True, width=2, height=2)
+    p.text(f"{event_name}\n")
+    p.set(align='center', bold=False)
+    p.text("=" * 32 + "\n\n")
 
     # Print participant info
-    p.set(align='left', text_type='B')
+    p.set(align='left', bold=True)
     p.text(f"{data.get('first_name', '')} {data.get('last_name', '')}\n")
-    p.set(text_type='normal')
+    p.set(bold=False)
 
-    if 'age' in data:
-        p.text(f"Alder: {data['age']} ar\n")
     if 'club' in data:
         p.text(f"Klubb: {data['club']}\n")
     if 'role' in data:
         p.text(f"Rolle: {data['role']}\n")
     if 'team' in data and data['team']:
         p.text(f"Lag: {data['team']}\n")
+
+    # Print courses if any
+    if 'courses' in data and data['courses'] and len(data['courses']) > 0:
+        p.text("\n")
+        p.set(align='left', bold=True)
+        p.text("Kurs:\n")
+        p.set(bold=False)
+        for course in data['courses']:
+            p.text(f"  - {course['name']}\n")
+            if course.get('instructor'):
+                p.text(f"    Instruktør: {course['instructor']}\n")
+            if course.get('location'):
+                p.text(f"    Sted: {course['location']}\n")
+
+    # Print QR code of participant code
     if 'participant_code' in data:
-        p.text(f"Kode: {data['participant_code']}\n")
+        p.text("\n")
+        p.set(align='center')
+        try:
+            p.qr(data['participant_code'], size=6)
+            p.text("\n")
+        except Exception as e:
+            print(f"QR code error: {e}", file=sys.stderr)
 
     # Footer
     p.text("\n")
     p.set(align='center')
     p.text("-" * 32 + "\n")
-    p.text("Velkommen til 4H!\n")
+    p.text("Velkommen!\n")
     p.text("\n\n\n")
 
     # Cut paper
@@ -287,6 +264,13 @@ if __name__ == '__main__':
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 ```
+
+**Funksjoner:**
+- Skriver ut arrangement-navn som header
+- Viser deltaker-informasjon (navn, klubb, rolle, lag)
+- Lister opp påmeldte kurs med instruktør og sted
+- Printer QR-kode av deltaker-kode for enkel re-skanning
+- Støtter norske tegn (æøå) via PC850 code page
 
 Gjør den kjørbar:
 ```bash
@@ -395,7 +379,7 @@ I `routes/participants.js`:
 const { exec } = require('child_process');
 const os = require('os');
 
-// POST /api/participants/:code/print - Print participant info with ASCII photo
+// POST /api/participants/:code/print - Print participant info to receipt printer
 router.post('/:code/print', (req, res) => {
     const db = req.app.locals.db;
     const { code } = req.params;
@@ -405,71 +389,95 @@ router.post('/:code/print', (req, res) => {
         return res.status(400).json({ error: 'Printer støttes kun på Linux' });
     }
 
-    // Get participant info
-    db.get(
-        `SELECT participant_code, first_name, last_name, age, club, role, team, photo_path
-         FROM participants
-         WHERE participant_code = ? AND active = 1`,
-        [code],
-        (err, participant) => {
-            if (err) {
-                return res.status(500).json({ error: 'Kunne ikke hente deltaker' });
-            }
-            if (!participant) {
-                return res.status(404).json({ error: 'Deltaker ikke funnet' });
-            }
+    // Get event name first
+    db.get('SELECT event_name FROM event_info WHERE active = 1 LIMIT 1', [], (err, event) => {
+        const eventName = event && event.event_name ? event.event_name : '4H Event Hub';
 
-            // Prepare data for printing
-            const printData = {
-                participant_code: participant.participant_code,
-                first_name: participant.first_name,
-                last_name: participant.last_name,
-                age: participant.age,
-                club: participant.club,
-                role: participant.role,
-                team: participant.team
-            };
-
-            // Add photo path if it exists
-            if (participant.photo_path) {
-                const fullPhotoPath = path.join(__dirname, '..', participant.photo_path);
-                if (fs.existsSync(fullPhotoPath)) {
-                    printData.photo_path = fullPhotoPath;
+        // Get participant info
+        db.get(
+            `SELECT participant_code, first_name, last_name, age, club, role, team
+             FROM participants
+             WHERE participant_code = ? AND active = 1`,
+            [code],
+            (err, participant) => {
+                if (err) {
+                    return res.status(500).json({ error: 'Kunne ikke hente deltaker' });
                 }
-            }
-
-            // Execute print command
-            const pythonPath = '/home/kasse/printer_env/bin/python3';
-            const printerScript = '/home/kasse/print_participant.py';
-            const jsonData = JSON.stringify(printData);
-            const command = `echo '${jsonData.replace(/'/g, "'\\''")}' | sudo ${pythonPath} ${printerScript}`;
-
-            exec(command, (error, stdout, stderr) => {
-                if (error) {
-                    console.error('Print error:', error);
-                    return res.status(500).json({
-                        error: 'Utskrift feilet',
-                        details: stderr || error.message
-                    });
+                if (!participant) {
+                    return res.status(404).json({ error: 'Deltaker ikke funnet' });
                 }
 
-                console.log('✅ Printed participant:', participant.first_name, participant.last_name);
-                res.json({
-                    message: 'Deltaker skrevet ut',
-                    participant: {
-                        name: `${participant.first_name} ${participant.last_name}`,
-                        code: participant.participant_code
+                // Get participant's courses
+                db.all(
+                    `SELECT c.name, c.instructor, c.location
+                     FROM courses c
+                     JOIN participant_courses pc ON c.id = pc.course_id
+                     WHERE pc.participant_code = ? AND c.active = 1
+                     ORDER BY c.name`,
+                    [code],
+                    (err, courses) => {
+                        if (err) {
+                            console.error('Error fetching courses:', err);
+                            courses = [];
+                        }
+
+                        // Prepare data for printing
+                        const printData = {
+                            event_name: eventName,
+                            participant_code: participant.participant_code,
+                            first_name: participant.first_name,
+                            last_name: participant.last_name,
+                            age: participant.age,
+                            club: participant.club,
+                            role: participant.role,
+                            team: participant.team,
+                            courses: courses || []
+                        };
+
+                        // Execute print command
+                        const pythonPath = '/home/kasse/printer_env/bin/python3';
+                        const printerScript = '/home/kasse/print_participant.py';
+                        const jsonData = JSON.stringify(printData);
+                        const command = `echo '${jsonData.replace(/'/g, "'\\''")}' | sudo ${pythonPath} ${printerScript}`;
+
+                        exec(command, (error, stdout, stderr) => {
+                            if (error) {
+                                console.error('Print error:', error);
+                                return res.status(500).json({
+                                    error: 'Utskrift feilet',
+                                    details: stderr || error.message
+                                });
+                            }
+
+                            console.log('✅ Printed participant:', participant.first_name, participant.last_name);
+                            res.json({
+                                message: 'Deltaker skrevet ut',
+                                participant: {
+                                    name: `${participant.first_name} ${participant.last_name}`,
+                                    code: participant.participant_code
+                                }
+                            });
+                        });
                     }
-                });
-            });
-        }
-    );
+                );
+            }
+        );
+    });
 });
 ```
+
+**Endepunktet:**
+- Henter arrangement-navn fra databasen
+- Henter deltaker-informasjon
+- Henter deltakers påmeldte kurs
+- Sender alt til Python-scriptet som JSON
+- Krever admin-autentisering (via middleware)
 
 ---
 
 ## Frontend Integrasjon
+
+**Merk:** Utskriftsfunksjonalitet er kun tilgjengelig i admin-panelet for sikkerhet. Deltakere kan ikke skrive ut sine egne profiler.
 
 ### 1. Admin Panel - Test Printer
 
@@ -565,50 +573,46 @@ async function testPrint(event) {
 }
 ```
 
-### 2. Profile Page - Print Profile
+### 2. Admin Panel - Print Participant
 
-I `public/profile.html`:
+I `public/js/admin.js`, legg til print-knapp i deltaker-listen:
 
-**HTML:**
-```html
-<div class="action-buttons">
-    <button id="printProfileBtn" class="button primary large-button" style="margin-bottom: 10px;">
-        🖨️ Skriv Ut Profil
-    </button>
-    <button id="scanAgainBtn" class="button secondary large-button">
-        🔄 Skann Ny Kode
-    </button>
-</div>
-
-<div id="printStatus" class="hidden" style="margin-top: 15px; padding: 15px; border-radius: 8px; text-align: center; font-weight: 600;"></div>
+**I renderParticipants-funksjonen:**
+```javascript
+// Add print button to participant actions
+participantsList.innerHTML = filteredParticipants.map(p => `
+    <div class="participant-item">
+        <div class="participant-info">
+            <h3>${p.first_name} ${p.last_name}</h3>
+            <p>${p.age ? p.age + ' år' : ''} • ${p.club || ''} • ${p.role || ''}</p>
+        </div>
+        <div class="participant-actions">
+            <!-- Other buttons... -->
+            <button class="button primary btn-small"
+                    onclick="printParticipant('${p.participant_code}')"
+                    title="Skriv ut profil">🖨️</button>
+            <!-- Delete button... -->
+        </div>
+    </div>
+`).join('');
 ```
 
-I `public/js/profile.js`:
-
-**JavaScript:**
+**Print-funksjon:**
 ```javascript
-// Add to DOM elements section
-const printProfileBtn = document.getElementById('printProfileBtn');
-const printStatus = document.getElementById('printStatus');
+async function printParticipant(participantCode) {
+    const participant = participants.find(p => p.participant_code === participantCode);
+    if (!participant) return;
 
-// Add event listener
-printProfileBtn.addEventListener('click', printProfile);
-
-// Print function
-async function printProfile() {
-    if (!currentParticipant) {
-        console.error('No participant loaded');
+    if (!confirm(`Skriv ut profil for ${participant.first_name} ${participant.last_name}?`)) {
         return;
     }
 
-    printProfileBtn.disabled = true;
-    printProfileBtn.textContent = '⏳ Skriver ut...';
-
     try {
-        const response = await fetch(`/api/participants/${currentParticipant.participant_code}/print`, {
+        const response = await fetch(`/api/participants/${participantCode}/print`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Admin-Token': getAdminToken()
             }
         });
 
@@ -618,27 +622,20 @@ async function printProfile() {
             throw new Error(data.error || 'Utskrift feilet');
         }
 
-        printStatus.textContent = '✅ ' + data.message;
-        printStatus.style.color = 'green';
-        printStatus.style.background = '#d4edda';
-        printStatus.classList.remove('hidden');
-
-        setTimeout(() => {
-            printStatus.classList.add('hidden');
-        }, 3000);
+        alert('✅ ' + data.message);
 
     } catch (error) {
         console.error('Print error:', error);
-        printStatus.textContent = '❌ Feil: ' + error.message;
-        printStatus.style.color = '#721c24';
-        printStatus.style.background = '#f8d7da';
-        printStatus.classList.remove('hidden');
-    } finally {
-        printProfileBtn.disabled = false;
-        printProfileBtn.textContent = '🖨️ Skriv Ut Profil';
+        alert('❌ Feil: ' + error.message);
     }
 }
 ```
+
+**Funksjonalitet:**
+- 🖨️-knapp vises ved hver deltaker i admin-panelet
+- Krever bekreftelse før utskrift
+- Bruker admin-autentisering (X-Admin-Token)
+- Viser suksess/feilmelding
 
 ---
 
@@ -654,12 +651,12 @@ echo "Test utskrift" | python3 ~/print_receipt.py
 
 **Test deltaker-utskrift:**
 ```bash
-echo '{"first_name":"Ola","last_name":"Nordmann","age":15,"club":"Eina 4H","role":"Deltaker","team":"Lag Rød","participant_code":"TEST0001"}' | python3 ~/print_participant.py
+echo '{"event_name":"4H Leir 2026","first_name":"Ola","last_name":"Nordmann","club":"Eina 4H","role":"Deltaker","team":"Lag Rød","participant_code":"TEST0001"}' | python3 ~/print_participant.py
 ```
 
-**Test med foto:**
+**Test med kurs:**
 ```bash
-echo '{"first_name":"Kari","last_name":"Nordmann","age":16,"club":"Eina 4H","photo_path":"/full/path/to/photo.jpg"}' | python3 ~/print_participant.py
+echo '{"event_name":"4H Leir 2026","first_name":"Kari","last_name":"Nordmann","club":"Eina 4H","role":"Deltaker","participant_code":"TEST0002","courses":[{"name":"Håndverk","instructor":"Anne Hansen","location":"Rom 101"},{"name":"Foto","instructor":"Per Olsen","location":"Rom 202"}]}' | python3 ~/print_participant.py
 ```
 
 ### 2. Test Backend API
@@ -686,16 +683,23 @@ curl -X POST http://localhost:3000/api/participants/TEST0001/print \
 
 ### 3. Test Frontend
 
-1. **Admin Panel:**
+1. **Admin Panel - Test Print:**
    - Gå til admin-panelet
    - Klikk på "🖨️ Skriver" tab
-   - Skriv inn tekst
+   - Skriv inn tekst (norske tegn som æøå fungerer)
    - Klikk "Test Utskrift"
 
-2. **Profile Page:**
-   - Gå til profil-siden
-   - Skann en deltaker-QR
-   - Klikk "🖨️ Skriv Ut Profil"
+2. **Admin Panel - Print Participant:**
+   - Gå til "👥 Deltakere" tab
+   - Finn en deltaker i listen
+   - Klikk på 🖨️-knappen ved deltakeren
+   - Bekreft utskrift
+   - Sjekk at kvitteringen inneholder:
+     * Arrangement-navn
+     * Deltaker-info (navn, klubb, rolle, lag)
+     * Kurs (hvis påmeldt)
+     * QR-kode
+     * Norske tegn vises korrekt
 
 ---
 
@@ -759,17 +763,34 @@ Skriveren har spesifikke endpoints. Verifiser at du bruker riktige endpoints i P
 p = Usb(0x154f, 0x154f, out_ep=0x02, in_ep=0x82)
 ```
 
-### Problem: ASCII art ser dårlig ut
+### Problem: Norske tegn (æøå) vises feil
 
 **Løsning:**
-Juster parametrene i `image_to_ascii()` funksjonen:
-```python
-# Reduser bredden for mindre bilde
-ascii_art = image_to_ascii(data['photo_path'], width=24, height=12)
+Skriveren må settes til riktig code page. For de fleste kvitteringsskrivere fungerer PC850 (code page 2):
 
-# Eller endre ASCII-tegn for bedre kontrast
-ascii_chars = ['█', '▓', '▒', '░', ' ']
+```python
+# Legg til etter printer-tilkobling
+p._raw(b'\x1b\x74\x02')  # ESC t 2 - PC850 (Multilingual)
 ```
+
+Hvis code page 2 ikke fungerer, bruk test-scriptet for å finne riktig code page:
+```bash
+sudo /home/kasse/printer_env/bin/python3 /home/kasse/test_codepages.py
+```
+
+Se på utskriften og finn hvilken code page (CP XX) som viser æøå korrekt, og oppdater scriptet med det nummeret.
+
+### Problem: QR-kode printar ikke
+
+**Løsning:**
+Sjekk at python-escpos støtter QR-koder for din skriver-modell. Noen modeller krever spesifikke QR-kommandoer:
+
+```python
+# Test manuelt
+p.qr("TEST123", size=6)
+```
+
+Hvis det ikke fungerer, kan du alternativt printe deltaker-koden som tekst i stedet.
 
 ### Problem: Tekst kuttes av på høyre side
 
@@ -801,12 +822,23 @@ Etter å ha fulgt denne guiden har du:
 
 ✅ Satt opp FEC/SNBC kvitteringsskriver på Linux Mint
 ✅ Konfigurert USB-tilgang med udev-regler
-✅ Installert Python-miljø med nødvendige biblioteker
-✅ Opprettet print-scripts for enkel tekst og deltaker-info med ASCII-foto
+✅ Installert Python-miljø med python-escpos og pyusb
+✅ Opprettet print-scripts for enkel tekst og deltaker-profiler
+✅ Konfigurert code page 2 (PC850) for norske tegn (æøå)
+✅ Lagt til QR-kode printing av deltaker-koder
+✅ Integrert kurs-informasjon i utskrifter
 ✅ Konfigurert sudo for passordløs utskrift
-✅ Integrert print-funksjonalitet i backend (Express.js)
-✅ Lagt til print-knapper i frontend (Admin + Profile)
+✅ Integrert print-funksjonalitet i backend med arrangement-navn
+✅ Lagt til print-knapper i admin-panelet (kun admin-tilgang)
 ✅ Testet hele oppsettet
+
+**Hva skriver kvitteringen ut:**
+- Arrangement-navn (fra database)
+- Deltaker-informasjon (navn, klubb, rolle, lag)
+- Påmeldte kurs med instruktør og sted
+- QR-kode av deltaker-kode (for re-skanning)
+- Velkommen-melding
+- Støtte for norske tegn (æøå ÆØÅ)
 
 Skriveren er nå klar til å brukes i 4H Event Hub! 🎉
 
@@ -821,5 +853,5 @@ Skriveren er nå klar til å brukes i 4H Event Hub! 🎉
 
 ---
 
-*Dokumentasjon oppdatert: 2026-02-24*
-*Versjon: 1.0*
+*Dokumentasjon oppdatert: 2026-02-25*
+*Versjon: 2.0 - Fjernet ASCII art, lagt til QR-koder, kurs og norsk tegnstøtte*
