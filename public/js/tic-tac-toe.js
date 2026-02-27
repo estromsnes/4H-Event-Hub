@@ -143,9 +143,8 @@ class TicTacToeGame {
         if (!file) return;
 
         try {
-            const html5QrCode = new Html5Qrcode("player1QrReader");
-            const qrData = await html5QrCode.scanFile(file, true);
-            this.handlePlayer1Scan(qrData);
+            // Use the QRScanner's scanFile method (handles jsQR + fallback internally)
+            await this.player1Scanner.scanFile(file);
             e.target.value = '';
             document.getElementById('player1QrReader').innerHTML = '';
         } catch (err) {
@@ -161,9 +160,8 @@ class TicTacToeGame {
         if (!file) return;
 
         try {
-            const html5QrCode = new Html5Qrcode("player2QrReader");
-            const qrData = await html5QrCode.scanFile(file, true);
-            this.handlePlayer2Scan(qrData);
+            // Use the QRScanner's scanFile method (handles jsQR + fallback internally)
+            await this.player2Scanner.scanFile(file);
             e.target.value = '';
             document.getElementById('player2QrReader').innerHTML = '';
         } catch (err) {

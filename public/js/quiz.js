@@ -180,17 +180,14 @@ class QuizManager {
         try {
             this.showParticipantScanFeedback('Leser QR-kode fra bilde...', 'info');
 
-            const html5QrCode = new Html5Qrcode("participantQrReader");
-            const qrData = await html5QrCode.scanFile(file, true);
+            // Use the QRScanner's scanFile method (handles jsQR + fallback internally)
+            await this.participantScanner.scanFile(file);
 
             // Clear file input
             e.target.value = '';
 
             // Clear the qr-reader div to remove displayed image
             document.getElementById('participantQrReader').innerHTML = '';
-
-            // Process the scanned data
-            await this.handleParticipantScan(qrData);
         } catch (err) {
             console.error('Error reading QR from file:', err);
             this.showParticipantScanFeedback('Kunne ikke lese QR-kode fra bildet. Prøv igjen.', 'error');

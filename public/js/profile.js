@@ -131,7 +131,14 @@ async function handleQrFileUpload(event) {
         await scanner.scanFile(file);
     } catch (err) {
         console.error('Error scanning file:', err);
-        showStatus('Kunne ikke lese QR-kode fra bilde', 'error');
+
+        // Provide helpful error message
+        const errorMsg = err.message || err.toString();
+        if (errorMsg.includes('No MultiFormat Readers') || errorMsg.includes('not detect')) {
+            showStatus('❌ Kunne ikke lese QR-kode. Tips: Sørg for at bildet er skarpt, QR-koden er godt belyst, og ta bildet rett forfra. Prøv kamera-skanning i stedet.', 'error');
+        } else {
+            showStatus('Kunne ikke lese QR-kode fra bilde. Prøv igjen eller bruk kamera-skanning.', 'error');
+        }
     }
 
     // Reset file input so same file can be selected again

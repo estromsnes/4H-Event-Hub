@@ -133,11 +133,8 @@ class TeamChallengeManager {
         this.showScanFeedback('Leser QR-kode fra bilde...', 'info');
 
         try {
-            // Create a temporary Html5Qrcode instance for file scanning
-            const html5QrCode = new Html5Qrcode("qr-reader");
-
-            const decodedText = await html5QrCode.scanFile(file, true);
-            this.handleScan(decodedText);
+            // Use the QRScanner's scanFile method (handles jsQR + fallback internally)
+            await this.scanner.scanFile(file);
 
             // Clear the file input so same file can be selected again
             e.target.value = '';

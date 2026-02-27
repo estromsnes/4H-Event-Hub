@@ -1173,7 +1173,10 @@
 
                         <div class="form-group">
                             <label for="scTimeLimit">Tidsgrense (minutter)</label>
-                            <input type="number" id="scTimeLimit" min="10" max="480" value="120" required>
+                            <input type="number" id="scTimeLimit" min="0" max="480" value="120" required>
+                            <small style="color: var(--text-light); display: block; margin-top: 5px;">
+                                💡 Sett til 0 for ingen tidsbegrensning (aktivt hele tiden)
+                            </small>
                         </div>
 
                         <div class="form-group">
@@ -1225,7 +1228,7 @@
 
                 <div style="padding: 15px; background: #fff3cd; border-radius: 8px; margin-bottom: 15px;">
                     <p style="margin: 0; color: #856404;">
-                        ℹ️ <strong>Gjeldende tidsgrense:</strong> <span id="scCurrentTimeLimit">--</span> minutter
+                        ℹ️ <strong>Gjeldende tidsgrense:</strong> <span id="scCurrentTimeLimit">--</span>
                     </p>
                 </div>
 
@@ -2591,7 +2594,13 @@ Klokkeslett: {{TIME}}</textarea>
                     // Update current time limit display
                     const currentTimeLimitEl = document.getElementById('scCurrentTimeLimit');
                     if (currentTimeLimitEl) {
-                        currentTimeLimitEl.textContent = config.time_limit_minutes || '--';
+                        if (config.time_limit_minutes === 0) {
+                            currentTimeLimitEl.textContent = '∞ (ingen tidsbegrensning)';
+                        } else if (config.time_limit_minutes) {
+                            currentTimeLimitEl.textContent = config.time_limit_minutes + ' minutter';
+                        } else {
+                            currentTimeLimitEl.textContent = '--';
+                        }
                     }
                 }
             } catch (error) {

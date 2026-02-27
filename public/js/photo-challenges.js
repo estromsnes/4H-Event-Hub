@@ -7,7 +7,7 @@
     let currentTeam = null;
     let challenges = [];
     let submissions = [];
-    let html5QrCode = null;
+    let scanner = null;
     let cameraStream = null;
     let currentChallenge = null;
 
@@ -39,6 +39,14 @@
     // Initialize
     function init() {
         setupEventListeners();
+
+        // Initialize QR scanner
+        scanner = new QRScanner();
+        scanner.init('qr-reader',
+            (code) => lookupParticipant(code),
+            (error) => showStatus('error', error)
+        );
+
         // Activate global barcode scanner
         globalBarcodeScanner.activate((qrData) => lookupParticipant(qrData));
     }
@@ -57,70 +65,37 @@
     }
 
     // QR Scanner
-    function startQRScanner() {
-        const qrReader = document.getElementById('qr-reader');
-        qrReader.innerHTML = '';
-
-        if (!html5QrCode) {
-            html5QrCode = new Html5Qrcode("qr-reader");
-        }
-
-        const config = {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
-        };
-
-        html5QrCode.start(
-            { facingMode: "environment" },
-            config,
-            (decodedText) => {
-                html5QrCode.stop();
-                lookupParticipant(decodedText);
-            },
-            (errorMessage) => {
-                // Ignore errors (scanning in progress)
-            }
-        ).catch(err => {
-            showStatus('error', 'Kunne ikke starte kamera. Prøv å laste opp et bilde i stedet.');
-            console.error('QR Scanner error:', err);
-        });
-
+    async function startQRScanner() {
+        await scanner.start();
         startScanBtn.textContent = '⏹️ Stopp Skanning';
         startScanBtn.onclick = stopQRScanner;
     }
 
-    function stopQRScanner() {
-        if (html5QrCode) {
-            html5QrCode.stop();
-            startScanBtn.textContent = '📷 Start Kamera-Skanning';
-            startScanBtn.onclick = startQRScanner;
-        }
+    async function stopQRScanner() {
+        await scanner.stop();
+        startScanBtn.textContent = '📷 Start Kamera-Skanning';
+        startScanBtn.onclick = startQRScanner;
     }
 
-    function handleQRFileUpload(e) {
+    async function handleQRFileUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (!html5QrCode) {
-            html5QrCode = new Html5Qrcode("qr-reader");
+        try {
+            // Use the QRScanner's scanFile method (handles jsQR + fallback internally)
+            await scanner.scanFile(file);
+            // Clear file input so same file can be selected again
+            e.target.value = '';
+            // Clear the qr-reader div to remove displayed image
+            document.getElementById('qr-reader').innerHTML = '';
+        } catch (err) {
+            showStatus('error', 'Kunne ikke lese QR-kode fra bildet. Prøv igjen.');
+            console.error('QR File scan error:', err);
+            // Clear file input
+            e.target.value = '';
+            // Clear the qr-reader div
+            document.getElementById('qr-reader').innerHTML = '';
         }
-
-        html5QrCode.scanFile(file, true)
-            .then(decodedText => {
-                lookupParticipant(decodedText);
-                // Clear file input so same file can be selected again
-                e.target.value = '';
-                // Clear the qr-reader div to remove displayed image
-                document.getElementById('qr-reader').innerHTML = '';
-            })
-            .catch(err => {
-                showStatus('error', 'Kunne ikke lese QR-kode fra bildet. Prøv igjen.');
-                console.error('QR File scan error:', err);
-                // Clear file input
-                e.target.value = '';
-                // Clear the qr-reader div
-                document.getElementById('qr-reader').innerHTML = '';
-            });
     }
 
     // Lookup Participant

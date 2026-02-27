@@ -90,7 +90,12 @@ class SelfieChainApp {
                 document.getElementById('participantQrReader').innerHTML = '';
             } catch (err) {
                 console.error('[Selfie Chain] File scan error:', err);
-                statusDiv.textContent = 'Kunne ikke lese QR-kode fra bildet. Prøv et annet bilde.';
+                const errorMsg = err.message || err.toString();
+                if (errorMsg.includes('No MultiFormat Readers') || errorMsg.includes('not detect')) {
+                    statusDiv.textContent = '❌ Kunne ikke lese QR-kode. Tips: Bruk et skarpt bilde med god belysning tatt rett forfra. Prøv kamera-skanning.';
+                } else {
+                    statusDiv.textContent = 'Kunne ikke lese QR-kode fra bildet. Prøv et annet bilde eller kamera-skanning.';
+                }
                 statusDiv.className = 'alert error';
             }
 
@@ -374,6 +379,28 @@ class SelfieChainApp {
 
             // Initialize scanner automatically
             this.scanTarget();
+        } else {
+            // Chain is complete - all people have been met
+            document.getElementById('qrScanSection').classList.add('hidden');
+            document.getElementById('selfieButtonSection').classList.add('hidden');
+
+            // Show completion message
+            const statusDiv = document.getElementById('missionStatus');
+            statusDiv.innerHTML = `
+                <div style="text-align: center; padding: 30px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">🎉</div>
+                    <h2 style="color: var(--success); margin-bottom: 15px;">Gratulerer!</h2>
+                    <p style="font-size: 18px; margin-bottom: 10px;">Du har møtt alle personene i kjeden!</p>
+                    <p style="color: var(--text-light);">Kjeden er fullført og alle selfies er tatt.</p>
+                </div>
+            `;
+            statusDiv.className = 'alert success';
+            statusDiv.classList.remove('hidden');
+
+            // Also update the target info section to show completion
+            document.getElementById('targetName').textContent = 'Kjeden er fullført! 🎊';
+            document.getElementById('targetHint').textContent = '';
+            document.getElementById('targetPhoto').innerHTML = '<div class="photo-placeholder">✅</div>';
         }
     }
 
@@ -640,6 +667,10 @@ class SelfieChainApp {
         const fileInput = document.getElementById('targetQrFileInput');
         const statusDiv = document.getElementById('targetScanStatus');
 
+        // Clear any previous status messages
+        statusDiv.classList.add('hidden');
+        statusDiv.textContent = '';
+
         // Initialize the QR scanner with callbacks
         this.targetScanner.init(
             'targetQrReader',
@@ -688,7 +719,12 @@ class SelfieChainApp {
                     document.getElementById('targetQrReader').innerHTML = '';
                 } catch (err) {
                     console.error('[Selfie Chain] File scan error:', err);
-                    statusDiv.textContent = 'Kunne ikke skanne bildet. Prøv igjen.';
+                    const errorMsg = err.message || err.toString();
+                    if (errorMsg.includes('No MultiFormat Readers') || errorMsg.includes('not detect')) {
+                        statusDiv.textContent = '❌ Kunne ikke lese QR-kode. Tips: Bruk et skarpt bilde med god belysning tatt rett forfra. Prøv kamera-skanning.';
+                    } else {
+                        statusDiv.textContent = 'Kunne ikke skanne bildet. Prøv igjen eller bruk kamera-skanning.';
+                    }
                     statusDiv.className = 'alert error';
                 }
                 fileInput.value = '';

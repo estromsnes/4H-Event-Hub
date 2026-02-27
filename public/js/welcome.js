@@ -1,6 +1,6 @@
 // Welcome page logic
 let currentParticipant = null;
-let html5QrCode = null;
+let scanner = null;
 let cameraStream = null;
 let capturedPhotoBlob = null;
 
@@ -58,8 +58,15 @@ function initializeScanner() {
         }, 100);
     });
 
-    // Initialize camera QR scanner
-    html5QrCode = new Html5Qrcode("qr-reader");
+    // Initialize camera QR scanner using QRScanner class
+    scanner = new QRScanner();
+    scanner.init('qr-reader',
+        (code) => handleQRScan(code),
+        (error) => {
+            console.error('QR Scanner error:', error);
+            showScanStatus('Kunne ikke starte QR-skanner', 'error');
+        }
+    );
     startQRScanner();
 }
 
@@ -76,13 +83,12 @@ function initializeFileUpload() {
 
             try {
                 // Stop camera scanner temporarily
-                if (html5QrCode && html5QrCode.isScanning) {
-                    await html5QrCode.stop();
+                if (scanner && scanner.isScanning) {
+                    await scanner.stop();
                 }
 
-                // Scan the uploaded file
-                const decodedText = await html5QrCode.scanFile(file, false);
-                handleQRScan(decodedText);
+                // Use the QRScanner's scanFile method (handles jsQR + fallback internally)
+                await scanner.scanFile(file);
 
             } catch (error) {
                 console.error('Error scanning file:', error);
@@ -102,22 +108,13 @@ function initializeFileUpload() {
 }
 
 // Start QR code camera scanner
-function startQRScanner() {
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-    html5QrCode.start(
-        { facingMode: "environment" },
-        config,
-        (decodedText) => {
-            handleQRScan(decodedText);
-        },
-        (errorMessage) => {
-            // Ignore scanning errors
-        }
-    ).catch(err => {
+async function startQRScanner() {
+    try {
+        await scanner.start();
+    } catch (err) {
         console.error("QR Scanner error:", err);
         showScanStatus('Kunne ikke starte QR-skanner', 'error');
-    });
+    }
 }
 
 // Keep focus on barcode input
@@ -169,8 +166,8 @@ async function handleQRScan(qrData) {
     }
 
     // Stop QR scanner
-    if (html5QrCode && html5QrCode.isScanning) {
-        await html5QrCode.stop();
+    if (scanner && scanner.isScanning) {
+        await scanner.stop();
     }
 
     // Show loading status

@@ -131,22 +131,71 @@ class QRScanner {
      * @param {File} file - The image file to scan
      */
     async scanFile(file) {
-        if (!this.html5QrCode) {
-            console.error('Scanner not initialized');
-            if (this.onScanError) {
-                this.onScanError('Skanner ikke initialisert');
-            }
-            return;
-        }
+        console.log('Scanning file:', file.name, 'Size:', file.size, 'Type:', file.type);
 
         try {
-            const decodedText = await this.html5QrCode.scanFile(file, false);
-            this.handleScanSuccess(decodedText);
+            // Load image
+            const imageUrl = URL.createObjectURL(file);
+            const img = new Image();
+
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = imageUrl;
+            });
+
+            // Create a canvas and draw the image
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            // Get image data for jsQR
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            // Use jsQR to scan the QR code (better for static images)
+            if (typeof jsQR !== 'undefined') {
+                console.log('Using jsQR to scan image...');
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                    inversionAttempts: "dontInvert",
+                });
+
+                if (code) {
+                    console.log('✅ Successfully scanned with jsQR:', code.data);
+                    URL.revokeObjectURL(imageUrl);
+                    this.handleScanSuccess(code.data);
+                    return;
+                } else {
+                    console.warn('jsQR could not find QR code, trying html5-qrcode...');
+                }
+            }
+
+            // Fallback to html5-qrcode scanFile method
+            if (this.html5QrCode) {
+                try {
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    const processedFile = new File([blob], file.name, { type: 'image/png' });
+                    const decodedText = await this.html5QrCode.scanFile(processedFile, false);
+                    console.log('✅ Successfully scanned with html5-qrcode:', decodedText);
+                    URL.revokeObjectURL(imageUrl);
+                    this.handleScanSuccess(decodedText);
+                    return;
+                } catch (html5Err) {
+                    console.warn('html5-qrcode also failed:', html5Err.message);
+                }
+            }
+
+            // Both methods failed
+            URL.revokeObjectURL(imageUrl);
+            throw new Error('Could not detect QR code in image');
+
         } catch (err) {
-            console.error('Error scanning file:', err);
+            console.error('❌ QR scan failed:', err);
             if (this.onScanError) {
                 this.onScanError('Kunne ikke lese QR-kode fra bilde. Prøv igjen.');
             }
+            throw err;
         }
     }
 
