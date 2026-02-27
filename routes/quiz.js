@@ -831,14 +831,21 @@ router.get('/leaderboard', async (req, res) => {
             );
         });
 
-        // Filter by event start time if exists
+        // Filter by event start time if exists AND event has started
+        // (Don't filter if event is in the future - allows testing before event)
         let filteredSessions = sessions;
         if (event && event.start_datetime) {
             const eventStart = new Date(event.start_datetime);
-            filteredSessions = sessions.filter(session => {
-                const completionTime = new Date(session.end_time);
-                return completionTime >= eventStart;
-            });
+            const now = new Date();
+
+            // Only filter if event has actually started
+            if (now >= eventStart) {
+                filteredSessions = sessions.filter(session => {
+                    const completionTime = new Date(session.end_time);
+                    return completionTime >= eventStart;
+                });
+            }
+            // If event hasn't started yet, show all results (testing mode)
         }
 
         // Get team photos (from first participant in each team)

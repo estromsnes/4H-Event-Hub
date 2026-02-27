@@ -405,26 +405,32 @@ class SelfieChainApp {
     }
 
     openCamera() {
+        console.log('[Selfie Chain] openCamera called, targetVerified:', this.targetVerified);
         // Verify that target has been scanned first
         if (!this.targetVerified) {
+            console.warn('[Selfie Chain] Target not verified!');
             this.showMessage('missionStatus', '❌ Du må skanne personens QR-kode først!', 'error');
             return;
         }
 
         // Deactivate barcode scanner while taking selfie
         if (window.globalBarcodeScanner) {
+            console.log('[Selfie Chain] Deactivating global barcode scanner');
             globalBarcodeScanner.deactivate();
         }
 
+        console.log('[Selfie Chain] Showing camera view');
         this.showView('cameraView');
         this.startCamera();
     }
 
     async startCamera() {
+        console.log('[Selfie Chain] startCamera called');
         try {
             const video = document.getElementById('cameraVideo');
 
             // Request camera with front-facing preference (for selfies)
+            console.log('[Selfie Chain] Requesting camera access...');
             this.cameraStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'user', // Front camera
@@ -434,6 +440,7 @@ class SelfieChainApp {
                 audio: false
             });
 
+            console.log('[Selfie Chain] Camera access granted');
             video.srcObject = this.cameraStream;
             video.classList.remove('hidden');
 
@@ -446,6 +453,8 @@ class SelfieChainApp {
             document.getElementById('retakeBtn').classList.add('hidden');
             document.getElementById('confirmBtn').classList.add('hidden');
 
+            console.log('[Selfie Chain] Camera UI setup complete');
+
         } catch (error) {
             console.error('[Selfie Chain] Camera error:', error);
             this.showCameraError('Kunne ikke starte kamera. Sjekk tillatelser.');
@@ -453,20 +462,46 @@ class SelfieChainApp {
     }
 
     capturePhoto() {
+        console.log('[Selfie Chain] capturePhoto called');
         const video = document.getElementById('cameraVideo');
         const canvas = document.getElementById('photoCanvas');
         const capturedImg = document.getElementById('capturedPhoto');
         const ctx = canvas.getContext('2d');
 
+        console.log('[Selfie Chain] Video dimensions:', {
+            videoWidth: video.videoWidth,
+            videoHeight: video.videoHeight,
+            readyState: video.readyState
+        });
+
         // Set canvas size to match video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
 
+        console.log('[Selfie Chain] Canvas size set to:', canvas.width, 'x', canvas.height);
+
+        // Check if video has valid dimensions
+        if (canvas.width === 0 || canvas.height === 0) {
+            console.error('[Selfie Chain] Video dimensions are 0! Video not ready.');
+            this.showCameraError('Video ikke klar. Vent litt og prøv igjen.');
+            return;
+        }
+
         // Draw video frame to canvas
+        console.log('[Selfie Chain] Drawing video to canvas...');
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
         // Convert to blob
+        console.log('[Selfie Chain] Converting to blob...');
         canvas.toBlob((blob) => {
+            console.log('[Selfie Chain] Blob created:', blob ? blob.size : 'NULL');
+
+            if (!blob) {
+                console.error('[Selfie Chain] Failed to create blob!');
+                this.showCameraError('Kunne ikke ta bilde. Prøv igjen.');
+                return;
+            }
+
             this.capturedPhotoBlob = blob;
 
             // Show captured photo
@@ -480,7 +515,11 @@ class SelfieChainApp {
             // Update buttons
             document.getElementById('captureBtn').classList.add('hidden');
             document.getElementById('retakeBtn').classList.remove('hidden');
-            document.getElementById('confirmBtn').classList.remove('hidden');
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.classList.remove('hidden');
+            confirmBtn.disabled = false; // Re-enable the button for new photo
+
+            console.log('[Selfie Chain] Photo captured and UI updated');
 
         }, 'image/jpeg', 0.85);
     }
@@ -501,12 +540,16 @@ class SelfieChainApp {
     }
 
     async confirmSelfie() {
+        console.log('[Selfie Chain] confirmSelfie called');
+
         if (!this.capturedPhotoBlob) {
+            console.error('[Selfie Chain] No photo blob!');
             this.showCameraError('Ingen bilde tatt!');
             return;
         }
 
         if (!this.currentTarget) {
+            console.error('[Selfie Chain] No current target!');
             this.showCameraError('Ingen target!');
             return;
         }
@@ -552,13 +595,23 @@ class SelfieChainApp {
             formData.append('target_code', this.currentTarget.participant_code);
             formData.append('target_verified', this.targetVerified);
 
+            console.log('[Selfie Chain] Starting upload...', {
+                participantCode: this.participantCode,
+                targetCode: this.currentTarget.participant_code,
+                photoSize: this.capturedPhotoBlob.size,
+                targetVerified: this.targetVerified
+            });
+
             const response = await fetch('/api/selfie-chain/complete', {
                 method: 'POST',
                 body: formData
             });
 
+            console.log('[Selfie Chain] Got response:', response.status, response.statusText);
+
             if (!response.ok) {
                 const error = await response.json();
+                console.log('[Selfie Chain] Error response:', error);
                 // Check if time expired
                 if (error.time_expired) {
                     this.stopCamera();
@@ -606,6 +659,7 @@ class SelfieChainApp {
         document.getElementById('updatedMeetings').textContent = result.meetings_completed;
 
         // Show next target if available
+        const nextMissionSection = document.querySelector('.next-mission');
         if (result.next_target) {
             this.currentTarget = result.next_target;
             const nextTargetInfo = document.getElementById('nextTargetInfo');
@@ -613,9 +667,22 @@ class SelfieChainApp {
                 <div class="next-target-name">${result.next_target.first_name} ${result.next_target.last_name}</div>
                 <div class="next-target-hint">${result.next_target.age ? `Alder: ${result.next_target.age}` : ''}</div>
             `;
+            nextMissionSection.style.display = 'block';
         } else {
-            // No more targets - completed!
+            // No more targets - hide next mission section and show completion message
+            nextMissionSection.style.display = 'none';
             this.currentStatus.all_met = true;
+
+            // Update success message to indicate completion
+            const nextTargetInfo = document.getElementById('nextTargetInfo');
+            nextTargetInfo.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🏆</div>
+                    <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">Alle møter fullført!</div>
+                    <div style="color: var(--text-light);">Du har møtt alle personene i kjeden</div>
+                </div>
+            `;
+
             setTimeout(() => {
                 this.showCompleteView();
             }, 3000);
@@ -1003,6 +1070,9 @@ function retakePhoto() {
 }
 
 function confirmSelfie() {
+    console.log('[Selfie Chain] Global confirmSelfie function called');
+    console.log('[Selfie Chain] selfieChainApp exists:', !!selfieChainApp);
+    console.log('[Selfie Chain] selfieChainApp.confirmSelfie exists:', !!selfieChainApp?.confirmSelfie);
     selfieChainApp.confirmSelfie();
 }
 
@@ -1020,6 +1090,10 @@ function showMyChain() {
 
 function closeMyChain() {
     selfieChainApp.closeMyChain();
+}
+
+function showLeaderboard() {
+    window.location.href = '/live-scoreboard.html#selfie-chain';
 }
 
 // Expose app globally for inline onclick handlers

@@ -444,6 +444,11 @@
             }
         }
 
+        // Helper function to format team name (handle null values)
+        function formatTeamName(teamName) {
+            return teamName || '<span style="color: var(--text-light); font-style: italic;">Individuell</span>';
+        }
+
         // Tab switching
         document.querySelectorAll('.tab-button[data-tab]').forEach(button => {
             button.addEventListener('click', () => {
@@ -618,7 +623,7 @@
                             <div class="team-rank ${isTop3 ? 'top3' : ''}">
                                 ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                             </div>
-                            <div class="team-name">${team.team_name}</div>
+                            <div class="team-name">${formatTeamName(team.team_name)}</div>
                             <div>
                                 <div class="stats-badge">${formatTime(team.elapsed_time_seconds)}</div>
                                 <div class="stats-label">tid</div>
@@ -661,7 +666,7 @@
                             <div class="team-rank ${isTop3 ? 'top3' : ''}">
                                 ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                             </div>
-                            <div class="team-name">${team.team_name}</div>
+                            <div class="team-name">${formatTeamName(team.team_name)}</div>
                             <div>
                                 <div class="stats-badge">${minutesText}</div>
                                 <div class="stats-label">etter start</div>
@@ -696,7 +701,7 @@
                         <div class="team-rank ${isTop3 ? 'top3' : ''}">
                             ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                         </div>
-                        <div class="team-name">${team.team_name}</div>
+                        <div class="team-name">${formatTeamName(team.team_name)}</div>
                         <div>
                             <div class="stats-badge points">${team.total_points}</div>
                             <div class="stats-label">poeng</div>
@@ -733,7 +738,7 @@
                         <div class="team-rank ${isTop3 ? 'top3' : ''}">
                             ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                         </div>
-                        <div class="team-name">${team.team_name}</div>
+                        <div class="team-name">${formatTeamName(team.team_name)}</div>
                         <div>
                             <div class="stats-badge score">${team.score}</div>
                             <div class="stats-label">${team.correct_answers}/${team.total_questions} riktige</div>
@@ -771,7 +776,7 @@
                         <div class="team-rank ${isTop3 ? 'top3' : ''}">
                             ${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                         </div>
-                        <div class="team-name">${team.team_name}</div>
+                        <div class="team-name">${formatTeamName(team.team_name)}</div>
                         <div>
                             <div class="stats-badge">${team.checkpoints_found}/${team.total_checkpoints}</div>
                             <div class="stats-label">${formatTime(team.elapsed_seconds)}</div>
