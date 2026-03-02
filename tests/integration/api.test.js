@@ -8,10 +8,15 @@ const { app, db } = require('../../server');
 describe('API Integration Tests', () => {
   // Close database connection after all tests
   afterAll((done) => {
-    db.close((err) => {
-      if (err) console.error('Error closing database:', err);
-      done();
-    });
+    // Give the database a moment to finish any pending operations
+    setTimeout(() => {
+      db.close((err) => {
+        if (err) {
+          console.error('Error closing database:', err);
+        }
+        done();
+      });
+    }, 100);
   });
 
   describe('GET /api/event', () => {
