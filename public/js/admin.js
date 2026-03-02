@@ -97,6 +97,27 @@ const teamStatus = document.getElementById('teamStatus');
 const teamMembersSection = document.getElementById('teamMembersSection');
 const teamMembersList = document.getElementById('teamMembersList');
 
+// Sleeping Rooms elements
+const roomsList = document.getElementById('roomsList');
+const addRoomBtn = document.getElementById('addRoomBtn');
+const roomModal = document.getElementById('roomModal');
+const roomModalTitle = document.getElementById('roomModalTitle');
+const roomForm = document.getElementById('roomForm');
+const roomIdInput = document.getElementById('roomId');
+const roomNameInput = document.getElementById('roomName');
+const roomDescriptionInput = document.getElementById('roomDescription');
+const roomCapacityInput = document.getElementById('roomCapacity');
+const roomFloorInput = document.getElementById('roomFloor');
+const roomNotesInput = document.getElementById('roomNotes');
+const closeRoomBtn = document.getElementById('closeRoomBtn');
+const cancelRoomBtn = document.getElementById('cancelRoomBtn');
+const roomModalStatus = document.getElementById('roomModalStatus');
+const roomStatus = document.getElementById('roomStatus');
+const roomStats = document.getElementById('roomStats');
+const printRoomReportBtn = document.getElementById('printRoomReportBtn');
+
+let rooms = [];
+
 // Photo Modal elements
 const photoModal = document.getElementById('photoModal');
 const photoModalTitle = document.getElementById('photoModalTitle');
@@ -241,6 +262,9 @@ async function initAdmin() {
     // Load teams
     await loadTeams();
 
+    // Load sleeping rooms
+    await loadRooms();
+
     // Generate initial participant code
     await generateNextCode();
 
@@ -286,6 +310,13 @@ async function initAdmin() {
     teamForm.addEventListener('submit', handleSaveTeam);
     closeTeamBtn.addEventListener('click', closeTeamModal);
     cancelTeamBtn.addEventListener('click', closeTeamModal);
+
+    // Sleeping rooms event listeners
+    addRoomBtn.addEventListener('click', () => openRoomModal());
+    roomForm.addEventListener('submit', handleSaveRoom);
+    closeRoomBtn.addEventListener('click', closeRoomModal);
+    cancelRoomBtn.addEventListener('click', closeRoomModal);
+    printRoomReportBtn.addEventListener('click', printRoomReport);
 
     // Photo modal event listeners
     closePhotoBtn.addEventListener('click', closePhotoModal);
@@ -916,6 +947,279 @@ function showTeamStatus(message, type) {
 
 // ============================================================================
 // END TEAMS MANAGEMENT
+// ============================================================================
+
+// ============================================================================
+// SLEEPING ROOMS MANAGEMENT
+// ============================================================================
+
+/**
+ * Load all sleeping rooms from API
+ */
+async function loadRooms() {
+    try {
+        const response = await fetch('/api/sleeping-rooms');
+        if (!response.ok) {
+            throw new Error('Failed to load sleeping rooms');
+        }
+
+        rooms = await response.json();
+        renderRooms();
+        await loadRoomStats();
+    } catch (err) {
+        console.error('Error loading rooms:', err);
+        roomsList.innerHTML = `
+            <div class="alert error">
+                Kunne ikke laste soverom: ${err.message}
+            </div>
+        `;
+    }
+}
+
+/**
+ * Render rooms list
+ */
+function renderRooms() {
+    if (rooms.length === 0) {
+        roomsList.innerHTML = `
+            <p class="text-center" style="color: var(--text-light);">
+                Ingen soverom opprettet ennå.
+            </p>
+        `;
+        return;
+    }
+
+    roomsList.innerHTML = rooms.map(room => {
+        const occupancy = participants.filter(p => p.sleeping_room_id === room.id).length;
+        const progressPercent = room.capacity > 0 ? (occupancy / room.capacity * 100) : 0;
+
+        return `
+            <div class="team-card" style="position: relative;">
+                <div class="team-card-header">
+                    <h3>🛏️ ${room.name}</h3>
+                    <span style="font-size: 14px; color: var(--text-light);">${occupancy} / ${room.capacity}</span>
+                </div>
+                ${room.description ? `<p>${room.description}</p>` : ''}
+                ${room.floor ? `<p><strong>Etasje:</strong> ${room.floor}</p>` : ''}
+                <div style="margin: 10px 0;">
+                    <div style="background: #e0e0e0; border-radius: 10px; height: 10px; overflow: hidden;">
+                        <div style="background: ${progressPercent >= 100 ? '#f44336' : '#4caf50'}; width: ${Math.min(progressPercent, 100)}%; height: 100%; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+                ${room.notes ? `<p style="font-size: 12px; color: #666;"><em>${room.notes}</em></p>` : ''}
+                <div class="team-card-actions">
+                    <button class="button secondary btn-small" onclick="editRoom(${room.id})">
+                        ✏️ Rediger
+                    </button>
+                    <button class="button secondary btn-small" onclick="deleteRoom(${room.id}, '${room.name.replace(/'/g, "\\'")}')">
+                        🗑️ Slett
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Load room statistics
+ */
+async function loadRoomStats() {
+    try {
+        const response = await fetch('/api/sleeping-rooms/report/all');
+        if (!response.ok) {
+            throw new Error('Failed to load room stats');
+        }
+
+        const roomsWithParticipants = await response.json();
+
+        if (roomsWithParticipants.length === 0) {
+            roomStats.innerHTML = `
+                <p class="text-center" style="color: var(--text-light);">
+                    Ingen soverom opprettet ennå.
+                </p>
+            `;
+            return;
+        }
+
+        roomStats.innerHTML = roomsWithParticipants.map(room => {
+            const progressPercent = room.capacity > 0 ? (room.occupancy / room.capacity * 100) : 0;
+            const statusColor = progressPercent >= 100 ? '#f44336' : progressPercent >= 80 ? '#ff9800' : '#4caf50';
+
+            return `
+                <div class="stats-card">
+                    <h3>${room.name}</h3>
+                    <p><strong>${room.occupancy} / ${room.capacity}</strong> deltakere</p>
+                    <div style="background: #e0e0e0; border-radius: 10px; height: 20px; overflow: hidden; margin: 10px 0;">
+                        <div style="background: ${statusColor}; width: ${Math.min(progressPercent, 100)}%; height: 100%; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">
+                            ${Math.round(progressPercent)}%
+                        </div>
+                    </div>
+                    ${room.floor ? `<p style="font-size: 12px; color: #666;">Etasje: ${room.floor}</p>` : ''}
+                </div>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error('Error loading room stats:', err);
+        roomStats.innerHTML = `
+            <div class="alert error">
+                Kunne ikke laste statistikk: ${err.message}
+            </div>
+        `;
+    }
+}
+
+/**
+ * Open room modal for adding or editing
+ */
+function openRoomModal(roomId = null) {
+    if (roomId) {
+        // Edit mode
+        const room = rooms.find(r => r.id === roomId);
+        if (!room) return;
+
+        roomModalTitle.textContent = 'Rediger Soverom';
+        roomIdInput.value = room.id;
+        roomNameInput.value = room.name;
+        roomDescriptionInput.value = room.description || '';
+        roomCapacityInput.value = room.capacity || 10;
+        roomFloorInput.value = room.floor || '';
+        roomNotesInput.value = room.notes || '';
+    } else {
+        // Add mode
+        roomModalTitle.textContent = 'Nytt Soverom';
+        roomForm.reset();
+        roomIdInput.value = '';
+        roomCapacityInput.value = 10;
+    }
+
+    roomModalStatus.classList.add('hidden');
+    roomModal.classList.remove('hidden');
+}
+
+/**
+ * Close room modal
+ */
+function closeRoomModal() {
+    roomModal.classList.add('hidden');
+    roomForm.reset();
+    roomModalStatus.classList.add('hidden');
+}
+
+/**
+ * Handle room form submission
+ */
+async function handleSaveRoom(e) {
+    e.preventDefault();
+
+    const roomId = roomIdInput.value;
+    const data = {
+        name: roomNameInput.value.trim(),
+        description: roomDescriptionInput.value.trim() || null,
+        capacity: parseInt(roomCapacityInput.value) || 10,
+        floor: roomFloorInput.value.trim() || null,
+        notes: roomNotesInput.value.trim() || null
+    };
+
+    if (!data.name) {
+        showRoomModalStatus('Romnavn er påkrevd', 'error');
+        return;
+    }
+
+    try {
+        let response;
+        if (roomId) {
+            // Update existing room
+            response = await authenticatedFetch(`/api/sleeping-rooms/${roomId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } else {
+            // Create new room
+            response = await authenticatedFetch('/api/sleeping-rooms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        }
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save room');
+        }
+
+        await loadRooms();
+        closeRoomModal();
+        showRoomStatus(roomId ? 'Soverom oppdatert' : 'Soverom opprettet', 'success');
+    } catch (err) {
+        console.error('Error saving room:', err);
+        showRoomModalStatus(err.message, 'error');
+    }
+}
+
+/**
+ * Edit room (global function for onclick)
+ */
+window.editRoom = function(roomId) {
+    openRoomModal(roomId);
+};
+
+/**
+ * Delete room (global function for onclick)
+ */
+window.deleteRoom = async function(roomId, roomName) {
+    const confirmed = confirm(`Er du sikker på at du vil slette rommet "${roomName}"?`);
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(`/api/sleeping-rooms/${roomId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete room');
+        }
+
+        await loadRooms();
+        showRoomStatus('Rommet ble slettet', 'success');
+    } catch (err) {
+        console.error('Error deleting room:', err);
+        showRoomStatus(err.message, 'error');
+    }
+};
+
+/**
+ * Print room report
+ */
+function printRoomReport() {
+    window.open('/room-report.html', '_blank', 'width=1200,height=800');
+}
+
+/**
+ * Show room modal status message
+ */
+function showRoomModalStatus(message, type) {
+    roomModalStatus.textContent = message;
+    roomModalStatus.className = `alert ${type}`;
+    roomModalStatus.classList.remove('hidden');
+}
+
+/**
+ * Show room status message
+ */
+function showRoomStatus(message, type) {
+    roomStatus.textContent = message;
+    roomStatus.className = `alert ${type}`;
+    roomStatus.classList.remove('hidden');
+
+    setTimeout(() => {
+        roomStatus.classList.add('hidden');
+    }, 5000);
+}
+
+// ============================================================================
+// END SLEEPING ROOMS MANAGEMENT
 // ============================================================================
 
 // ============================================================================

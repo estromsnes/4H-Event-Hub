@@ -630,6 +630,7 @@
             <button class="tab-button" data-tab="program">📅 Program</button>
             <button class="tab-button" data-tab="photo-challenges">📸 Bildeoppgaver</button>
             <button class="tab-button" data-tab="selfie-chain">🤳 Selfie-kjedet</button>
+            <button class="tab-button" data-tab="sleeping-rooms">🛏️ Soverom</button>
             <button class="tab-button" data-tab="feedback">💬 Tilbakemeldinger<span id="feedbackBadge" class="badge hidden">0</span></button>
             <button class="tab-button" data-tab="adminqr">🔑 Admin QR</button>
             <button class="tab-button" data-tab="stats">📊 Statistikk</button>
@@ -1477,6 +1478,39 @@ Klokkeslett: {{TIME}}</textarea>
         </div>
         <!-- End Printer Tab -->
 
+        <!-- Sleeping Rooms Tab -->
+        <div id="sleeping-roomsTab" class="tab-content">
+            <!-- Room Management Section -->
+            <div class="section no-print">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Administrer Soverom</h2>
+                    <button id="addRoomBtn" class="button primary btn-small">
+                        ➕ Nytt Soverom
+                    </button>
+                </div>
+
+                <div id="roomsList" class="rooms-list">
+                    <p class="text-center" style="color: var(--text-light);">Laster soverom...</p>
+                </div>
+
+                <div id="roomStatus" class="hidden mt-2"></div>
+            </div>
+
+            <!-- Room Occupancy Statistics -->
+            <div class="section no-print" style="margin-top: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">Beleggsstatistikk</h2>
+                    <button id="printRoomReportBtn" class="button secondary btn-small">
+                        🖨️ Skriv ut brannliste
+                    </button>
+                </div>
+                <div id="roomStats" class="room-stats-grid">
+                    <p class="text-center" style="color: var(--text-light);">Laster statistikk...</p>
+                </div>
+            </div>
+        </div>
+        <!-- End Sleeping Rooms Tab -->
+
         <!-- Feedback Tab -->
         <div id="feedbackTab" class="tab-content">
             <div class="section no-print">
@@ -1744,6 +1778,58 @@ Klokkeslett: {{TIME}}</textarea>
             </div>
 
             <div id="teamModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Room Modal (Add/Edit) -->
+    <div id="roomModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="roomModalTitle">Nytt Soverom</h2>
+                <button id="closeRoomBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="roomForm">
+                <input type="hidden" id="roomId">
+
+                <div class="form-group">
+                    <label for="roomName">Romnavn *</label>
+                    <input type="text" id="roomName" required placeholder="f.eks. Miks 1, Gutter 1">
+                </div>
+
+                <div class="form-group">
+                    <label for="roomDescription">Beskrivelse</label>
+                    <textarea id="roomDescription" rows="2" placeholder="f.eks. Rom for gutter 12-15 år"></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="roomCapacity">Kapasitet</label>
+                        <input type="number" id="roomCapacity" value="10" min="1" max="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="roomFloor">Etasje</label>
+                        <input type="text" id="roomFloor" placeholder="f.eks. 1. etasje">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="roomNotes">Notater</label>
+                    <textarea id="roomNotes" rows="2" placeholder="Spesielle merknader om rommet"></textarea>
+                </div>
+
+                <div id="roomModalStatus" class="hidden mt-2"></div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Lagre
+                    </button>
+                    <button type="button" id="cancelRoomBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

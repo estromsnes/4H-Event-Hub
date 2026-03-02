@@ -74,6 +74,13 @@
                     <p><strong>Klubb:</strong> <span id="profileClub">-</span></p>
                     <p><strong>Rolle:</strong> <span id="profileRole">-</span></p>
                     <p id="profileTeamRow" class="hidden"><strong>Lag:</strong> <span id="profileTeam">-</span></p>
+                    <p id="profileRoomRow" class="hidden">
+                        <strong>Soverom:</strong>
+                        <span id="profileRoom">Ikke valgt</span>
+                        <button id="changeRoomBtn" class="button secondary btn-small" style="margin-left: 10px; padding: 8px 12px;">
+                            ✏️ Velg
+                        </button>
+                    </p>
                 </div>
             </div>
 
@@ -133,6 +140,20 @@
                 <div id="coursesList" class="courses-list">
                     <!-- Dynamically populated -->
                 </div>
+            </div>
+
+            <!-- Room Selection Section -->
+            <div id="roomSelectionSection" class="room-selection-section hidden">
+                <h2 class="room-section-title">🛏️ Velg Soverom</h2>
+                <p style="color: var(--text-light); margin-bottom: 20px; text-align: center;">
+                    Velg hvilket rom du skal sove i. Du kan endre valget ditt senere.
+                </p>
+
+                <div id="roomSelectionList" class="room-selection-list">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <div id="roomSelectionStatus" class="hidden mt-2"></div>
             </div>
         </div>
     </div>

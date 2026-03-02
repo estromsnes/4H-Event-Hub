@@ -658,4 +658,87 @@ router.post('/:code/print', (req, res) => {
     });
 });
 
+// PUT update participant's sleeping room assignment
+router.put('/:code/sleeping-room', (req, res) => {
+    const db = req.app.locals.db;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
+    const { sleepingRoomId } = req.body;
+
+    // If sleepingRoomId is null, unassign from room
+    if (sleepingRoomId === null || sleepingRoomId === undefined || sleepingRoomId === '') {
+        db.run(
+            'UPDATE participants SET sleeping_room_id = NULL WHERE participant_code = ? AND active = 1',
+            [code],
+            function(err) {
+                if (err) {
+                    console.error('Error unassigning room:', err);
+                    return res.status(500).json({ error: 'Failed to unassign room' });
+                }
+
+                if (this.changes === 0) {
+                    return res.status(404).json({ error: 'Participant not found' });
+                }
+
+                res.json({ message: 'Room unassigned successfully', sleepingRoomId: null });
+            }
+        );
+        return;
+    }
+
+    // Verify that the room exists and is active
+    db.get(
+        'SELECT * FROM sleeping_rooms WHERE id = ? AND active = 1',
+        [sleepingRoomId],
+        (err, room) => {
+            if (err) {
+                console.error('Error fetching room:', err);
+                return res.status(500).json({ error: 'Failed to verify room' });
+            }
+
+            if (!room) {
+                return res.status(404).json({ error: 'Sleeping room not found' });
+            }
+
+            // Check current occupancy (optional - soft limit)
+            db.get(
+                'SELECT COUNT(*) as count FROM participants WHERE sleeping_room_id = ? AND active = 1',
+                [sleepingRoomId],
+                (err, result) => {
+                    if (err) {
+                        console.error('Error checking occupancy:', err);
+                        // Continue anyway
+                    }
+
+                    const currentOccupancy = result ? result.count : 0;
+                    const warning = currentOccupancy >= room.capacity ? 'Room is at or over capacity' : null;
+
+                    // Update participant's room assignment
+                    db.run(
+                        'UPDATE participants SET sleeping_room_id = ? WHERE participant_code = ? AND active = 1',
+                        [sleepingRoomId, code],
+                        function(err) {
+                            if (err) {
+                                console.error('Error assigning room:', err);
+                                return res.status(500).json({ error: 'Failed to assign room' });
+                            }
+
+                            if (this.changes === 0) {
+                                return res.status(404).json({ error: 'Participant not found' });
+                            }
+
+                            res.json({
+                                message: 'Room assigned successfully',
+                                sleepingRoomId: sleepingRoomId,
+                                roomName: room.name,
+                                warning: warning
+                            });
+                        }
+                    );
+                }
+            );
+        }
+    );
+});
+
 module.exports = router;

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brannliste - Soverom</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/print-report.css">
+</head>
+<body>
+    <div class="report-container">
+        <!-- Header (not printed) -->
+        <header class="report-header no-print">
+            <h1>🛏️ Brannliste - Soverom</h1>
+            <div class="header-actions">
+                <button onclick="window.print()" class="button primary">🖨️ Skriv ut</button>
+                <button onclick="window.close()" class="button secondary">✕ Lukk</button>
+            </div>
+        </header>
+
+        <!-- Print Header (only printed) -->
+        <div class="print-header">
+            <h1>Brannliste - Soverom</h1>
+            <div class="report-meta">
+                <p><strong>Dato:</strong> <span id="reportDate"></span></p>
+                <p><strong>Klokkeslett:</strong> <span id="reportTime"></span></p>
+                <p><strong>Arrangement:</strong> <span id="reportEvent">4H Event Hub</span></p>
+            </div>
+        </div>
+
+        <!-- Rooms Container -->
+        <div id="roomsContainer">
+            <p class="loading">Laster soverom...</p>
+        </div>
+
+        <!-- Print Footer -->
+        <div class="print-footer">
+            <p>Generert av 4H Event Hub - <span id="footerDate"></span></p>
+        </div>
+    </div>
+
+    <script src="/js/room-report.js"></script>
+</body>
+</html>

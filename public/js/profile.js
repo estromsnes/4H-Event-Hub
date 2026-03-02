@@ -22,6 +22,15 @@ const profileClub = document.getElementById('profileClub');
 const profileRole = document.getElementById('profileRole');
 const profileTeam = document.getElementById('profileTeam');
 const profileTeamRow = document.getElementById('profileTeamRow');
+const profileRoom = document.getElementById('profileRoom');
+const profileRoomRow = document.getElementById('profileRoomRow');
+const changeRoomBtn = document.getElementById('changeRoomBtn');
+const roomSelectionSection = document.getElementById('roomSelectionSection');
+const roomSelectionList = document.getElementById('roomSelectionList');
+const roomSelectionStatus = document.getElementById('roomSelectionStatus');
+
+let availableRooms = [];
+let selectedRoomId = null;
 
 const takeSelfieBtn = document.getElementById('takeSelfieBtn');
 const cameraModal = document.getElementById('cameraModal');
@@ -114,6 +123,7 @@ function initApp() {
     uploadBtn.addEventListener('click', uploadPhoto);
     confirmBtn.addEventListener('click', confirmParticipant);
     welcomeCloseBtn.addEventListener('click', closeWelcomeModal);
+    changeRoomBtn.addEventListener('click', toggleRoomSelection);
 
     // Activate global barcode scanner
     globalBarcodeScanner.activate((qrData) => onScanSuccess(qrData));
@@ -374,6 +384,14 @@ function showProfileView() {
     } else {
         profileTeamRow.classList.add('hidden');
     }
+
+    // Show room row
+    profileRoomRow.classList.remove('hidden');
+
+    // Load available rooms and update display
+    loadAvailableRooms().then(() => {
+        updateRoomDisplay();
+    });
 
     // Update profile photo
     if (currentParticipant.profile_photo_path) {
@@ -800,3 +818,189 @@ function closeWelcomeModal() {
     const welcomeKey = `welcomeShown_${currentParticipant.participant_code}`;
     localStorage.setItem(welcomeKey, 'true');
 }
+
+// ============================================================================
+// SLEEPING ROOMS FUNCTIONALITY
+// ============================================================================
+
+/**
+ * Load available sleeping rooms
+ */
+async function loadAvailableRooms() {
+    try {
+        const response = await fetch('/api/sleeping-rooms');
+        if (!response.ok) {
+            throw new Error('Failed to load rooms');
+        }
+
+        availableRooms = await response.json();
+
+        // Get room occupancy data
+        const reportResponse = await fetch('/api/sleeping-rooms/report/all');
+        if (reportResponse.ok) {
+            const roomsWithOccupancy = await reportResponse.json();
+            // Merge occupancy data with available rooms
+            availableRooms = availableRooms.map(room => {
+                const roomData = roomsWithOccupancy.find(r => r.id === room.id);
+                return {
+                    ...room,
+                    occupancy: roomData ? roomData.occupancy : 0
+                };
+            });
+        }
+
+    } catch (err) {
+        console.error('Error loading rooms:', err);
+    }
+}
+
+/**
+ * Update room display in profile
+ */
+function updateRoomDisplay() {
+    if (!currentParticipant) return;
+
+    if (currentParticipant.sleeping_room_id) {
+        // Find the room name
+        const room = availableRooms.find(r => r.id === currentParticipant.sleeping_room_id);
+        profileRoom.textContent = room ? room.name : 'Ukjent rom';
+        selectedRoomId = currentParticipant.sleeping_room_id;
+    } else {
+        profileRoom.textContent = 'Ikke valgt';
+        selectedRoomId = null;
+    }
+}
+
+/**
+ * Toggle room selection section
+ */
+function toggleRoomSelection() {
+    if (roomSelectionSection.classList.contains('hidden')) {
+        showRoomSelection();
+    } else {
+        hideRoomSelection();
+    }
+}
+
+/**
+ * Show room selection
+ */
+function showRoomSelection() {
+    renderRoomSelection();
+    roomSelectionSection.classList.remove('hidden');
+    roomSelectionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/**
+ * Hide room selection
+ */
+function hideRoomSelection() {
+    roomSelectionSection.classList.add('hidden');
+}
+
+/**
+ * Render room selection cards
+ */
+function renderRoomSelection() {
+    if (availableRooms.length === 0) {
+        roomSelectionList.innerHTML = `
+            <p style="text-align: center; color: var(--text-light); grid-column: 1 / -1;">
+                Ingen soverom tilgjengelige.
+            </p>
+        `;
+        return;
+    }
+
+    roomSelectionList.innerHTML = availableRooms.map(room => {
+        const occupancy = room.occupancy || 0;
+        const capacity = room.capacity || 10;
+        const progressPercent = capacity > 0 ? (occupancy / capacity * 100) : 0;
+        const isFull = occupancy >= capacity;
+        const isSelected = room.id === selectedRoomId;
+
+        let capacityClass = 'low';
+        if (progressPercent >= 100) capacityClass = 'high';
+        else if (progressPercent >= 80) capacityClass = 'medium';
+
+        return `
+            <div class="room-card ${isSelected ? 'selected' : ''} ${isFull && !isSelected ? 'room-card-full' : ''}"
+                 onclick="${isFull && !isSelected ? '' : `selectRoom(${room.id})`}">
+                <div class="room-card-header">
+                    <div class="room-card-name">
+                        🛏️ ${room.name}
+                    </div>
+                    <div class="room-card-occupancy">
+                        ${occupancy} / ${capacity}
+                    </div>
+                </div>
+                ${room.floor ? `<div class="room-card-floor">📍 ${room.floor}</div>` : ''}
+                ${room.description ? `<div style="font-size: 14px; color: #666; margin-top: 5px;">${room.description}</div>` : ''}
+                <div class="room-card-capacity">
+                    <div class="capacity-bar">
+                        <div class="capacity-fill ${capacityClass}" style="width: ${Math.min(progressPercent, 100)}%"></div>
+                    </div>
+                </div>
+                ${isFull && !isSelected ? '<div class="room-full-badge">Fullt</div>' : ''}
+                ${isSelected ? '<div class="room-selected-badge">✓ Valgt</div>' : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Select a room
+ */
+async function selectRoom(roomId) {
+    if (!currentParticipant) return;
+
+    try {
+        roomSelectionStatus.textContent = 'Lagrer...';
+        roomSelectionStatus.className = '';
+        roomSelectionStatus.classList.remove('hidden');
+
+        const response = await fetch(`/api/participants/${currentParticipant.participant_code}/sleeping-room`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sleepingRoomId: roomId })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Kunne ikke velge rom');
+        }
+
+        const result = await response.json();
+
+        // Update current participant
+        currentParticipant.sleeping_room_id = roomId;
+        selectedRoomId = roomId;
+
+        // Update display
+        updateRoomDisplay();
+        await loadAvailableRooms(); // Reload to get updated occupancy
+        renderRoomSelection();
+
+        roomSelectionStatus.textContent = `✅ ${result.roomName} valgt!`;
+        roomSelectionStatus.className = 'alert success';
+
+        if (result.warning) {
+            roomSelectionStatus.textContent += ` (${result.warning})`;
+        }
+
+        setTimeout(() => {
+            roomSelectionStatus.classList.add('hidden');
+        }, 3000);
+
+    } catch (err) {
+        console.error('Error selecting room:', err);
+        roomSelectionStatus.textContent = `❌ ${err.message}`;
+        roomSelectionStatus.className = 'alert error';
+
+        setTimeout(() => {
+            roomSelectionStatus.classList.add('hidden');
+        }, 5000);
+    }
+}
+
+// Make selectRoom globally available for onclick
+window.selectRoom = selectRoom;
