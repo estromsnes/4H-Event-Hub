@@ -116,7 +116,18 @@ const roomStatus = document.getElementById('roomStatus');
 const roomStats = document.getElementById('roomStats');
 const printRoomReportBtn = document.getElementById('printRoomReportBtn');
 
+// Assign Room Modal elements
+const assignRoomModal = document.getElementById('assignRoomModal');
+const assignRoomParticipantName = document.getElementById('assignRoomParticipantName');
+const assignRoomCurrentRoom = document.getElementById('assignRoomCurrentRoom');
+const assignRoomSelect = document.getElementById('assignRoomSelect');
+const confirmAssignRoomBtn = document.getElementById('confirmAssignRoomBtn');
+const cancelAssignRoomBtn = document.getElementById('cancelAssignRoomBtn');
+const closeAssignRoomBtn = document.getElementById('closeAssignRoomBtn');
+const assignRoomStatus = document.getElementById('assignRoomStatus');
+
 let rooms = [];
+let currentAssignRoomParticipantCode = null;
 
 // Photo Modal elements
 const photoModal = document.getElementById('photoModal');
@@ -271,8 +282,9 @@ async function initAdmin() {
     // Load participants
     await loadParticipants();
 
-    // Re-render teams now that participants are loaded
+    // Re-render teams and rooms now that participants are loaded
     renderTeams();
+    renderRooms();
 
     // Load scavenger hunt data
     await loadCheckpoints();
@@ -334,6 +346,12 @@ async function initAdmin() {
     editParticipantForm.addEventListener('submit', handleEditParticipant);
     closeEditBtn.addEventListener('click', closeEditModal);
     cancelEditBtn.addEventListener('click', closeEditModal);
+
+    // Assign room modal event listeners
+    closeAssignRoomBtn.addEventListener('click', closeAssignRoomModal);
+    cancelAssignRoomBtn.addEventListener('click', closeAssignRoomModal);
+    confirmAssignRoomBtn.addEventListener('click', handleAssignRoom);
+
     autoAssignTeamsBtn.addEventListener('click', autoAssignTeams);
 
     // Confirmation filter
@@ -965,7 +983,6 @@ async function loadRooms() {
 
         rooms = await response.json();
         renderRooms();
-        await loadRoomStats();
     } catch (err) {
         console.error('Error loading rooms:', err);
         roomsList.innerHTML = `
@@ -977,7 +994,7 @@ async function loadRooms() {
 }
 
 /**
- * Render rooms list
+ * Render rooms list with statistics
  */
 function renderRooms() {
     if (rooms.length === 0) {
@@ -993,21 +1010,42 @@ function renderRooms() {
         const occupancy = participants.filter(p => p.sleeping_room_id === room.id).length;
         const progressPercent = room.capacity > 0 ? (occupancy / room.capacity * 100) : 0;
 
+        // Color coding based on occupancy
+        let statusColor = '#4caf50'; // Green (low occupancy)
+        let statusText = 'Ledig plass';
+        if (progressPercent >= 100) {
+            statusColor = '#f44336'; // Red (full)
+            statusText = 'Fullt';
+        } else if (progressPercent >= 80) {
+            statusColor = '#ff9800'; // Orange (almost full)
+            statusText = 'Nesten fullt';
+        }
+
         return `
             <div class="team-card" style="position: relative;">
                 <div class="team-card-header">
                     <h3>🛏️ ${room.name}</h3>
-                    <span style="font-size: 14px; color: var(--text-light);">${occupancy} / ${room.capacity}</span>
-                </div>
-                ${room.description ? `<p>${room.description}</p>` : ''}
-                ${room.floor ? `<p><strong>Etasje:</strong> ${room.floor}</p>` : ''}
-                <div style="margin: 10px 0;">
-                    <div style="background: #e0e0e0; border-radius: 10px; height: 10px; overflow: hidden;">
-                        <div style="background: ${progressPercent >= 100 ? '#f44336' : '#4caf50'}; width: ${Math.min(progressPercent, 100)}%; height: 100%; transition: width 0.3s;"></div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 18px; font-weight: bold; color: ${statusColor};">${occupancy} / ${room.capacity}</div>
+                        <div style="font-size: 12px; color: ${statusColor};">${statusText}</div>
                     </div>
                 </div>
-                ${room.notes ? `<p style="font-size: 12px; color: #666;"><em>${room.notes}</em></p>` : ''}
-                <div class="team-card-actions">
+                ${room.description ? `<p style="margin: 8px 0; color: #666;">${room.description}</p>` : ''}
+                ${room.floor ? `<p style="margin: 5px 0;"><strong>📍 Etasje:</strong> ${room.floor}</p>` : ''}
+
+                <!-- Enhanced progress bar with percentage -->
+                <div style="margin: 15px 0;">
+                    <div style="background: #e0e0e0; border-radius: 10px; height: 24px; overflow: hidden; position: relative;">
+                        <div style="background: ${statusColor}; width: ${Math.min(progressPercent, 100)}%; height: 100%; transition: width 0.3s; display: flex; align-items: center; justify-content: center;">
+                            ${progressPercent > 15 ? `<span style="color: white; font-size: 12px; font-weight: bold; z-index: 1;">${Math.round(progressPercent)}%</span>` : ''}
+                        </div>
+                        ${progressPercent <= 15 && progressPercent > 0 ? `<span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: bold; color: #666;">${Math.round(progressPercent)}%</span>` : ''}
+                    </div>
+                </div>
+
+                ${room.notes ? `<p style="font-size: 12px; color: #666; margin-top: 10px;"><em>💭 ${room.notes}</em></p>` : ''}
+
+                <div class="team-card-actions" style="margin-top: 15px;">
                     <button class="button secondary btn-small" onclick="editRoom(${room.id})">
                         ✏️ Rediger
                     </button>
@@ -1488,6 +1526,11 @@ async function loadParticipants() {
 
         participants = await response.json();
         renderParticipants();
+
+        // Re-render rooms to update occupancy counts
+        if (rooms.length > 0) {
+            renderRooms();
+        }
     } catch (err) {
         console.error('Error loading participants:', err);
         participantsList.innerHTML = `
@@ -1713,13 +1756,16 @@ function renderParticipants() {
         filteredParticipants = participants.filter(p => p.confirmed !== 1 && p.no_show !== 1);
     } else if (filterValue === 'no-show') {
         filteredParticipants = participants.filter(p => p.no_show === 1);
+    } else if (filterValue === 'no-room') {
+        filteredParticipants = participants.filter(p => !p.sleeping_room_id);
     }
 
     // Update filter stats
     const confirmedCount = participants.filter(p => p.confirmed === 1 && p.no_show !== 1).length;
     const unconfirmedCount = participants.filter(p => p.confirmed !== 1 && p.no_show !== 1).length;
     const noShowCount = participants.filter(p => p.no_show === 1).length;
-    filterStats.textContent = `(${confirmedCount} bekreftet, ${unconfirmedCount} ubekreftet, ${noShowCount} no-show)`;
+    const noRoomCount = participants.filter(p => !p.sleeping_room_id).length;
+    filterStats.textContent = `(${confirmedCount} bekreftet, ${unconfirmedCount} ubekreftet, ${noShowCount} no-show, ${noRoomCount} uten rom)`;
 
     if (filteredParticipants.length === 0) {
         participantsList.innerHTML = `
@@ -1749,6 +1795,9 @@ function renderParticipants() {
                     ${p.role ? '• ' + p.role : ''}
                     ${p.team ? '• ' + p.team : ''}
                 </p>
+                <p style="font-size: 13px; margin-top: 5px;">
+                    🛏️ <strong>Soverom:</strong> ${p.sleeping_room_id ? (rooms.find(r => r.id === p.sleeping_room_id)?.name || 'Ukjent') : '<span style="color: #999;">Ikke tildelt</span>'}
+                </p>
                 <p style="font-size: 12px; color: #999;">
                     ${p.participant_code}
                     ${p.confirmed === 1 && p.confirmed_at
@@ -1763,13 +1812,14 @@ function renderParticipants() {
             </div>
             <div class="participant-actions">
                 ${p.no_show === 1
-                    ? `<button class="button success btn-small" onclick="removeNoShow('${p.participant_code}')" title="Marker som møtt opp">✓ Møtt opp</button>`
-                    : `<button class="button danger btn-small" onclick="markNoShow('${p.participant_code}')" title="Marker som no-show">❌</button>`
+                    ? `<button class="button success btn-small" onclick="removeNoShow('${p.participant_code}')" title="Fjern no-show status">↩️ Angre</button>`
+                    : `<button class="button danger btn-small" onclick="markNoShow('${p.participant_code}')" title="Marker som no-show">❌ No-show</button>`
                 }
                 ${p.confirmed !== 1 && p.no_show !== 1
                     ? `<button class="button primary btn-small" onclick="confirmParticipant('${p.participant_code}')" title="Bekreft deltaker">✅</button>`
                     : ''
                 }
+                <button class="button secondary btn-small" onclick="assignRoomToParticipant('${p.participant_code}')" title="Tildel/endre soverom">🛏️</button>
                 <button class="button secondary btn-small" onclick="editParticipant('${p.participant_code}')">✏️</button>
                 ${p.qr_code_path
                     ? `<button class="button secondary btn-small" onclick="viewQR('${p.participant_code}')">👁️ QR</button>`
@@ -2046,6 +2096,116 @@ async function deleteParticipant(participantCode) {
     } catch (err) {
         console.error('Error deleting participant:', err);
         alert('Kunne ikke slette deltaker: ' + err.message);
+    }
+}
+
+/**
+ * Open assign room modal for a participant
+ */
+function assignRoomToParticipant(participantCode) {
+    const participant = participants.find(p => p.participant_code === participantCode);
+    if (!participant) return;
+
+    // Store current participant code
+    currentAssignRoomParticipantCode = participantCode;
+
+    // Update modal content
+    assignRoomParticipantName.textContent = `${participant.first_name} ${participant.last_name}`;
+
+    // Show current room
+    if (participant.sleeping_room_id) {
+        const currentRoom = rooms.find(r => r.id === participant.sleeping_room_id);
+        assignRoomCurrentRoom.textContent = currentRoom ? currentRoom.name : 'Ukjent';
+    } else {
+        assignRoomCurrentRoom.textContent = 'Ikke tildelt';
+    }
+
+    // Populate room select options
+    assignRoomSelect.innerHTML = '<option value="">-- Fjern romtildeling --</option>';
+    rooms.forEach(room => {
+        const occupancy = participants.filter(p => p.sleeping_room_id === room.id).length;
+        const isFull = occupancy >= room.capacity;
+        const isCurrentRoom = room.id === participant.sleeping_room_id;
+
+        const option = document.createElement('option');
+        option.value = room.id;
+        option.textContent = `${room.name} (${occupancy}/${room.capacity})${isFull && !isCurrentRoom ? ' - Fullt' : ''}`;
+        option.selected = isCurrentRoom;
+
+        // Disable if full (unless it's the current room)
+        if (isFull && !isCurrentRoom) {
+            option.disabled = true;
+        }
+
+        assignRoomSelect.appendChild(option);
+    });
+
+    // Clear status
+    assignRoomStatus.classList.add('hidden');
+    assignRoomStatus.textContent = '';
+
+    // Reset button state
+    confirmAssignRoomBtn.disabled = false;
+    confirmAssignRoomBtn.textContent = '✅ Tildel Rom';
+
+    // Show modal
+    assignRoomModal.classList.remove('hidden');
+}
+
+/**
+ * Close assign room modal
+ */
+function closeAssignRoomModal() {
+    assignRoomModal.classList.add('hidden');
+    currentAssignRoomParticipantCode = null;
+}
+
+/**
+ * Handle room assignment
+ */
+async function handleAssignRoom() {
+    if (!currentAssignRoomParticipantCode) return;
+
+    const selectedRoomId = assignRoomSelect.value ? parseInt(assignRoomSelect.value) : null;
+
+    try {
+        confirmAssignRoomBtn.disabled = true;
+        confirmAssignRoomBtn.textContent = '⏳ Tildeler...';
+
+        assignRoomStatus.textContent = 'Tildeler rom...';
+        assignRoomStatus.className = '';
+        assignRoomStatus.classList.remove('hidden');
+
+        const response = await fetch(`/api/participants/${currentAssignRoomParticipantCode}/sleeping-room`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sleepingRoomId: selectedRoomId })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Kunne ikke tildele rom');
+        }
+
+        const result = await response.json();
+
+        assignRoomStatus.textContent = `✅ ${result.roomName || 'Rom fjernet'}!`;
+        assignRoomStatus.className = 'alert success';
+
+        // Reload participants to update the display
+        await loadParticipants();
+
+        // Close modal after short delay
+        setTimeout(() => {
+            closeAssignRoomModal();
+        }, 1500);
+
+    } catch (err) {
+        console.error('Error assigning room:', err);
+        assignRoomStatus.textContent = `❌ ${err.message}`;
+        assignRoomStatus.className = 'alert error';
+        confirmAssignRoomBtn.disabled = false;
+        confirmAssignRoomBtn.textContent = '✅ Tildel Rom';
     }
 }
 
