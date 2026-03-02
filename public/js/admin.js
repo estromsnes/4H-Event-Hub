@@ -154,6 +154,7 @@ const participantsList = document.getElementById('participantsList');
 const participantCount = document.getElementById('participantCount');
 const confirmationFilter = document.getElementById('confirmationFilter');
 const filterStats = document.getElementById('filterStats');
+const printParticipantsBtn = document.getElementById('printParticipantsBtn');
 const teamStats = document.getElementById('teamStats');
 const autoAssignTeamsBtn = document.getElementById('autoAssignTeamsBtn');
 const autoAssignStatus = document.getElementById('autoAssignStatus');
@@ -360,6 +361,7 @@ async function initAdmin() {
     }
     generateAllQRBtn.addEventListener('click', generateAllQRCodes);
     printQRBtn.addEventListener('click', showQRForPrint);
+    printParticipantsBtn.addEventListener('click', printParticipantsList);
 
     // Scavenger hunt event listeners
     addCheckpointBtn.addEventListener('click', () => openCheckpointModal());
@@ -2275,6 +2277,14 @@ async function showQRForPrint() {
     setTimeout(() => {
         window.print();
     }, 500);
+}
+
+/**
+ * Print participants list based on current filter
+ */
+function printParticipantsList() {
+    const filterValue = confirmationFilter ? confirmationFilter.value : 'all';
+    window.open(`/participant-report.html?filter=${filterValue}`, '_blank', 'width=1200,height=800');
 }
 
 /**

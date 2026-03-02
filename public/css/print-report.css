@@ -173,6 +173,10 @@ body {
     color: var(--text-light);
 }
 
+.participant-room {
+    color: var(--text-light);
+}
+
 .participant-notes {
     font-style: italic;
     color: var(--text-light);

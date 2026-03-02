@@ -852,16 +852,21 @@
             </div>
 
             <!-- Confirmation Filter -->
-            <div style="margin-bottom: 20px;">
-                <label for="confirmationFilter" style="font-weight: 600; margin-right: 10px;">Filtrer:</label>
-                <select id="confirmationFilter" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px;">
-                    <option value="all">Alle deltakere</option>
-                    <option value="confirmed">✅ Kun bekreftede</option>
-                    <option value="unconfirmed">⏳ Kun ubekreftede</option>
-                    <option value="no-show">❌ Kun no-show</option>
-                    <option value="no-room">🛏️ Uten soverom</option>
-                </select>
-                <span id="filterStats" style="margin-left: 15px; color: var(--text-light); font-size: 14px;"></span>
+            <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="confirmationFilter" style="font-weight: 600;">Filtrer:</label>
+                    <select id="confirmationFilter" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px;">
+                        <option value="all">Alle deltakere</option>
+                        <option value="confirmed">✅ Kun bekreftede</option>
+                        <option value="unconfirmed">⏳ Kun ubekreftede</option>
+                        <option value="no-show">❌ Kun no-show</option>
+                        <option value="no-room">🛏️ Uten soverom</option>
+                    </select>
+                </div>
+                <button id="printParticipantsBtn" class="button secondary btn-small" title="Skriv ut filtrert liste">
+                    🖨️ Skriv ut liste
+                </button>
+                <span id="filterStats" style="color: var(--text-light); font-size: 14px;"></span>
             </div>
 
             <div id="participantsList" class="participants-list">
