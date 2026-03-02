@@ -338,6 +338,7 @@ async function loadParticipantByCode(participantCode) {
         uploadBtn.addEventListener('click', uploadPhoto);
         confirmBtn.addEventListener('click', confirmParticipant);
         welcomeCloseBtn.addEventListener('click', closeWelcomeModal);
+        changeRoomBtn.addEventListener('click', toggleRoomSelection);
 
         showProfileView();
         console.log('Participant loaded from welcome page');
