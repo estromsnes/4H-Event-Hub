@@ -46,6 +46,13 @@ Thumbs.db
 *.swo
 *~
 
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+*.spec.js.snap
+
 # Claude
 nul
 settings.local.json

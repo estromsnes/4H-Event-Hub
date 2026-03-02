@@ -7,7 +7,15 @@
     "start": "node database/migrate.js && node server.js",
     "init-db": "node database/init.js",
     "migrate": "node database/migrate.js",
-    "dev": "node database/migrate.js && node server.js"
+    "dev": "node database/migrate.js && node server.js",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm run test && npm run test:e2e",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "4h",
@@ -25,5 +33,11 @@
     "qrcode": "^1.5.3",
     "sharp": "^0.33.0",
     "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.10.0",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
   }
 }
