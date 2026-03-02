@@ -107,24 +107,36 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log('🎉 4H Event Hub server started!');
-    console.log(`📍 Local:    http://localhost:${PORT}`);
-    console.log(`📱 Profile:  http://localhost:${PORT}/profile.html`);
-    console.log(`⚙️  Admin:    http://localhost:${PORT}/admin.html`);
-    console.log('\n🔐 Admin PIN: ' + ADMIN_PIN);
-    console.log('   (QR-koden finner du inne i admin-panelet etter innlogging)');
-    console.log('\n✨ Ready for camp participants!\n');
-});
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-    console.log('\n👋 Shutting down gracefully...');
-    db.close((err) => {
-        if (err) {
-            console.error('Error closing database:', err.message);
-        }
-        process.exit(0);
+// Start server only if this file is run directly (not imported)
+if (require.main === module) {
+    const server = app.listen(PORT, () => {
+        console.log('🎉 4H Event Hub server started!');
+        console.log(`📍 Local:    http://localhost:${PORT}`);
+        console.log(`📱 Profile:  http://localhost:${PORT}/profile.html`);
+        console.log(`⚙️  Admin:    http://localhost:${PORT}/admin.html`);
+        console.log('\n🔐 Admin PIN: ' + ADMIN_PIN);
+        console.log('   (QR-koden finner du inne i admin-panelet etter innlogging)');
+        console.log('\n✨ Ready for camp participants!\n');
     });
-});
+
+    // Graceful shutdown
+    process.on('SIGINT', () => {
+        console.log('\n👋 Shutting down gracefully...');
+        server.close(() => {
+            db.close((err) => {
+                if (err) {
+                    console.error('Error closing database:', err.message);
+                }
+                process.exit(0);
+            });
+        });
+    });
+}
+
+// Export for testing
+module.exports = {
+    app,
+    db,
+    ADMIN_ACCESS_KEY,
+    ADMIN_PIN
+};
