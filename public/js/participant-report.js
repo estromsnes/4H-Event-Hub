@@ -111,10 +111,22 @@ async function loadParticipantReport(filterType) {
             return;
         }
 
-        // Sort participants by last name, then first name
+        // Sort participants by club, then age (descending), then last name, then first name
         participants.sort((a, b) => {
+            // First sort by club
+            const clubCompare = (a.club || '').localeCompare(b.club || '');
+            if (clubCompare !== 0) return clubCompare;
+
+            // Then by age (descending - older first)
+            const ageA = a.age || 0;
+            const ageB = b.age || 0;
+            if (ageA !== ageB) return ageB - ageA;
+
+            // Then by last name
             const lastNameCompare = (a.last_name || '').localeCompare(b.last_name || '');
             if (lastNameCompare !== 0) return lastNameCompare;
+
+            // Finally by first name
             return (a.first_name || '').localeCompare(b.first_name || '');
         });
 
