@@ -30,15 +30,42 @@
             <div class="team-selector">
                 <h1>👤</h1>
                 <h2>Skann din QR-kode</h2>
+				<!--
                 <p style="color: var(--text-light); margin-bottom: 30px;">Hold QR-koden foran kameraet eller bruk strekkodeskanneren</p>
+				-->
+				
+				<div class="scanner-mode-indicator">
+                    <svg class="qr-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="2" width="8" height="8" rx="1"/>
+                        <rect x="14" y="2" width="8" height="8" rx="1"/>
+                        <rect x="2" y="14" width="8" height="8" rx="1"/>
+                        <rect x="4" y="4" width="4" height="4" fill="white"/>
+                        <rect x="16" y="4" width="4" height="4" fill="white"/>
+                        <rect x="4" y="16" width="4" height="4" fill="white"/>
+                        <rect x="14" y="14" width="2" height="2"/>
+                        <rect x="18" y="14" width="2" height="2"/>
+                        <rect x="14" y="18" width="2" height="2"/>
+                        <rect x="20" y="18" width="2" height="2"/>
+                        <rect x="12" y="12" width="2" height="2"/>
+                    </svg>
+                    <span>Skanner klar - skann QR-koden din!</span>
+                </div>
+
+                <div class="divider">
+                    <span>eller</span>
+                </div>
 
                 <div id="qr-reader" style="margin-bottom: 20px;"></div>
 
-                <button id="startScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
+                <button id="startScanBtn" class="button primary" style="width: 100%; max-width: 400px; font-size: 18px; padding: 20px; margin: 0 auto 15px auto; display: block;">
                     📷 Start Kamera-Skanning
                 </button>
 
-                <label for="qrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+				<div class="divider">
+                    <span>eller</span>
+                </div>
+
+                <label for="qrFileInput" class="button secondary" style="width: 100%; max-width: 400px; font-size: 18px; padding: 20px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
                     🖼️ Last opp bilde av QR
                 </label>
                 <input type="file" id="qrFileInput" accept="image/*" style="display: none;">

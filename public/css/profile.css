@@ -99,7 +99,7 @@
     width: 100%;
     max-width: 400px;
     text-align: center;
-    margin: 10px 0;
+    margin: 10px auto;
 }
 
 .divider::before,
