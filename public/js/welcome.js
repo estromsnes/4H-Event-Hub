@@ -112,11 +112,13 @@ function initializeFileUpload() {
                 console.error('Error scanning file:', error);
                 showScanStatus('Kunne ikke lese QR-kode fra bildet. Prøv et annet bilde.', 'error');
 
-                // Restart scanner after error
-                setTimeout(() => {
-                    startQRScanner();
-                    hideScanStatus();
-                }, 3000);
+                // Only restart camera if it was already scanning
+                if (isScanning) {
+                    setTimeout(() => {
+                        startQRScanner();
+                        hideScanStatus();
+                    }, 3000);
+                }
             } finally {
                 // Clear file input
                 fileInput.value = '';
@@ -219,10 +221,13 @@ async function handleQRScan(qrData) {
     } catch (e) {
         if (e.message.includes('Ugyldig QR-kode')) {
             showScanStatus(e.message, 'error');
-            setTimeout(() => {
-                startQRScanner();
-                hideScanStatus();
-            }, 2000);
+            // Only restart camera if it was already scanning
+            if (isScanning) {
+                setTimeout(() => {
+                    startQRScanner();
+                    hideScanStatus();
+                }, 2000);
+            }
             return;
         }
         // Not JSON, use as-is
@@ -271,11 +276,13 @@ async function handleQRScan(qrData) {
         console.error('Scan error:', error);
         showScanStatus(error.message, 'error');
 
-        // Restart scanner after error
-        setTimeout(() => {
-            startQRScanner();
-            hideScanStatus();
-        }, 2000);
+        // Only restart camera if it was already scanning
+        if (isScanning) {
+            setTimeout(() => {
+                startQRScanner();
+                hideScanStatus();
+            }, 2000);
+        }
     }
 }
 
