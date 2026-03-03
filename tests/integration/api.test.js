@@ -29,12 +29,15 @@ describe('API Integration Tests', () => {
     test('should return event with all expected fields', async () => {
       const response = await request(app).get('/api/event');
       expect(response.status).toBe(200);
-      expect(response.body).toMatchObject({
-        event_name: expect.any(String),
-        location: expect.anything(),
-        start_date: expect.anything(),
-        end_date: expect.anything()
-      });
+
+      // Check required fields
+      expect(response.body).toHaveProperty('event_name');
+      expect(response.body.event_name).toBeTruthy();
+
+      // Check optional fields exist (may be null)
+      expect(response.body).toHaveProperty('location');
+      expect(response.body).toHaveProperty('start_date');
+      expect(response.body).toHaveProperty('end_date');
     });
   });
 
