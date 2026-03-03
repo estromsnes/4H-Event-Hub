@@ -3,12 +3,14 @@ let currentParticipant = null;
 let scanner = null;
 let cameraStream = null;
 let capturedPhotoBlob = null;
+let isScanning = false;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     loadEventInfo();
     initializeScanner();
     initializeFileUpload();
+    initializeCameraButton();
     focusBarcodeInput();
 });
 
@@ -67,7 +69,23 @@ function initializeScanner() {
             showScanStatus('Kunne ikke starte QR-skanner', 'error');
         }
     );
-    startQRScanner();
+    // Don't auto-start scanner - user must click button
+}
+
+// Initialize camera button
+function initializeCameraButton() {
+    const startScanBtn = document.getElementById('start-scan-btn');
+
+    if (startScanBtn) {
+        startScanBtn.addEventListener('click', () => {
+            console.log('Scan button clicked, isScanning:', isScanning);
+            if (isScanning) {
+                stopQRScanner();
+            } else {
+                startQRScanner();
+            }
+        });
+    }
 }
 
 // Initialize file upload for QR scanning
@@ -109,11 +127,57 @@ function initializeFileUpload() {
 
 // Start QR code camera scanner
 async function startQRScanner() {
+    const startScanBtn = document.getElementById('start-scan-btn');
+
+    if (startScanBtn) {
+        startScanBtn.textContent = '📷 Starter...';
+    }
+
     try {
         await scanner.start();
+        isScanning = true;
+
+        if (startScanBtn) {
+            startScanBtn.textContent = '⏸️ Stopp Kamera';
+        }
+
+        showScanStatus('Skanner etter QR-kode... (Klikk "Stopp Kamera" for å avslutte)', 'info');
+        console.log('Scanner started successfully');
     } catch (err) {
         console.error("QR Scanner error:", err);
         showScanStatus('Kunne ikke starte QR-skanner', 'error');
+        isScanning = false;
+
+        if (startScanBtn) {
+            startScanBtn.textContent = '📷 Start Kamera-Skanning';
+        }
+    }
+}
+
+// Stop QR code camera scanner
+async function stopQRScanner() {
+    const startScanBtn = document.getElementById('start-scan-btn');
+
+    try {
+        if (scanner && scanner.isScanning) {
+            await scanner.stop();
+        }
+
+        isScanning = false;
+
+        if (startScanBtn) {
+            startScanBtn.textContent = '📷 Start Kamera-Skanning';
+        }
+
+        showScanStatus('Skanning stoppet', 'info');
+        setTimeout(() => {
+            hideScanStatus();
+        }, 2000);
+
+        console.log('Scanner stopped successfully');
+    } catch (err) {
+        console.error('Scanner stop error:', err);
+        showScanStatus('Kunne ikke stoppe skanning', 'error');
     }
 }
 
@@ -168,6 +232,13 @@ async function handleQRScan(qrData) {
     // Stop QR scanner
     if (scanner && scanner.isScanning) {
         await scanner.stop();
+    }
+
+    isScanning = false;
+
+    const startScanBtn = document.getElementById('start-scan-btn');
+    if (startScanBtn) {
+        startScanBtn.textContent = '📷 Start Kamera-Skanning';
     }
 
     // Show loading status

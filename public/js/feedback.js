@@ -10,6 +10,7 @@ class FeedbackForm {
         this.activeInput = null; // 'title' or 'message'
         this.scanner = null;
         this.isScannerActive = false;
+        this.isScanning = false;
 
         // DOM elements
         this.eventSubtitle = document.getElementById('eventSubtitle');
@@ -42,6 +43,7 @@ class FeedbackForm {
 
         this.newFeedbackBtn = document.getElementById('newFeedbackBtn');
         this.statusMessage = document.getElementById('statusMessage');
+        this.scanStatus = document.getElementById('scan-status');
 
         this.init();
     }
@@ -84,9 +86,15 @@ class FeedbackForm {
         this.identifyBtn.addEventListener('click', () => this.chooseIdentify());
 
         // Scanner controls
-        this.startCameraScanBtn.addEventListener('click', () => this.startScanning());
+        this.startCameraScanBtn.addEventListener('click', () => this.toggleScanning());
         this.cancelScanBtn.addEventListener('click', () => this.cancelScan());
         this.continueScanBtn.addEventListener('click', () => this.proceedToStep2());
+
+        // File upload
+        const qrFileInput = document.getElementById('qr-file-input');
+        if (qrFileInput) {
+            qrFileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+        }
 
         // Step 2: Input displays
         this.titleDisplay.addEventListener('click', () => this.activateInput('title'));
@@ -336,9 +344,16 @@ class FeedbackForm {
         }
     }
 
+    async toggleScanning() {
+        if (this.isScanning) {
+            await this.stopScanning();
+        } else {
+            await this.startScanning();
+        }
+    }
+
     async startScanning() {
         console.log('Starting camera scan...');
-        this.startCameraScanBtn.disabled = true;
         this.startCameraScanBtn.textContent = '📷 Starter...';
 
         try {
@@ -351,16 +366,72 @@ class FeedbackForm {
                     (error) => console.error('Scanner error:', error)
                 );
                 await this.scanner.start();
-                this.startCameraScanBtn.textContent = '🔍 Skanner...';
+                this.isScanning = true;
+                this.startCameraScanBtn.textContent = '⏸️ Stopp Kamera';
+                this.showScanStatus('Skanner etter QR-kode... (Klikk "Stopp Kamera" for å avslutte)', 'info');
                 console.log('Camera scanner started successfully');
             } else {
                 throw new Error('QR Scanner er ikke støttet i denne nettleseren');
             }
         } catch (err) {
             console.error('Scanner error:', err);
-            this.showStatus(err.message || 'Kunne ikke starte kamera', 'error');
-            this.startCameraScanBtn.disabled = false;
+            this.showScanStatus(err.message || 'Kunne ikke starte kamera', 'error');
+            this.isScanning = false;
             this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
+        }
+    }
+
+    async stopScanning() {
+        console.log('Stopping camera scan...');
+
+        try {
+            if (this.scanner) {
+                await this.scanner.stop();
+            }
+            this.isScanning = false;
+            this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
+            this.showScanStatus('Skanning stoppet', 'info');
+            setTimeout(() => {
+                this.hideScanStatus();
+            }, 2000);
+            console.log('Camera scanner stopped successfully');
+        } catch (err) {
+            console.error('Scanner stop error:', err);
+            this.showScanStatus('Kunne ikke stoppe skanning', 'error');
+        }
+    }
+
+    async handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        this.showScanStatus('Leser QR-kode fra bilde...', 'info');
+
+        try {
+            // Stop camera scanner temporarily
+            if (this.scanner && this.isScanning) {
+                await this.stopScanning();
+            }
+
+            // Initialize scanner if not already initialized
+            if (!this.scanner) {
+                this.scanner = new QRScanner();
+                await this.scanner.init(
+                    'qr-reader',
+                    (decodedText) => this.handleScan(decodedText),
+                    (error) => console.error('Scanner error:', error)
+                );
+            }
+
+            // Use the QRScanner's scanFile method
+            await this.scanner.scanFile(file);
+
+        } catch (error) {
+            console.error('Error scanning file:', error);
+            this.showScanStatus('Kunne ikke lese QR-kode fra bildet. Prøv et annet bilde.', 'error');
+        } finally {
+            // Clear file input
+            event.target.value = '';
         }
     }
 
@@ -374,7 +445,7 @@ class FeedbackForm {
             try {
                 parsed = JSON.parse(decoded);
             } catch (e) {
-                this.showStatus('Ugyldig QR-kode. Skann din deltaker-QR-kode.', 'error');
+                this.showScanStatus('Ugyldig QR-kode. Skann din deltaker-QR-kode.', 'error');
                 return;
             }
 
@@ -406,6 +477,8 @@ class FeedbackForm {
                 if (this.scanner) {
                     await this.scanner.stop();
                 }
+                this.isScanning = false;
+                this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
 
                 // Deactivate global barcode scanner
                 this.isScannerActive = false;
@@ -413,13 +486,13 @@ class FeedbackForm {
                     globalBarcodeScanner.deactivate();
                 }
 
-                this.showStatus('Deltaker identifisert!', 'success');
+                this.showScanStatus('Deltaker identifisert!', 'success');
             } else {
-                this.showStatus('Ugyldig QR-kode. Skann din deltaker-QR-kode.', 'error');
+                this.showScanStatus('Ugyldig QR-kode. Skann din deltaker-QR-kode.', 'error');
             }
         } catch (err) {
             console.error('Scan error:', err);
-            this.showStatus('Kunne ikke identifisere deltaker', 'error');
+            this.showScanStatus('Kunne ikke identifisere deltaker', 'error');
         }
     }
 
@@ -432,14 +505,17 @@ class FeedbackForm {
 
         // Stop camera scanner
         if (this.scanner) {
-            await this.scanner.clear();
+            await this.scanner.stop();
             this.scanner = null;
         }
+        this.isScanning = false;
 
         // Reset camera scan button
         this.startCameraScanBtn.style.display = 'block';
-        this.startCameraScanBtn.disabled = false;
         this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
+
+        // Hide scan status
+        this.hideScanStatus();
 
         this.showSection(this.step1);
         this.participantInfo.classList.add('hidden');
@@ -539,6 +615,20 @@ class FeedbackForm {
         }, 4000);
     }
 
+    showScanStatus(message, type = 'info') {
+        if (this.scanStatus) {
+            this.scanStatus.textContent = message;
+            this.scanStatus.className = `scan-status ${type}`;
+            this.scanStatus.style.display = 'block';
+        }
+    }
+
+    hideScanStatus() {
+        if (this.scanStatus) {
+            this.scanStatus.style.display = 'none';
+        }
+    }
+
     reset() {
         // Deactivate global barcode scanner
         this.isScannerActive = false;
@@ -548,14 +638,17 @@ class FeedbackForm {
 
         // Clear scanner if active
         if (this.scanner) {
-            this.scanner.clear();
+            this.scanner.stop();
             this.scanner = null;
         }
+        this.isScanning = false;
 
         // Reset camera scan button
         this.startCameraScanBtn.style.display = 'block';
-        this.startCameraScanBtn.disabled = false;
         this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
+
+        // Hide scan status
+        this.hideScanStatus();
 
         // Reset state
         this.currentStep = 1;

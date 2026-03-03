@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Velkommen! - 4H Event Hub</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/qr-scanner.css">
     <link rel="stylesheet" href="/css/welcome.css">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -63,7 +66,15 @@
 
                 <div id="qr-reader" class="qr-reader"></div>
 
-                <label for="qr-file-input" class="btn btn-secondary" style="width: 100%; max-width: 400px; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-top: 20px;">
+                <button id="start-scan-btn" class="button primary" style="width: 100%; max-width: 400px; font-size: 18px; padding: 20px; margin: 0 auto 15px auto; display: block;">
+                    📷 Start Kamera-Skanning
+                </button>
+
+                <div class="divider">
+                    <span>eller</span>
+                </div>
+
+                <label for="qr-file-input" class="button secondary" style="width: 100%; max-width: 400px; font-size: 18px; padding: 20px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
                     🖼️ Last opp bilde av QR
                 </label>
                 <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
