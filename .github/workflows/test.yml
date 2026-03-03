@@ -31,6 +31,9 @@ jobs:
     - name: Initialize database for testing
       run: npm run init-db
 
+    - name: Run database migrations
+      run: npm run migrate
+
     - name: Run unit tests
       run: npm run test:unit
 
