@@ -27,6 +27,7 @@ router.post('/reset', async (req, res) => {
             'participant_courses',
             'courses',
             'teams',
+            'sleeping_rooms',
             'participants'
         ];
 
@@ -166,6 +167,32 @@ router.post('/load-dummy-data', async (req, res) => {
                     `INSERT INTO teams (name, description, max_members)
                      VALUES (?, ?, ?)`,
                     [teamName, `${teamName} - Et fantastisk lag!`, 10],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        }
+
+        // Create sleeping rooms
+        const sleepingRooms = [
+            { name: 'Rom 101', description: 'Gutterom 1', capacity: 8, floor: '1. etasje' },
+            { name: 'Rom 102', description: 'Gutterom 2', capacity: 8, floor: '1. etasje' },
+            { name: 'Rom 103', description: 'Jenterom 1', capacity: 8, floor: '1. etasje' },
+            { name: 'Rom 104', description: 'Jenterom 2', capacity: 8, floor: '1. etasje' },
+            { name: 'Rom 201', description: 'Gutterom 3', capacity: 6, floor: '2. etasje' },
+            { name: 'Rom 202', description: 'Jenterom 3', capacity: 6, floor: '2. etasje' },
+            { name: 'Rom 301', description: 'Lederrom 1', capacity: 4, floor: '3. etasje' },
+            { name: 'Rom 302', description: 'Lederrom 2', capacity: 4, floor: '3. etasje' }
+        ];
+
+        for (const room of sleepingRooms) {
+            await new Promise((resolve, reject) => {
+                db.run(
+                    `INSERT INTO sleeping_rooms (name, description, capacity, floor)
+                     VALUES (?, ?, ?, ?)`,
+                    [room.name, room.description, room.capacity, room.floor],
                     (err) => {
                         if (err) reject(err);
                         else resolve();

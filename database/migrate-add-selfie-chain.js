@@ -92,9 +92,9 @@ db.serialize(() => {
         console.log('✅ Created selfie_chain_stats table');
     });
 
-    // Insert default config if not exists
+    // Insert default config if not exists (active with 0 minute time limit for testing)
     db.run(`INSERT INTO selfie_chain_config (active, time_limit_minutes, points_per_selfie, variant)
-            SELECT 0, 120, 50, 'linear'
+            SELECT 1, 0, 50, 'linear'
             WHERE NOT EXISTS (SELECT 1 FROM selfie_chain_config)`, (err) => {
         if (err) {
             console.error('❌ Error inserting default config:', err.message);
