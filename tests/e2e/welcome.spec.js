@@ -8,25 +8,23 @@ test.describe('Welcome Page', () => {
   test('should load welcome page', async ({ page }) => {
     await page.goto('/welcome.html');
 
-    // Check for main heading
-    await expect(page.locator('h1')).toContainText('Velkommen');
+    // Check for main heading (use specific text to avoid matching multiple h1 elements)
+    await expect(page.getByRole('heading', { name: /Velkommen/ })).toBeVisible();
   });
 
-  test('should have QR scanner button', async ({ page }) => {
+  test('should have QR scanner interface', async ({ page }) => {
     await page.goto('/welcome.html');
 
-    // Check for scan button
-    const scanButton = page.locator('button', { hasText: 'Skann QR-kode' });
-    await expect(scanButton).toBeVisible();
+    // Check that the scanner is ready (more specific pattern to match only status message)
+    await expect(page.getByText(/Skanner klar -/)).toBeVisible();
   });
 
-  test('should navigate to profile page when QR is scanned', async ({ page }) => {
+  test('should have scanner input ready', async ({ page }) => {
     await page.goto('/welcome.html');
 
-    // This would require mocking QR scanning or using a test participant code
-    // For now, we'll just check that the button exists
-    const scanButton = page.locator('button', { hasText: 'Skann QR-kode' });
-    await expect(scanButton).toBeEnabled();
+    // Check that scanner interface is active and ready for input
+    const scannerInput = page.locator('input[type="text"]').first();
+    await expect(scannerInput).toBeVisible();
   });
 });
 

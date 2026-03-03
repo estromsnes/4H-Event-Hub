@@ -16,12 +16,12 @@ test.describe('Admin Panel - Authentication', () => {
   test('should have QR and PIN auth options', async ({ page }) => {
     await page.goto('/admin.html');
 
-    // Check for auth tabs
-    const qrAuthTab = page.locator('text=QR-kode');
-    const pinAuthTab = page.locator('text=PIN-kode');
+    // Check for auth option buttons (specific button text to avoid matching multiple elements)
+    const qrAuthButton = page.getByRole('button', { name: /Skann QR/ });
+    const pinAuthButton = page.getByRole('button', { name: /PIN-kode/ });
 
-    await expect(qrAuthTab).toBeVisible();
-    await expect(pinAuthTab).toBeVisible();
+    await expect(qrAuthButton).toBeVisible();
+    await expect(pinAuthButton).toBeVisible();
   });
 });
 
