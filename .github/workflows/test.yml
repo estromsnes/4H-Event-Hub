@@ -28,6 +28,9 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    - name: Initialize database for testing
+      run: npm run migrate
+
     - name: Run unit tests
       run: npm run test:unit
 
@@ -61,6 +64,9 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+
+    - name: Initialize database for testing
+      run: npm run migrate
 
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
