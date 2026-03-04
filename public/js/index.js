@@ -238,7 +238,12 @@ class EventHub {
                         <div class="program-day-header">${dayName}</div>
                         <div class="program-items">`;
 
-                days[dayNum].forEach(item => {
+                // Sort items by start time before rendering
+                const sortedItems = days[dayNum].sort((a, b) => {
+                    return a.start_time.localeCompare(b.start_time);
+                });
+
+                sortedItems.forEach(item => {
                     html += `
                         <div class="program-item">
                             <div class="program-time">${item.start_time} - ${item.end_time}</div>
