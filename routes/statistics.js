@@ -4,10 +4,11 @@ const router = express.Router();
 // GET /api/statistics - Get comprehensive statistics
 router.get('/', async (req, res) => {
     const db = req.app.locals.db;
+    const activeSessions = req.app.locals.activeSessions;
 
     try {
         // 1. KPI - Main numbers
-        const kpis = await getKPIs(db);
+        const kpis = await getKPIs(db, activeSessions);
 
         // 2. Activity distribution
         const activityDistribution = await getActivityDistribution(db);
@@ -65,7 +66,10 @@ router.get('/', async (req, res) => {
 
 // Helper functions
 
-async function getKPIs(db) {
+async function getKPIs(db, activeSessions) {
+    // Concurrent users (active in last 5 minutes)
+    const concurrentUsers = activeSessions ? activeSessions.size : 0;
+
     // Total participants
     const totalParticipants = await new Promise((resolve, reject) => {
         db.get('SELECT COUNT(*) as count FROM participants WHERE active = 1', [], (err, row) => {
@@ -158,6 +162,7 @@ async function getKPIs(db) {
     });
 
     return {
+        concurrentUsers,
         totalParticipants,
         confirmedParticipants,
         noShowParticipants,

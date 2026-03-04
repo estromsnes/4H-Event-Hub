@@ -29,6 +29,7 @@ class EventHub {
         this.setupEventListeners();
         this.setupBarcodeScanning();
         await this.loadEventInfo();
+        await this.loadMobileAccessQR();
         await this.loadProgram();
         await this.loadParticipants();
         this.renderParticipants();
@@ -47,6 +48,31 @@ class EventHub {
             }
         });
 
+        // Mobile Access Modal
+        const mobileAccessBtn = document.getElementById('mobileAccessBtn');
+        const mobileAccessModal = document.getElementById('mobileAccessModal');
+        const closeMobileModalBtn = document.getElementById('closeMobileModalBtn');
+
+        if (mobileAccessBtn) {
+            mobileAccessBtn.addEventListener('click', () => {
+                mobileAccessModal.classList.remove('hidden');
+            });
+        }
+
+        if (closeMobileModalBtn) {
+            closeMobileModalBtn.addEventListener('click', () => {
+                mobileAccessModal.classList.add('hidden');
+            });
+        }
+
+        if (mobileAccessModal) {
+            mobileAccessModal.addEventListener('click', (e) => {
+                if (e.target === mobileAccessModal) {
+                    mobileAccessModal.classList.add('hidden');
+                }
+            });
+        }
+
         // Keyboard
         const keys = document.querySelectorAll('.key');
         keys.forEach(key => {
@@ -63,10 +89,15 @@ class EventHub {
         // Section toggle
         this.sectionToggle.addEventListener('click', () => this.toggleParticipantSection());
 
-        // Escape key to close modal
+        // Escape key to close modals
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !this.detailModal.classList.contains('hidden')) {
-                this.closeModal();
+            if (e.key === 'Escape') {
+                if (!this.detailModal.classList.contains('hidden')) {
+                    this.closeModal();
+                }
+                if (mobileAccessModal && !mobileAccessModal.classList.contains('hidden')) {
+                    mobileAccessModal.classList.add('hidden');
+                }
             }
         });
 
@@ -204,6 +235,47 @@ class EventHub {
             }
         } catch (err) {
             console.error('Error loading event info:', err);
+        }
+    }
+
+    async loadMobileAccessQR() {
+        try {
+            const response = await fetch('/api/local-url');
+            if (!response.ok) throw new Error('Failed to get local URL');
+
+            const data = await response.json();
+            const url = data.url;
+
+            // Update URL display
+            const urlText = document.getElementById('urlText');
+            if (urlText) {
+                urlText.textContent = url;
+            }
+
+            // Generate small QR code for button icon
+            const qrBtnIcon = document.getElementById('qrBtnIcon');
+            if (qrBtnIcon) {
+                const btnQrSize = 100;
+                const btnQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${btnQrSize}x${btnQrSize}&data=${encodeURIComponent(url)}&margin=5`;
+                qrBtnIcon.innerHTML = `<img src="${btnQrCodeUrl}" alt="QR Code" />`;
+            }
+
+            // Generate large QR code for modal
+            const qrContainer = document.getElementById('qrCodeContainer');
+            if (qrContainer) {
+                const qrSize = 300;
+                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(url)}&margin=10`;
+
+                qrContainer.innerHTML = `<img src="${qrCodeUrl}" alt="QR Code til ${url}" />`;
+            }
+
+            console.log('Mobile access QR code loaded:', url);
+        } catch (err) {
+            console.error('Error loading mobile access QR:', err);
+            const qrContainer = document.getElementById('qrCodeContainer');
+            if (qrContainer) {
+                qrContainer.innerHTML = '<div class="qr-loading">Kunne ikke generere QR-kode</div>';
+            }
         }
     }
 

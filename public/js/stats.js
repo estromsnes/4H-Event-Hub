@@ -66,6 +66,11 @@ function renderKPICards(kpis) {
             <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">🎯 Antall lag</div>
             <div style="font-size: 32px; font-weight: bold;">${kpis.totalTeams}</div>
         </div>
+        <div style="background: linear-gradient(135deg, #FC466B 0%, #3F5EFB 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">🌐 Samtidige brukere</div>
+            <div style="font-size: 32px; font-weight: bold;">${kpis.concurrentUsers || 0}</div>
+            <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Aktive siste 5 min</div>
+        </div>
         <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
             <div style="font-size: 14px; opacity: 0.9; margin-bottom: 5px;">📱 QR-skanninger</div>
             <div style="font-size: 32px; font-weight: bold;">${kpis.totalScans}</div>

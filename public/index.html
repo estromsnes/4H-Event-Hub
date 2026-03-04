@@ -46,7 +46,39 @@
             <span class="btn-icon">💬</span>
             <span class="btn-text">Tilbakemelding</span>
         </a>
+        <button id="mobileAccessBtn" class="action-btn mobile-btn">
+            <div class="btn-icon qr-btn-icon" id="qrBtnIcon">
+                <div class="qr-icon-loading">📱</div>
+            </div>
+            <span class="btn-text">Bruk på mobil</span>
+        </button>
     </section>
+
+    <!-- Mobile Access Modal -->
+    <div id="mobileAccessModal" class="modal hidden">
+        <div class="modal-content mobile-modal-content">
+            <div class="modal-header">
+                <h2>📱 Bruk på din mobil eller nettbrett</h2>
+                <button id="closeMobileModalBtn" class="close-btn">✕</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Skann QR-koden med kameraet på mobilen din for å åpne siden på din egen enhet</p>
+
+                <div class="qr-code-wrapper">
+                    <div class="qr-code-container" id="qrCodeContainer">
+                        <div class="qr-loading">Genererer QR-kode...</div>
+                    </div>
+                </div>
+
+                <div class="url-display" id="urlDisplay">
+                    <span class="url-label">URL:</span>
+                    <span class="url-text" id="urlText">Laster...</span>
+                </div>
+
+                <p class="qr-hint">💡 Husk å koble til samme WiFi-nettverk først</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Participant Search Section -->
     <section class="participant-section">
@@ -165,6 +197,7 @@
     <!-- Hidden barcode input for background scanning -->
     <input type="text" id="barcode-input" style="position: absolute; left: -9999px;" autocomplete="off">
 
+    <script src="/js/session-tracker.js"></script>
     <script src="/js/barcode-scanner-global.js"></script>
     <script src="/js/index.js"></script>
 </body>

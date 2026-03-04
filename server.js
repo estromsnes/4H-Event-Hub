@@ -28,13 +28,56 @@ db.run('PRAGMA journal_mode=WAL;');
 // Make database available to routes
 app.locals.db = db;
 
+// Active sessions tracking for concurrent users metric
+const activeSessions = new Map();
+const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+
+// Clean up inactive sessions every minute
+setInterval(() => {
+    const now = Date.now();
+    for (const [sessionId, lastActivity] of activeSessions.entries()) {
+        if (now - lastActivity > SESSION_TIMEOUT) {
+            activeSessions.delete(sessionId);
+        }
+    }
+}, 60 * 1000);
+
+// Make active sessions available to routes
+app.locals.activeSessions = activeSessions;
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static file serving
+// Static file serving (before session tracking to avoid tracking static files)
 app.use(express.static('public'));
 app.use('/uploads', express.static('uploads'));
+
+// Track user activity middleware - ONLY for API routes and HTML pages
+app.use((req, res, next) => {
+    // Skip session tracking for static files
+    const isStaticFile = /\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot|map)$/i.test(req.path);
+
+    if (isStaticFile) {
+        return next();
+    }
+
+    // Generate or get session ID from header/cookie
+    let sessionId = req.headers['x-session-id'];
+
+    if (!sessionId) {
+        // Generate new session ID
+        sessionId = crypto.randomBytes(16).toString('hex');
+    }
+
+    // Update last activity time
+    activeSessions.set(sessionId, Date.now());
+
+    // Send session ID back to client
+    res.setHeader('X-Session-ID', sessionId);
+
+    next();
+});
 
 // Routes
 const authRouter = require('./routes/auth');
@@ -90,6 +133,39 @@ app.get('/api/health', (req, res) => {
         status: 'ok',
         timestamp: new Date().toISOString(),
         database: 'connected'
+    });
+});
+
+// Heartbeat endpoint (session is already updated by middleware)
+app.get('/api/heartbeat', (req, res) => {
+    res.json({ status: 'ok' });
+});
+
+// Get local network URL for QR code
+app.get('/api/local-url', (req, res) => {
+    const os = require('os');
+    const networkInterfaces = os.networkInterfaces();
+
+    // Find local IP address
+    let localIP = 'localhost';
+
+    for (const name of Object.keys(networkInterfaces)) {
+        for (const iface of networkInterfaces[name]) {
+            // Skip internal and non-IPv4 addresses
+            if (iface.family === 'IPv4' && !iface.internal) {
+                localIP = iface.address;
+                break;
+            }
+        }
+        if (localIP !== 'localhost') break;
+    }
+
+    const url = `http://${localIP}:${PORT}`;
+
+    res.json({
+        url: url,
+        ip: localIP,
+        port: PORT
     });
 });
 
