@@ -333,6 +333,9 @@ class FeedbackForm {
         this.isAnonymous = false;
         this.showSection(this.scannerSection);
 
+        // Setup barcode scanner input handler
+        this.setupBarcodeScanning();
+
         // Activate global barcode scanner
         if (typeof globalBarcodeScanner !== 'undefined') {
             this.isScannerActive = true;
@@ -342,6 +345,37 @@ class FeedbackForm {
                 }
             });
         }
+    }
+
+    setupBarcodeScanning() {
+        const barcodeInput = document.getElementById('barcode-input');
+        if (!barcodeInput) {
+            console.warn('Barcode input element not found');
+            return;
+        }
+
+        let scanBuffer = '';
+        let scanTimeout = null;
+
+        // Barcode scanner input handler
+        barcodeInput.addEventListener('input', (e) => {
+            clearTimeout(scanTimeout);
+            scanBuffer += e.target.value;
+            e.target.value = '';
+
+            scanTimeout = setTimeout(() => {
+                if (scanBuffer.length > 0 && this.isScannerActive) {
+                    console.log('Barcode scanned via input field:', scanBuffer);
+                    this.handleScan(scanBuffer.trim());
+                    scanBuffer = '';
+                }
+            }, 100);
+        });
+
+        // Keep focus on barcode input for background scanning
+        barcodeInput.focus();
+
+        console.log('Barcode scanning initialized');
     }
 
     async toggleScanning() {
@@ -436,28 +470,40 @@ class FeedbackForm {
     }
 
     async handleScan(qrData) {
+        console.log('handleScan called with:', qrData);
+
         try {
             // Decode QR data using global barcode scanner
             const decoded = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
+            console.log('Decoded data:', decoded);
 
             // Parse JSON
             let parsed;
             try {
                 parsed = JSON.parse(decoded);
+                console.log('Parsed JSON:', parsed);
             } catch (e) {
-                this.showScanStatus('Ugyldig QR-kode. Skann din deltaker-QR-kode.', 'error');
+                console.error('JSON parse error:', e);
+                console.error('Failed to parse:', decoded);
+                this.showScanStatus('Ugyldig QR-kode format. Skann din deltaker-QR-kode.', 'error');
                 return;
             }
 
             if (parsed && parsed.type === 'participant' && parsed.code) {
+                console.log('Valid participant QR code, looking up:', parsed.code);
+
                 // Fetch participant info
                 const response = await fetch(`/api/participants/${parsed.code}`);
+                console.log('API response status:', response.status);
 
                 if (!response.ok) {
-                    throw new Error('Deltaker ikke funnet');
+                    const errorText = await response.text();
+                    console.error('API error:', errorText);
+                    throw new Error(`Deltaker ikke funnet (kode: ${parsed.code})`);
                 }
 
                 const participant = await response.json();
+                console.log('Found participant:', participant);
                 this.currentParticipant = participant;
 
                 // Display participant info
@@ -486,13 +532,14 @@ class FeedbackForm {
                     globalBarcodeScanner.deactivate();
                 }
 
-                this.showScanStatus('Deltaker identifisert!', 'success');
+                this.showScanStatus('Deltaker identifisert! ✓', 'success');
             } else {
+                console.warn('Invalid QR code structure:', parsed);
                 this.showScanStatus('Ugyldig QR-kode. Skann din deltaker-QR-kode.', 'error');
             }
         } catch (err) {
             console.error('Scan error:', err);
-            this.showScanStatus('Kunne ikke identifisere deltaker', 'error');
+            this.showScanStatus(err.message || 'Kunne ikke identifisere deltaker', 'error');
         }
     }
 
