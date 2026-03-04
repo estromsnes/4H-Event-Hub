@@ -178,4 +178,7 @@ class GlobalBarcodeScanner {
 // Create and export global instance
 window.globalBarcodeScanner = new GlobalBarcodeScanner();
 
+// Also export the class itself so static methods can be accessed
+window.GlobalBarcodeScanner = GlobalBarcodeScanner;
+
 console.log('GlobalBarcodeScanner module loaded');

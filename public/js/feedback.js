@@ -477,66 +477,68 @@ class FeedbackForm {
             const decoded = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
             console.log('Decoded data:', decoded);
 
-            // Parse JSON
-            let parsed;
+            // Try to parse as JSON, otherwise use as plain participant code
+            let participantCode;
             try {
-                parsed = JSON.parse(decoded);
+                const parsed = JSON.parse(decoded);
                 console.log('Parsed JSON:', parsed);
+
+                if (parsed && parsed.type === 'participant' && parsed.code) {
+                    participantCode = parsed.code;
+                } else {
+                    console.warn('Invalid QR code structure:', parsed);
+                    this.showScanStatus('Ugyldig QR-kode. Skann din deltaker-QR-kode.', 'error');
+                    return;
+                }
             } catch (e) {
-                console.error('JSON parse error:', e);
-                console.error('Failed to parse:', decoded);
-                this.showScanStatus('Ugyldig QR-kode format. Skann din deltaker-QR-kode.', 'error');
-                return;
+                // Not JSON, treat as plain participant code
+                console.log('Not JSON format, using as participant code:', decoded);
+                participantCode = decoded;
             }
 
-            if (parsed && parsed.type === 'participant' && parsed.code) {
-                console.log('Valid participant QR code, looking up:', parsed.code);
+            console.log('Looking up participant:', participantCode);
 
-                // Fetch participant info
-                const response = await fetch(`/api/participants/${parsed.code}`);
-                console.log('API response status:', response.status);
+            // Fetch participant info
+            const response = await fetch(`/api/participants/${participantCode}`);
+            console.log('API response status:', response.status);
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('API error:', errorText);
-                    throw new Error(`Deltaker ikke funnet (kode: ${parsed.code})`);
-                }
-
-                const participant = await response.json();
-                console.log('Found participant:', participant);
-                this.currentParticipant = participant;
-
-                // Display participant info
-                this.participantName.textContent = `${participant.first_name} ${participant.last_name}`;
-                const details = [];
-                if (participant.age) details.push(`${participant.age} år`);
-                if (participant.club) details.push(participant.club);
-                this.participantDetails.textContent = details.join(' • ');
-
-                this.participantInfo.classList.remove('hidden');
-                this.continueScanBtn.classList.remove('hidden');
-
-                // Hide camera scan button and reset it
-                this.startCameraScanBtn.style.display = 'none';
-
-                // Stop camera scanner
-                if (this.scanner) {
-                    await this.scanner.stop();
-                }
-                this.isScanning = false;
-                this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
-
-                // Deactivate global barcode scanner
-                this.isScannerActive = false;
-                if (typeof globalBarcodeScanner !== 'undefined') {
-                    globalBarcodeScanner.deactivate();
-                }
-
-                this.showScanStatus('Deltaker identifisert! ✓', 'success');
-            } else {
-                console.warn('Invalid QR code structure:', parsed);
-                this.showScanStatus('Ugyldig QR-kode. Skann din deltaker-QR-kode.', 'error');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API error:', errorText);
+                throw new Error(`Deltaker ikke funnet (kode: ${participantCode})`);
             }
+
+            const participant = await response.json();
+            console.log('Found participant:', participant);
+            this.currentParticipant = participant;
+
+            // Display participant info
+            this.participantName.textContent = `${participant.first_name} ${participant.last_name}`;
+            const details = [];
+            if (participant.age) details.push(`${participant.age} år`);
+            if (participant.club) details.push(participant.club);
+            this.participantDetails.textContent = details.join(' • ');
+
+            this.participantInfo.classList.remove('hidden');
+            this.continueScanBtn.classList.remove('hidden');
+
+            // Hide camera scan button and reset it
+            this.startCameraScanBtn.style.display = 'none';
+
+            // Stop camera scanner
+            if (this.scanner) {
+                await this.scanner.stop();
+            }
+            this.isScanning = false;
+            this.startCameraScanBtn.textContent = '📷 Start Kamera-Skanning';
+
+            // Deactivate global barcode scanner
+            this.isScannerActive = false;
+            if (typeof globalBarcodeScanner !== 'undefined') {
+                globalBarcodeScanner.deactivate();
+            }
+
+            this.showScanStatus('Deltaker identifisert! ✓', 'success');
         } catch (err) {
             console.error('Scan error:', err);
             this.showScanStatus(err.message || 'Kunne ikke identifisere deltaker', 'error');
