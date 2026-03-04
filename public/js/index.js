@@ -27,6 +27,7 @@ class EventHub {
 
     async init() {
         this.setupEventListeners();
+        this.setupBarcodeScanning();
         await this.loadEventInfo();
         await this.loadProgram();
         await this.loadParticipants();
@@ -72,6 +73,88 @@ class EventHub {
         // Start with participant section collapsed
         this.participantContent.classList.add('collapsed');
         this.sectionToggle.classList.add('collapsed');
+    }
+
+    setupBarcodeScanning() {
+        const barcodeInput = document.getElementById('barcode-input');
+        if (!barcodeInput) return;
+
+        let scanBuffer = '';
+        let scanTimeout = null;
+
+        // Barcode scanner input handler
+        barcodeInput.addEventListener('input', (e) => {
+            clearTimeout(scanTimeout);
+            scanBuffer += e.target.value;
+            e.target.value = '';
+
+            scanTimeout = setTimeout(() => {
+                if (scanBuffer.length > 0) {
+                    this.handleQRScan(scanBuffer.trim());
+                    scanBuffer = '';
+                }
+            }, 100);
+        });
+
+        // Keep focus on barcode input for background scanning
+        barcodeInput.focus();
+
+        // Refocus if focus is lost (unless modal is open)
+        document.addEventListener('click', (e) => {
+            if (this.detailModal.classList.contains('hidden')) {
+                setTimeout(() => barcodeInput.focus(), 100);
+            }
+        });
+
+        setInterval(() => {
+            if (this.detailModal.classList.contains('hidden')) {
+                barcodeInput.focus();
+            }
+        }, 1000);
+    }
+
+    async handleQRScan(qrData) {
+        console.log('QR Code scanned on homepage:', qrData);
+
+        // Decode potential keyboard layout issues
+        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
+        let participantCode;
+
+        try {
+            // Try to parse as JSON first
+            const parsed = JSON.parse(decodedData);
+            if (parsed.type === 'participant' && parsed.code) {
+                participantCode = parsed.code;
+            } else {
+                console.error('Invalid QR code format');
+                return;
+            }
+        } catch (e) {
+            // Not JSON, use as-is
+            participantCode = decodedData;
+        }
+
+        try {
+            // Verify participant exists
+            const response = await fetch(`/api/participants/${participantCode}`);
+
+            if (!response.ok) {
+                console.error('Participant not found');
+                return;
+            }
+
+            const participant = await response.json();
+
+            // Store participant code and redirect to profile page
+            sessionStorage.setItem('profileParticipantCode', participantCode);
+            sessionStorage.setItem('fromHomepage', 'true');
+
+            // Redirect to profile page
+            window.location.href = '/profile.html';
+
+        } catch (error) {
+            console.error('QR scan error:', error);
+        }
     }
 
     toggleParticipantSection() {
