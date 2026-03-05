@@ -195,27 +195,53 @@
 
         .qr-card {
             text-align: center;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 10px;
+            padding: 20px;
+            background: linear-gradient(135deg, #ffffff, #f5f5f5);
+            border: 2px dashed #4CAF50;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            page-break-inside: avoid;
         }
 
         .qr-card img {
             width: 100%;
             height: auto;
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
         }
 
         .qr-card h4 {
-            margin: 0 0 5px 0;
-            font-size: 16px;
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c5f2d;
         }
 
         .qr-card p {
-            margin: 0;
-            font-size: 12px;
-            color: var(--text-light);
+            margin: 5px 0;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+
+        .qr-card .login-word {
+            background: linear-gradient(135deg, #4CAF50, #2c5f2d);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 10px 0;
+            display: inline-block;
+        }
+
+        .qr-card .card-footer {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 11px;
+            color: #666;
         }
 
         @media print {

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deltakerkort</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #2c5f2d;
+            --text-dark: #212121;
+            --text-light: #757575;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Screen-only header */
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: var(--primary-dark);
+            font-size: 28px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .button.primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .button.primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .button.secondary {
+            background: #e0e0e0;
+            color: var(--text-dark);
+        }
+
+        .button.secondary:hover {
+            background: #bdbdbd;
+        }
+
+        /* Cards grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+            page-break-inside: avoid;
+            border: 2px dashed var(--primary-color);
+        }
+
+        .card-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .card-logo {
+            width: 60px;
+            height: auto;
+            margin-bottom: 8px;
+        }
+
+        .card-event-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 5px;
+        }
+
+        .card-qr {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            margin: 15px auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .card-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-dark);
+            margin: 10px 0;
+        }
+
+        .login-word-section {
+            margin: 15px 0;
+        }
+
+        .login-word-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-login-word {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            display: inline-block;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+        }
+
+        .card-info {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .card-info p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+
+        .card-info strong {
+            color: var(--primary-dark);
+        }
+
+        .card-code {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 10px;
+            font-family: monospace;
+        }
+
+        .no-login-word {
+            color: #999;
+            font-style: italic;
+            padding: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-light);
+            font-size: 18px;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #d32f2f;
+            background: #ffebee;
+            border-radius: 8px;
+            border: 2px solid #ef5350;
+        }
+
+        /* Print styles */
+        @media print {
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
+            body {
+                background: white;
+            }
+
+            .container {
+                max-width: 100%;
+                padding: 0;
+            }
+
+            .header {
+                display: none !important;
+            }
+
+            .cards-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+            }
+
+            .card {
+                padding: 15px;
+                box-shadow: none;
+                border: 2px dashed #333;
+                page-break-inside: avoid;
+            }
+
+            .card-qr {
+                max-width: 150px;
+            }
+
+            .card-name {
+                font-size: 16px;
+            }
+
+            .login-word-label {
+                font-size: 11px;
+                margin-bottom: 5px;
+            }
+
+            .card-login-word {
+                font-size: 18px;
+                padding: 8px 15px;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .card-info p {
+                font-size: 12px;
+            }
+
+            .card-code {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Screen-only header -->
+        <header class="header no-print">
+            <h1>🎫 Deltakerkort</h1>
+            <div class="header-actions">
+                <button onclick="window.print()" class="button primary">🖨️ Skriv ut</button>
+                <button onclick="window.close()" class="button secondary">✕ Lukk</button>
+            </div>
+        </header>
+
+        <!-- Cards container -->
+        <div id="cardsContainer">
+            <p class="loading">Laster deltakerkort...</p>
+        </div>
+    </div>
+
+    <script src="/js/participant-cards.js"></script>
+</body>
+</html>

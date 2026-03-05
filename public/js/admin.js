@@ -2254,7 +2254,7 @@ async function generateAllQRCodes() {
 }
 
 /**
- * Show QR codes for printing
+ * Show QR codes for printing - opens in new window
  */
 async function showQRForPrint() {
     // Filter participants that have QR codes
@@ -2265,25 +2265,8 @@ async function showQRForPrint() {
         return;
     }
 
-    // Render QR grid
-    qrGrid.innerHTML = withQR.map(p => `
-        <div class="qr-card">
-            <img src="/api/qr/${p.participant_code}" alt="${p.participant_code}">
-            <h4>${p.first_name} ${p.last_name}</h4>
-            <p>${p.participant_code}</p>
-        </div>
-    `).join('');
-
-    // Show QR section
-    qrSection.style.display = 'block';
-
-    // Scroll to QR section
-    qrSection.scrollIntoView({ behavior: 'smooth' });
-
-    // Open print dialog after a short delay
-    setTimeout(() => {
-        window.print();
-    }, 500);
+    // Open participant cards in new window
+    window.open('/participant-cards.html', '_blank', 'width=1400,height=900');
 }
 
 /**
