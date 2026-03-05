@@ -22,11 +22,11 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             display: flex;
             gap: 10px;
-            overflow-x: auto;
+            flex-wrap: wrap;
         }
 
         .tab-button {
-            flex: 1;
+            flex: 1 1 150px;
             min-width: 150px;
             padding: 15px 20px;
             border: none;
@@ -269,30 +269,167 @@
         }
 
         @media (max-width: 768px) {
-            .team-card {
-                grid-template-columns: 60px 60px 1fr;
-                gap: 15px;
+            .scoreboard-container {
+                padding: 0 10px 20px;
+            }
+
+            .tabs-container {
+                padding: 5px;
+                gap: 5px;
+                flex-wrap: wrap;
+            }
+
+            .tab-button {
+                flex: 1 1 calc(50% - 5px);
+                min-width: 120px;
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+
+            #team-challenge .tab-button {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+
+            .team-card, .player-card {
+                padding: 15px;
+                gap: 10px;
+                grid-template-columns: 50px 1fr;
+                grid-template-rows: auto auto;
             }
 
             .team-photo,
             .team-photo-placeholder {
-                width: 60px;
-                height: 60px;
-                font-size: 28px;
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+                grid-row: 1 / 3;
+            }
+
+            .team-rank {
+                font-size: 24px;
+                text-align: left;
+                grid-column: 2;
+                grid-row: 1;
+            }
+
+            .team-name {
+                font-size: 18px;
+                grid-column: 2;
+                grid-row: 2;
+            }
+
+            /* Position stats badges on mobile */
+            .team-card > div:last-child,
+            .player-card > div:last-child {
+                grid-column: 1 / -1;
+                margin-top: 10px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
 
             .team-progress,
             .team-time {
                 grid-column: 1 / -1;
                 margin-top: 10px;
+                flex-direction: row;
+                justify-content: space-around;
+            }
+
+            .stats-badge {
+                padding: 6px 12px;
+                font-size: 16px;
+            }
+
+            .stats-label {
+                font-size: 11px;
+            }
+
+            .checkpoints-badge,
+            .time-badge {
+                font-size: 16px;
+                padding: 6px 12px;
+            }
+
+            .progress-text,
+            .status-badge {
+                font-size: 12px;
+            }
+
+            .no-data {
+                padding: 30px 15px;
+            }
+
+            .no-data h2 {
+                font-size: 18px;
+            }
+
+            .loading {
+                padding: 30px;
+                font-size: 18px;
+            }
+
+            .last-updated {
+                font-size: 14px !important;
+                margin-bottom: 15px !important;
+            }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .scoreboard-container {
+                padding: 0 5px 15px;
+            }
+
+            .tab-button {
+                flex: 1 1 calc(50% - 5px);
+                min-width: 100px;
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+
+            .team-card, .player-card {
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .team-photo,
+            .team-photo-placeholder {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
             }
 
             .team-rank {
-                font-size: 28px;
+                font-size: 20px;
             }
 
             .team-name {
-                font-size: 22px;
+                font-size: 16px;
+            }
+
+            .stats-badge {
+                padding: 5px 10px;
+                font-size: 14px;
+            }
+
+            .stats-label {
+                font-size: 10px;
+            }
+
+            .checkpoints-badge,
+            .time-badge {
+                font-size: 14px;
+                padding: 5px 10px;
+            }
+
+            .page-title {
+                font-size: 24px;
+            }
+
+            .page-subtitle {
+                font-size: 14px;
             }
         }
     </style>
