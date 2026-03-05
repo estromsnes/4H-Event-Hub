@@ -15,6 +15,16 @@ const qrFileInput = document.getElementById('qrFileInput');
 const scanStatus = document.getElementById('scanStatus');
 const scanAgainBtn = document.getElementById('scanAgainBtn');
 
+// Login elements
+const continueAsSection = document.getElementById('continueAsSection');
+const continueAsName = document.getElementById('continueAsName');
+const continueAsBtn = document.getElementById('continueAsBtn');
+const switchUserBtn = document.getElementById('switchUserBtn');
+const codeInputSection = document.getElementById('codeInputSection');
+const participantCodeInput = document.getElementById('participantCodeInput');
+const codeLoginBtn = document.getElementById('codeLoginBtn');
+const codeStatus = document.getElementById('codeStatus');
+
 const profilePhoto = document.getElementById('profilePhoto');
 const photoPlaceholder = document.getElementById('photoPlaceholder');
 const profileName = document.getElementById('profileName');
@@ -70,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initApp();
 });
 
-function initApp() {
+async function initApp() {
     console.log('Initializing app...');
 
     // Load event info first
@@ -88,6 +98,17 @@ function initApp() {
         // Load participant directly
         loadParticipantByCode(welcomeCode);
         return; // Skip scanner initialization
+    }
+
+    // Check for existing session using participant auth
+    if (typeof participantAuth !== 'undefined') {
+        const storedParticipant = await participantAuth.init();
+        if (storedParticipant) {
+            console.log('Found existing session for:', storedParticipant.first_name);
+            showContinueAsSection(storedParticipant);
+        } else {
+            console.log('No existing session found');
+        }
     }
 
     // Check browser support
@@ -129,6 +150,24 @@ function initApp() {
     confirmBtn.addEventListener('click', confirmParticipant);
     welcomeCloseBtn.addEventListener('click', closeWelcomeModal);
     changeRoomBtn.addEventListener('click', toggleRoomSelection);
+
+    // Login word event listeners
+    if (codeLoginBtn) {
+        codeLoginBtn.addEventListener('click', handleLoginWithCode);
+    }
+    if (participantCodeInput) {
+        participantCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLoginWithCode();
+            }
+        });
+    }
+    if (continueAsBtn) {
+        continueAsBtn.addEventListener('click', handleContinueAs);
+    }
+    if (switchUserBtn) {
+        switchUserBtn.addEventListener('click', handleSwitchUser);
+    }
 
     // Activate global barcode scanner
     globalBarcodeScanner.activate((qrData) => onScanSuccess(qrData));
@@ -851,6 +890,127 @@ function closeWelcomeModal() {
     // Mark welcome as shown for this participant
     const welcomeKey = `welcomeShown_${currentParticipant.participant_code}`;
     localStorage.setItem(welcomeKey, 'true');
+}
+
+// ============================================================================
+// LOGIN WORD AUTHENTICATION
+// ============================================================================
+
+/**
+ * Show "Continue as" section for existing session
+ */
+function showContinueAsSection(participant) {
+    if (!continueAsSection || !continueAsName) return;
+
+    continueAsName.textContent = `${participant.first_name} ${participant.last_name}`;
+    continueAsSection.classList.remove('hidden');
+}
+
+/**
+ * Handle continue as existing user
+ */
+async function handleContinueAs() {
+    if (typeof participantAuth === 'undefined') {
+        console.error('participantAuth not available');
+        return;
+    }
+
+    const storedParticipant = participantAuth.getCurrentParticipant();
+    if (storedParticipant) {
+        console.log('Continuing as:', storedParticipant.first_name);
+        currentParticipant = storedParticipant;
+        showProfileView();
+    } else {
+        console.error('No stored participant found');
+        showCodeStatus('Ingen lagret bruker funnet', 'error');
+    }
+}
+
+/**
+ * Handle switch user (clear session)
+ */
+function handleSwitchUser() {
+    if (typeof participantAuth === 'undefined') {
+        console.error('participantAuth not available');
+        return;
+    }
+
+    participantAuth.logout();
+    console.log('Session cleared');
+
+    // Hide continue as section, show login input
+    if (continueAsSection) {
+        continueAsSection.classList.add('hidden');
+    }
+    if (codeInputSection) {
+        codeInputSection.classList.remove('hidden');
+    }
+}
+
+/**
+ * Handle login with code/login word
+ */
+async function handleLoginWithCode() {
+    if (typeof participantAuth === 'undefined') {
+        console.error('participantAuth not available');
+        showCodeStatus('Autentiseringssystem ikke tilgjengelig', 'error');
+        return;
+    }
+
+    const code = participantCodeInput.value.trim();
+
+    if (!code) {
+        showCodeStatus('Vennligst skriv inn ditt login-ord', 'error');
+        participantCodeInput.focus();
+        return;
+    }
+
+    // Disable button and show loading
+    codeLoginBtn.disabled = true;
+    codeLoginBtn.textContent = '⏳';
+    showCodeStatus('Logger inn...', 'info');
+
+    try {
+        const participant = await participantAuth.loginWithCode(code);
+
+        if (participant) {
+            console.log('Login successful:', participant.first_name);
+            currentParticipant = participant;
+
+            showCodeStatus('✅ Innlogget!', 'success');
+
+            // Clear input
+            participantCodeInput.value = '';
+
+            // Show profile after short delay
+            setTimeout(() => {
+                showProfileView();
+            }, 800);
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        showCodeStatus(error.message || 'Feil ved innlogging', 'error');
+        codeLoginBtn.disabled = false;
+        codeLoginBtn.textContent = '➡️';
+    }
+}
+
+/**
+ * Show status message for code input
+ */
+function showCodeStatus(message, type) {
+    if (!codeStatus) return;
+
+    codeStatus.textContent = message;
+    codeStatus.className = `scan-status ${type}`;
+    codeStatus.classList.remove('hidden');
+
+    // Auto-hide after 3 seconds for non-error messages
+    if (type !== 'error') {
+        setTimeout(() => {
+            codeStatus.classList.add('hidden');
+        }, 3000);
+    }
 }
 
 // ============================================================================

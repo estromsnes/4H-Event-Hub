@@ -67,6 +67,9 @@ const formStatus = document.getElementById('formStatus');
 const editModal = document.getElementById('editModal');
 const editParticipantForm = document.getElementById('editParticipantForm');
 const editParticipantCodeInput = document.getElementById('editParticipantCode');
+const editLoginWord = document.getElementById('editLoginWord');
+const editLoginWordDisplay = document.getElementById('editLoginWordDisplay');
+const regenerateLoginWordBtn = document.getElementById('regenerateLoginWordBtn');
 const editFirstNameInput = document.getElementById('editFirstName');
 const editLastNameInput = document.getElementById('editLastName');
 const editAgeInput = document.getElementById('editAge');
@@ -347,6 +350,9 @@ async function initAdmin() {
     editParticipantForm.addEventListener('submit', handleEditParticipant);
     closeEditBtn.addEventListener('click', closeEditModal);
     cancelEditBtn.addEventListener('click', closeEditModal);
+    if (regenerateLoginWordBtn) {
+        regenerateLoginWordBtn.addEventListener('click', handleRegenerateLoginWord);
+    }
 
     // Assign room modal event listeners
     closeAssignRoomBtn.addEventListener('click', closeAssignRoomModal);
@@ -1802,6 +1808,7 @@ function renderParticipants() {
                 </p>
                 <p style="font-size: 12px; color: #999;">
                     ${p.participant_code}
+                    ${p.login_word ? ` • <strong style="color: var(--primary-green);">Login:</strong> ${p.login_word}` : ''}
                     ${p.confirmed === 1 && p.confirmed_at
                         ? ` • Bekreftet ${new Date(p.confirmed_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
                         : ''
@@ -2296,6 +2303,18 @@ function editParticipant(participantCode) {
 
     // Populate form
     editParticipantCodeInput.value = participant.participant_code;
+
+    // Show login word if available
+    if (editLoginWord && editLoginWordDisplay) {
+        if (participant.login_word) {
+            editLoginWord.textContent = participant.login_word;
+            editLoginWordDisplay.style.display = 'block';
+        } else {
+            editLoginWord.textContent = 'Ikke tildelt';
+            editLoginWordDisplay.style.display = 'block';
+        }
+    }
+
     editFirstNameInput.value = participant.first_name;
     editLastNameInput.value = participant.last_name;
     editAgeInput.value = participant.age || '';
@@ -2364,6 +2383,71 @@ async function handleEditParticipant(e) {
         editStatus.textContent = 'Kunne ikke oppdatere: ' + err.message;
         editStatus.className = 'alert error';
         editStatus.classList.remove('hidden');
+    }
+}
+
+/**
+ * Handle regenerate login word
+ */
+async function handleRegenerateLoginWord() {
+    const code = editParticipantCodeInput.value;
+    if (!code) return;
+
+    // Confirm action
+    if (!confirm('Er du sikker på at du vil generere et nytt login-ord? Det gamle ordet vil ikke lenger fungere.')) {
+        return;
+    }
+
+    // Disable button and show loading
+    regenerateLoginWordBtn.disabled = true;
+    regenerateLoginWordBtn.textContent = '⏳ Genererer...';
+
+    try {
+        const response = await authenticatedFetch(`/api/participants/${code}/regenerate-login-word`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Kunne ikke generere nytt login-ord');
+        }
+
+        const result = await response.json();
+
+        // Update display
+        if (editLoginWord) {
+            editLoginWord.textContent = result.login_word;
+        }
+
+        // Update in participants array
+        const participant = participants.find(p => p.participant_code === code);
+        if (participant) {
+            participant.login_word = result.login_word;
+        }
+
+        // Show success message
+        editStatus.textContent = `✅ Nytt login-ord generert: ${result.login_word}`;
+        editStatus.className = 'alert success';
+        editStatus.classList.remove('hidden');
+
+        // Reset button
+        regenerateLoginWordBtn.disabled = false;
+        regenerateLoginWordBtn.textContent = '🔄 Generer nytt';
+
+        // Reload participants to update list view
+        setTimeout(() => {
+            loadParticipants();
+            editStatus.classList.add('hidden');
+        }, 3000);
+
+    } catch (err) {
+        console.error('Error regenerating login word:', err);
+        editStatus.textContent = '❌ ' + err.message;
+        editStatus.className = 'alert error';
+        editStatus.classList.remove('hidden');
+
+        regenerateLoginWordBtn.disabled = false;
+        regenerateLoginWordBtn.textContent = '🔄 Generer nytt';
     }
 }
 

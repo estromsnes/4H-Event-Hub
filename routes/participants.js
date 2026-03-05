@@ -7,6 +7,58 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const os = require('os');
 
+// Load login words
+let loginWords = [];
+try {
+    const wordsPath = path.join(__dirname, '../data/login-words.json');
+    const wordsData = JSON.parse(fs.readFileSync(wordsPath, 'utf8'));
+    loginWords = wordsData.words || [];
+    console.log(`✅ Loaded ${loginWords.length} login words`);
+} catch (error) {
+    console.error('⚠️  Warning: Could not load login words:', error.message);
+    // Fallback to a small list if file not found
+    loginWords = ['EPLE', 'STOL', 'KATT', 'HUND', 'BALL', 'BOK'];
+}
+
+// Function to generate unique login word
+function generateUniqueLoginWord(db, callback) {
+    // Shuffle words array
+    const shuffled = [...loginWords].sort(() => Math.random() - 0.5);
+
+    // Try to find an unused word
+    function tryWord(index) {
+        if (index >= shuffled.length) {
+            // All words used, generate a random one with number
+            const randomWord = loginWords[Math.floor(Math.random() * loginWords.length)];
+            const randomNum = Math.floor(Math.random() * 999);
+            return callback(null, `${randomWord}${randomNum}`);
+        }
+
+        const word = shuffled[index];
+
+        // Check if word is already used
+        db.get(
+            'SELECT login_word FROM participants WHERE login_word = ? AND active = 1',
+            [word],
+            (err, row) => {
+                if (err) {
+                    return callback(err);
+                }
+
+                if (!row) {
+                    // Word is available
+                    callback(null, word);
+                } else {
+                    // Word is taken, try next
+                    tryWord(index + 1);
+                }
+            }
+        );
+    }
+
+    tryWord(0);
+}
+
 // Configure multer for photo uploads
 const storage = multer.memoryStorage(); // Use memory storage for processing with sharp
 const upload = multer({
@@ -90,42 +142,53 @@ router.get('/stats/roles', (req, res) => {
     );
 });
 
-// GET specific participant by code
+// GET specific participant by code or login word
 router.get('/:code', (req, res) => {
     const db = req.app.locals.db;
     let { code } = req.params;
 
     // Decode URL encoding and handle plus signs (SK+2026+001 → SK-2026-001)
-    code = decodeURIComponent(code).replace(/\+/g, '-');
+    code = decodeURIComponent(code).replace(/\+/g, '-').trim().toUpperCase();
 
-    db.get(
-        'SELECT * FROM participants WHERE participant_code = ? AND active = 1',
-        [code],
-        (err, row) => {
-            if (err) {
-                console.error('Error fetching participant:', err);
-                return res.status(500).json({ error: 'Failed to fetch participant' });
-            }
+    // Determine if this looks like a login word (letters only, 4-10 chars) or participant code
+    const isLoginWord = /^[A-ZÆØÅ]+\d*$/.test(code) && code.length >= 3 && code.length <= 10;
 
-            if (!row) {
-                return res.status(404).json({ error: 'Participant not found' });
-            }
+    // Build query based on input type
+    let query, params;
+    if (isLoginWord) {
+        // Search by login_word
+        query = 'SELECT * FROM participants WHERE UPPER(login_word) = ? AND active = 1';
+        params = [code];
+    } else {
+        // Search by participant_code
+        query = 'SELECT * FROM participants WHERE participant_code = ? AND active = 1';
+        params = [code];
+    }
 
-            // Update last scan date
-            db.run(
-                'UPDATE participants SET last_scan_date = datetime("now") WHERE participant_code = ?',
-                [code]
-            );
-
-            // Log the scan
-            db.run(
-                'INSERT INTO scan_log (participant_code) VALUES (?)',
-                [code]
-            );
-
-            res.json(row);
+    db.get(query, params, (err, row) => {
+        if (err) {
+            console.error('Error fetching participant:', err);
+            return res.status(500).json({ error: 'Failed to fetch participant' });
         }
-    );
+
+        if (!row) {
+            return res.status(404).json({ error: 'Participant not found' });
+        }
+
+        // Update last scan date
+        db.run(
+            'UPDATE participants SET last_scan_date = datetime("now") WHERE participant_code = ?',
+            [row.participant_code]
+        );
+
+        // Log the scan
+        db.run(
+            'INSERT INTO scan_log (participant_code) VALUES (?)',
+            [row.participant_code]
+        );
+
+        res.json(row);
+    });
 });
 
 // POST create new participant
@@ -154,31 +217,41 @@ router.post('/', (req, res) => {
                 return res.status(409).json({ error: 'Participant code already exists' });
             }
 
-            // Insert new participant
-            db.run(
-                `INSERT INTO participants (participant_code, first_name, last_name, age, home_location, club, role, team, notes)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [participant_code, first_name, last_name, age, home_location, club, role, team, notes],
-                function(err) {
-                    if (err) {
-                        console.error('Error creating participant:', err);
-                        return res.status(500).json({ error: 'Failed to create participant' });
-                    }
-
-                    // Fetch and return the created participant
-                    db.get(
-                        'SELECT * FROM participants WHERE id = ?',
-                        [this.lastID],
-                        (err, row) => {
-                            if (err) {
-                                console.error('Error fetching created participant:', err);
-                                return res.status(500).json({ error: 'Participant created but failed to fetch' });
-                            }
-                            res.status(201).json(row);
-                        }
-                    );
+            // Generate unique login word
+            generateUniqueLoginWord(db, (err, loginWord) => {
+                if (err) {
+                    console.error('Error generating login word:', err);
+                    return res.status(500).json({ error: 'Failed to generate login word' });
                 }
-            );
+
+                console.log(`✅ Generated login word "${loginWord}" for ${first_name} ${last_name}`);
+
+                // Insert new participant with login word
+                db.run(
+                    `INSERT INTO participants (participant_code, first_name, last_name, age, home_location, club, role, team, notes, login_word)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [participant_code, first_name, last_name, age, home_location, club, role, team, notes, loginWord],
+                    function(err) {
+                        if (err) {
+                            console.error('Error creating participant:', err);
+                            return res.status(500).json({ error: 'Failed to create participant' });
+                        }
+
+                        // Fetch and return the created participant
+                        db.get(
+                            'SELECT * FROM participants WHERE id = ?',
+                            [this.lastID],
+                            (err, row) => {
+                                if (err) {
+                                    console.error('Error fetching created participant:', err);
+                                    return res.status(500).json({ error: 'Participant created but failed to fetch' });
+                                }
+                                res.status(201).json(row);
+                            }
+                        );
+                    }
+                );
+            });
         }
     );
 });
@@ -544,6 +617,61 @@ router.post('/:code/confirm', (req, res) => {
                     );
                 }
             );
+        }
+    );
+});
+
+// POST /api/participants/:code/regenerate-login-word - Generate a new login word for participant
+router.post('/:code/regenerate-login-word', (req, res) => {
+    const db = req.app.locals.db;
+    let { code } = req.params;
+    code = decodeURIComponent(code).replace(/\+/g, '-');
+
+    // Check if participant exists
+    db.get(
+        'SELECT * FROM participants WHERE participant_code = ? AND active = 1',
+        [code],
+        (err, participant) => {
+            if (err) {
+                console.error('Error fetching participant:', err);
+                return res.status(500).json({ error: 'Failed to fetch participant' });
+            }
+
+            if (!participant) {
+                return res.status(404).json({ error: 'Participant not found' });
+            }
+
+            // Generate new unique login word
+            generateUniqueLoginWord(db, (err, newLoginWord) => {
+                if (err) {
+                    console.error('Error generating login word:', err);
+                    return res.status(500).json({ error: 'Failed to generate login word' });
+                }
+
+                // Update participant with new login word
+                db.run(
+                    'UPDATE participants SET login_word = ? WHERE participant_code = ? AND active = 1',
+                    [newLoginWord, code],
+                    function(err) {
+                        if (err) {
+                            console.error('Error updating login word:', err);
+                            return res.status(500).json({ error: 'Failed to update login word' });
+                        }
+
+                        if (this.changes === 0) {
+                            return res.status(404).json({ error: 'Participant not found' });
+                        }
+
+                        console.log(`✅ Regenerated login word for ${participant.first_name} ${participant.last_name}: ${newLoginWord}`);
+
+                        res.json({
+                            success: true,
+                            login_word: newLoginWord,
+                            participant_code: code
+                        });
+                    }
+                );
+            });
         }
     );
 });

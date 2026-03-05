@@ -29,11 +29,50 @@
         <div class="container">
             <div class="team-selector">
                 <h1>👤</h1>
-                <h2>Skann din QR-kode</h2>
-				<!--
-                <p style="color: var(--text-light); margin-bottom: 30px;">Hold QR-koden foran kameraet eller bruk strekkodeskanneren</p>
-				-->
-				
+                <h2>Logg inn</h2>
+
+                <!-- Continue as existing user -->
+                <div id="continueAsSection" class="continue-as-section hidden" style="margin-bottom: 25px;">
+                    <div style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border: 2px solid #4CAF50; border-radius: 15px; padding: 20px; text-align: center;">
+                        <p style="font-size: 16px; color: #2c5f2d; margin-bottom: 15px;">Velkommen tilbake!</p>
+                        <p style="font-size: 20px; font-weight: bold; color: #2c5f2d; margin-bottom: 15px;" id="continueAsName">-</p>
+                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                            <button id="continueAsBtn" class="button primary" style="font-size: 18px; padding: 15px 30px;">
+                                ✅ Fortsett som meg
+                            </button>
+                            <button id="switchUserBtn" class="button secondary" style="font-size: 16px; padding: 15px 20px;">
+                                🔄 Bytt bruker
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Login Word Input Section -->
+                <div id="codeInputSection" class="code-input-section">
+                    <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
+                    <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                        <input
+                            type="text"
+                            id="participantCodeInput"
+                            placeholder="F.eks: 4H"
+                            style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
+                            autocomplete="off"
+                            maxlength="10"
+                        >
+                        <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
+                            ➡️
+                        </button>
+                    </div>
+                    <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
+                        💡 Finner du dette på ditt navneskilt/deltakerkort
+                    </p>
+                    <div id="codeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
+                </div>
+
+                <div class="divider">
+                    <span>eller skann QR-kode</span>
+                </div>
+
 				<div class="scanner-mode-indicator">
                     <svg class="qr-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <rect x="2" y="2" width="8" height="8" rx="1"/>
@@ -294,6 +333,7 @@
 
     <!-- Include our JavaScript modules -->
     <script src="/js/camera-detector.js"></script>
+    <script src="/js/participant-auth.js"></script>
     <script src="/js/session-tracker.js"></script>
     <script src="/js/barcode-scanner-global.js"></script>
     <script src="/js/scanner.js"></script>
