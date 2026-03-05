@@ -57,7 +57,7 @@ body {
 
 /* Settings Icon */
 .settings-icon {
-    position: fixed;
+    position: absolute;
     top: 15px;
     right: 15px;
     width: 60px;
@@ -71,7 +71,7 @@ body {
     text-decoration: none;
     box-shadow: var(--shadow);
     transition: transform 0.2s, box-shadow 0.2s;
-    z-index: 1000;
+    z-index: 100;
 }
 
 .settings-icon:active {
@@ -81,7 +81,7 @@ body {
 
 /* Welcome Link (Registration) */
 .welcome-link {
-    position: fixed;
+    position: absolute;
     top: 15px;
     right: 90px;
     padding: 12px 20px;
@@ -93,7 +93,7 @@ body {
     text-decoration: none;
     box-shadow: var(--shadow);
     transition: transform 0.2s, box-shadow 0.2s;
-    z-index: 1000;
+    z-index: 100;
 }
 
 .welcome-link:active {
@@ -959,6 +959,46 @@ body {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+    /* Header adjustments for mobile */
+    .event-header {
+        padding: 80px 15px 25px;
+    }
+
+    .header-4h-logo {
+        height: 50px;
+        top: 10px;
+        left: 10px;
+    }
+
+    .event-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 12px;
+    }
+
+    .event-title {
+        font-size: 32px;
+    }
+
+    .event-subtitle {
+        font-size: 18px;
+    }
+
+    /* Fixed buttons adjustments */
+    .settings-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 28px;
+        top: 10px;
+        right: 10px;
+    }
+
+    .welcome-link {
+        top: 10px;
+        right: 70px;
+    }
+
+    /* Program and other sections */
     .program-container {
         grid-template-columns: 1fr;
     }
@@ -969,6 +1009,73 @@ body {
 
     .participants-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .btn-icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+    }
+
+    .btn-text {
+        font-size: 22px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .event-header {
+        padding: 70px 10px 20px;
+    }
+
+    .header-4h-logo {
+        display: none;
+    }
+
+    .event-logo {
+        width: 70px;
+        height: 70px;
+        margin-bottom: 10px;
+    }
+
+    .event-title {
+        font-size: 26px;
+        margin-bottom: 6px;
+    }
+
+    .event-subtitle {
+        font-size: 16px;
+    }
+
+    .settings-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 24px;
+    }
+
+    .action-btn {
+        padding: 25px 15px;
+        min-height: 120px;
+    }
+
+    .btn-icon {
+        font-size: 40px;
+    }
+
+    .qr-btn-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .btn-text {
+        font-size: 18px;
+    }
+
+    .section-toggle h2 {
+        font-size: 24px;
+    }
+
+    .toggle-icon {
+        font-size: 22px;
     }
 }
 
