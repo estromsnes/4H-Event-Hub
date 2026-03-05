@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeScanner();
     initializeFileUpload();
     initializeCameraButton();
+    initializeLoginWordInput();
     focusBarcodeInput();
 });
 
@@ -188,15 +189,27 @@ function focusBarcodeInput() {
     const barcodeInput = document.getElementById('barcode-input');
     barcodeInput.focus();
 
-    // Refocus if focus is lost
-    document.addEventListener('click', () => {
+    // Refocus if focus is lost - but not if user is typing in login word input
+    document.addEventListener('click', (e) => {
         if (document.getElementById('scanner-view').classList.contains('active')) {
+            // Don't refocus if user clicked on login word input or button
+            const clickedElement = e.target;
+            if (clickedElement.id === 'participantCodeInput' ||
+                clickedElement.id === 'codeLoginBtn' ||
+                clickedElement.closest('#codeInputSection')) {
+                return;
+            }
             setTimeout(() => barcodeInput.focus(), 100);
         }
     });
 
     setInterval(() => {
         if (document.getElementById('scanner-view').classList.contains('active')) {
+            // Don't refocus if user is actively typing in login word input
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.id === 'participantCodeInput') {
+                return;
+            }
             barcodeInput.focus();
         }
     }, 1000);
@@ -298,4 +311,95 @@ function showScanStatus(message, type) {
 function hideScanStatus() {
     const statusEl = document.getElementById('scan-status');
     statusEl.style.display = 'none';
+}
+
+// Initialize login word input
+function initializeLoginWordInput() {
+    const participantCodeInput = document.getElementById('participantCodeInput');
+    const codeLoginBtn = document.getElementById('codeLoginBtn');
+    const codeStatus = document.getElementById('codeStatus');
+
+    if (codeLoginBtn) {
+        codeLoginBtn.addEventListener('click', handleLoginWithCode);
+    }
+
+    if (participantCodeInput) {
+        participantCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleLoginWithCode();
+            }
+        });
+    }
+}
+
+// Handle login with code/login word
+async function handleLoginWithCode() {
+    const participantCodeInput = document.getElementById('participantCodeInput');
+    const codeLoginBtn = document.getElementById('codeLoginBtn');
+    const codeStatus = document.getElementById('codeStatus');
+
+    if (typeof participantAuth === 'undefined') {
+        console.error('participantAuth not available');
+        showCodeStatus('Autentiseringssystem ikke tilgjengelig', 'error');
+        return;
+    }
+
+    const code = participantCodeInput.value.trim();
+
+    if (!code) {
+        showCodeStatus('Vennligst skriv inn ditt login-ord', 'error');
+        participantCodeInput.focus();
+        return;
+    }
+
+    // Disable button and show loading
+    codeLoginBtn.disabled = true;
+    codeLoginBtn.textContent = '⏳';
+    showCodeStatus('Logger inn...', 'info');
+
+    try {
+        const participant = await participantAuth.loginWithCode(code);
+
+        if (participant) {
+            console.log('Login successful:', participant.first_name);
+
+            // Show welcome message
+            const fullName = `${participant.first_name} ${participant.last_name}`.trim();
+            showCodeStatus(`Velkommen ${fullName}! 🎉`, 'success');
+
+            // Store participant code and redirect to profile page
+            sessionStorage.setItem('welcomeParticipantCode', participant.participant_code);
+            sessionStorage.setItem('fromWelcome', 'true');
+
+            // Clear input
+            participantCodeInput.value = '';
+
+            // Redirect after short delay
+            setTimeout(() => {
+                window.location.href = '/profile.html';
+            }, 1500);
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        showCodeStatus(error.message || 'Feil ved innlogging', 'error');
+        codeLoginBtn.disabled = false;
+        codeLoginBtn.textContent = '➡️';
+    }
+}
+
+// Show status message for code input
+function showCodeStatus(message, type) {
+    const codeStatus = document.getElementById('codeStatus');
+    if (!codeStatus) return;
+
+    codeStatus.textContent = message;
+    codeStatus.className = `scan-status ${type}`;
+    codeStatus.classList.remove('hidden');
+
+    // Auto-hide after 5 seconds for non-error messages
+    if (type !== 'error') {
+        setTimeout(() => {
+            codeStatus.classList.add('hidden');
+        }, 5000);
+    }
 }

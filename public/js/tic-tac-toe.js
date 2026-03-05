@@ -88,6 +88,34 @@ class TicTacToeGame {
     }
 
     initEventListeners() {
+        // Player 1 login word input
+        const player1CodeInput = document.getElementById('player1CodeInput');
+        const player1CodeLoginBtn = document.getElementById('player1CodeLoginBtn');
+        if (player1CodeLoginBtn) {
+            player1CodeLoginBtn.addEventListener('click', () => this.handlePlayer1LoginWithCode());
+        }
+        if (player1CodeInput) {
+            player1CodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handlePlayer1LoginWithCode();
+                }
+            });
+        }
+
+        // Player 2 login word input
+        const player2CodeInput = document.getElementById('player2CodeInput');
+        const player2CodeLoginBtn = document.getElementById('player2CodeLoginBtn');
+        if (player2CodeLoginBtn) {
+            player2CodeLoginBtn.addEventListener('click', () => this.handlePlayer2LoginWithCode());
+        }
+        if (player2CodeInput) {
+            player2CodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handlePlayer2LoginWithCode();
+                }
+            });
+        }
+
         // Scanner buttons
         this.startPlayer1ScanBtn.addEventListener('click', () => this.togglePlayer1Scanner());
         this.startPlayer2ScanBtn.addEventListener('click', () => this.togglePlayer2Scanner());
@@ -172,9 +200,119 @@ class TicTacToeGame {
         }
     }
 
-    async handlePlayer1Scan(qrData) {
-        // Decode potential keyboard layout issues
-        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
+    async handlePlayer1LoginWithCode() {
+        const player1CodeInput = document.getElementById('player1CodeInput');
+        const player1CodeLoginBtn = document.getElementById('player1CodeLoginBtn');
+
+        if (typeof participantAuth === 'undefined') {
+            console.error('participantAuth not available');
+            this.showPlayer1CodeStatus('Autentiseringssystem ikke tilgjengelig', 'error');
+            return;
+        }
+
+        const code = player1CodeInput.value.trim();
+
+        if (!code) {
+            this.showPlayer1CodeStatus('Vennligst skriv inn ditt login-ord', 'error');
+            player1CodeInput.focus();
+            return;
+        }
+
+        player1CodeLoginBtn.disabled = true;
+        player1CodeLoginBtn.textContent = '⏳';
+        this.showPlayer1CodeStatus('Logger inn...', 'info');
+
+        try {
+            const participant = await participantAuth.loginWithCode(code);
+
+            if (participant) {
+                console.log('Player 1 login successful:', participant.first_name);
+                await this.handlePlayer1Scan(participant.participant_code, true);
+                player1CodeInput.value = '';
+                player1CodeLoginBtn.disabled = false;
+                player1CodeLoginBtn.textContent = '➡️';
+            }
+        } catch (error) {
+            console.error('Player 1 login error:', error);
+            this.showPlayer1CodeStatus(error.message || 'Feil ved innlogging', 'error');
+            player1CodeLoginBtn.disabled = false;
+            player1CodeLoginBtn.textContent = '➡️';
+        }
+    }
+
+    showPlayer1CodeStatus(message, type) {
+        const player1CodeStatus = document.getElementById('player1CodeStatus');
+        if (!player1CodeStatus) return;
+
+        player1CodeStatus.textContent = message;
+        player1CodeStatus.className = `scan-status ${type}`;
+        player1CodeStatus.classList.remove('hidden');
+
+        if (type !== 'error') {
+            setTimeout(() => {
+                player1CodeStatus.classList.add('hidden');
+            }, 3000);
+        }
+    }
+
+    async handlePlayer2LoginWithCode() {
+        const player2CodeInput = document.getElementById('player2CodeInput');
+        const player2CodeLoginBtn = document.getElementById('player2CodeLoginBtn');
+
+        if (typeof participantAuth === 'undefined') {
+            console.error('participantAuth not available');
+            this.showPlayer2CodeStatus('Autentiseringssystem ikke tilgjengelig', 'error');
+            return;
+        }
+
+        const code = player2CodeInput.value.trim();
+
+        if (!code) {
+            this.showPlayer2CodeStatus('Vennligst skriv inn ditt login-ord', 'error');
+            player2CodeInput.focus();
+            return;
+        }
+
+        player2CodeLoginBtn.disabled = true;
+        player2CodeLoginBtn.textContent = '⏳';
+        this.showPlayer2CodeStatus('Logger inn...', 'info');
+
+        try {
+            const participant = await participantAuth.loginWithCode(code);
+
+            if (participant) {
+                console.log('Player 2 login successful:', participant.first_name);
+                await this.handlePlayer2Scan(participant.participant_code, true);
+                player2CodeInput.value = '';
+                player2CodeLoginBtn.disabled = false;
+                player2CodeLoginBtn.textContent = '➡️';
+            }
+        } catch (error) {
+            console.error('Player 2 login error:', error);
+            this.showPlayer2CodeStatus(error.message || 'Feil ved innlogging', 'error');
+            player2CodeLoginBtn.disabled = false;
+            player2CodeLoginBtn.textContent = '➡️';
+        }
+    }
+
+    showPlayer2CodeStatus(message, type) {
+        const player2CodeStatus = document.getElementById('player2CodeStatus');
+        if (!player2CodeStatus) return;
+
+        player2CodeStatus.textContent = message;
+        player2CodeStatus.className = `scan-status ${type}`;
+        player2CodeStatus.classList.remove('hidden');
+
+        if (type !== 'error') {
+            setTimeout(() => {
+                player2CodeStatus.classList.add('hidden');
+            }, 3000);
+        }
+    }
+
+    async handlePlayer1Scan(qrData, skipDecode = false) {
+        // Decode potential keyboard layout issues - skip if already decoded (from login)
+        const decodedData = skipDecode ? qrData : GlobalBarcodeScanner.decodeBarcodeInput(qrData);
         let participantCode;
 
         try {
@@ -229,9 +367,9 @@ class TicTacToeGame {
         }
     }
 
-    async handlePlayer2Scan(qrData) {
-        // Decode potential keyboard layout issues
-        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
+    async handlePlayer2Scan(qrData, skipDecode = false) {
+        // Decode potential keyboard layout issues - skip if already decoded (from login)
+        const decodedData = skipDecode ? qrData : GlobalBarcodeScanner.decodeBarcodeInput(qrData);
         let participantCode;
 
         try {

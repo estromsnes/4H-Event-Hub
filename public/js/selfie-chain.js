@@ -30,6 +30,20 @@ class SelfieChainApp {
         const fileInput = document.getElementById('participantQrFileInput');
         const statusDiv = document.getElementById('participantScanStatus');
 
+        // Login word input
+        const participantCodeInput = document.getElementById('participantCodeInput');
+        const codeLoginBtn = document.getElementById('codeLoginBtn');
+        if (codeLoginBtn) {
+            codeLoginBtn.addEventListener('click', () => this.handleLoginWithCode());
+        }
+        if (participantCodeInput) {
+            participantCodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleLoginWithCode();
+                }
+            });
+        }
+
         // Initialize the QR scanner with callbacks
         this.participantScanner.init(
             'participantQrReader',
@@ -104,7 +118,7 @@ class SelfieChainApp {
         });
     }
 
-    async handleParticipantScan(qrData) {
+    async handleParticipantScan(qrData, skipDecode = false) {
         const statusDiv = document.getElementById('participantScanStatus');
         const startBtn = document.getElementById('startParticipantScanBtn');
 
@@ -117,8 +131,8 @@ class SelfieChainApp {
 
         console.log('[Selfie Chain] Raw QR data:', qrData);
 
-        // Decode potential keyboard layout issues
-        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
+        // Decode potential keyboard layout issues - skip if already decoded (from login)
+        const decodedData = skipDecode ? qrData : GlobalBarcodeScanner.decodeBarcodeInput(qrData);
         console.log('[Selfie Chain] Decoded data:', decodedData);
 
         let participantCode;
@@ -174,6 +188,61 @@ class SelfieChainApp {
         // Start timer if activity is running
         if (this.currentStatus && this.currentStatus.has_started && !this.currentStatus.all_met) {
             this.startTimer();
+        }
+    }
+
+    async handleLoginWithCode() {
+        const participantCodeInput = document.getElementById('participantCodeInput');
+        const codeLoginBtn = document.getElementById('codeLoginBtn');
+
+        if (typeof participantAuth === 'undefined') {
+            console.error('participantAuth not available');
+            this.showCodeStatus('Autentiseringssystem ikke tilgjengelig', 'error');
+            return;
+        }
+
+        const code = participantCodeInput.value.trim();
+
+        if (!code) {
+            this.showCodeStatus('Vennligst skriv inn ditt login-ord', 'error');
+            participantCodeInput.focus();
+            return;
+        }
+
+        codeLoginBtn.disabled = true;
+        codeLoginBtn.textContent = '⏳';
+        this.showCodeStatus('Logger inn...', 'info');
+
+        try {
+            const participant = await participantAuth.loginWithCode(code);
+
+            if (participant) {
+                console.log('Login successful:', participant.first_name);
+                await this.handleParticipantScan(participant.participant_code, true);
+                participantCodeInput.value = '';
+                codeLoginBtn.disabled = false;
+                codeLoginBtn.textContent = '➡️';
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            this.showCodeStatus(error.message || 'Feil ved innlogging', 'error');
+            codeLoginBtn.disabled = false;
+            codeLoginBtn.textContent = '➡️';
+        }
+    }
+
+    showCodeStatus(message, type) {
+        const codeStatus = document.getElementById('codeStatus');
+        if (!codeStatus) return;
+
+        codeStatus.textContent = message;
+        codeStatus.className = `scan-status ${type}`;
+        codeStatus.classList.remove('hidden');
+
+        if (type !== 'error') {
+            setTimeout(() => {
+                codeStatus.classList.add('hidden');
+            }, 3000);
         }
     }
 
@@ -738,6 +807,20 @@ class SelfieChainApp {
         statusDiv.classList.add('hidden');
         statusDiv.textContent = '';
 
+        // Target login word input
+        const targetCodeInput = document.getElementById('targetCodeInput');
+        const targetCodeLoginBtn = document.getElementById('targetCodeLoginBtn');
+        if (targetCodeLoginBtn) {
+            targetCodeLoginBtn.onclick = () => this.handleTargetLoginWithCode();
+        }
+        if (targetCodeInput) {
+            targetCodeInput.onkeypress = (e) => {
+                if (e.key === 'Enter') {
+                    this.handleTargetLoginWithCode();
+                }
+            };
+        }
+
         // Initialize the QR scanner with callbacks
         this.targetScanner.init(
             'targetQrReader',
@@ -807,11 +890,11 @@ class SelfieChainApp {
         }
     }
 
-    async handleTargetScan(qrData) {
+    async handleTargetScan(qrData, skipDecode = false) {
         const statusDiv = document.getElementById('targetScanStatus');
 
-        // Decode keyboard layout issues
-        const decoded = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
+        // Decode keyboard layout issues - skip if already decoded (from login)
+        const decoded = skipDecode ? qrData : GlobalBarcodeScanner.decodeBarcodeInput(qrData);
 
         let scannedCode;
         try {
@@ -850,6 +933,61 @@ class SelfieChainApp {
             statusDiv.textContent = '❌ Feil person! Finn riktig person og skann deres QR-kode.';
             statusDiv.className = 'alert error';
             statusDiv.classList.remove('hidden');
+        }
+    }
+
+    async handleTargetLoginWithCode() {
+        const targetCodeInput = document.getElementById('targetCodeInput');
+        const targetCodeLoginBtn = document.getElementById('targetCodeLoginBtn');
+
+        if (typeof participantAuth === 'undefined') {
+            console.error('participantAuth not available');
+            this.showTargetCodeStatus('Autentiseringssystem ikke tilgjengelig', 'error');
+            return;
+        }
+
+        const code = targetCodeInput.value.trim();
+
+        if (!code) {
+            this.showTargetCodeStatus('Vennligst skriv inn personens login-ord', 'error');
+            targetCodeInput.focus();
+            return;
+        }
+
+        targetCodeLoginBtn.disabled = true;
+        targetCodeLoginBtn.textContent = '⏳';
+        this.showTargetCodeStatus('Logger inn...', 'info');
+
+        try {
+            const participant = await participantAuth.loginWithCode(code);
+
+            if (participant) {
+                console.log('Target login successful:', participant.first_name);
+                await this.handleTargetScan(participant.participant_code, true);
+                targetCodeInput.value = '';
+                targetCodeLoginBtn.disabled = false;
+                targetCodeLoginBtn.textContent = '➡️';
+            }
+        } catch (error) {
+            console.error('Target login error:', error);
+            this.showTargetCodeStatus(error.message || 'Feil ved innlogging', 'error');
+            targetCodeLoginBtn.disabled = false;
+            targetCodeLoginBtn.textContent = '➡️';
+        }
+    }
+
+    showTargetCodeStatus(message, type) {
+        const targetCodeStatus = document.getElementById('targetCodeStatus');
+        if (!targetCodeStatus) return;
+
+        targetCodeStatus.textContent = message;
+        targetCodeStatus.className = `scan-status ${type}`;
+        targetCodeStatus.classList.remove('hidden');
+
+        if (type !== 'error') {
+            setTimeout(() => {
+                targetCodeStatus.classList.add('hidden');
+            }, 3000);
         }
     }
 

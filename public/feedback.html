@@ -48,10 +48,36 @@
 
         <!-- QR Scanner Section (Hidden initially) -->
         <div id="scannerSection" class="step-section hidden">
-            <h2>Skann din QR-kode</h2>
-            <p class="section-description">Hold QR-koden foran strekkodeskanneren eller bruk kamera</p>
+            <h2>Identifiser deg</h2>
+            <p class="section-description">Skriv inn login-ord eller skann QR-koden din</p>
 
             <div id="scannerContainer" class="scanner-container">
+                <!-- Login Word Input Section -->
+                <div id="codeInputSection" class="code-input-section" style="margin-bottom: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
+                    <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                        <input
+                            type="text"
+                            id="participantCodeInput"
+                            placeholder="F.eks: 4H"
+                            style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
+                            autocomplete="off"
+                            maxlength="10"
+                        >
+                        <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
+                            ➡️
+                        </button>
+                    </div>
+                    <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
+                        💡 Finner du dette på ditt navneskilt/deltakerkort
+                    </p>
+                    <div id="codeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
+                </div>
+
+                <div class="divider">
+                    <span>eller skann QR-kode</span>
+                </div>
+
                 <div class="scanner-mode-indicator">
                     <svg class="qr-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <rect x="2" y="2" width="8" height="8" rx="1"/>
@@ -158,6 +184,7 @@
     <input type="text" id="barcode-input" style="position: absolute; left: -9999px;" autocomplete="off">
 
     <script src="/js/camera-detector.js"></script>
+    <script src="/js/participant-auth.js"></script>
     <script src="/js/session-tracker.js"></script>
     <script src="/js/scanner.js"></script>
     <script src="/js/barcode-scanner-global.js"></script>

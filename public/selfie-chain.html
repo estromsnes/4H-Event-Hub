@@ -28,8 +28,34 @@
                     <div class="scan-icon">🤳</div>
                     <h2>Skann din deltaker-QR</h2>
                     <p style="color: var(--text-light); margin-bottom: 30px;">
-                        Hold QR-koden foran kameraet eller bruk strekkodeskanneren for å starte
+                        Skriv inn login-ord eller skann QR-koden din
                     </p>
+
+                    <!-- Login Word Input Section -->
+                    <div id="codeInputSection" class="code-input-section" style="margin-bottom: 25px;">
+                        <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
+                        <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                            <input
+                                type="text"
+                                id="participantCodeInput"
+                                placeholder="F.eks: 4H"
+                                style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
+                                autocomplete="off"
+                                maxlength="10"
+                            >
+                            <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
+                                ➡️
+                            </button>
+                        </div>
+                        <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
+                            💡 Finner du på deltakerkortet
+                        </p>
+                        <div id="codeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
+                    </div>
+
+                    <div class="divider">
+                        <span>eller skann QR-kode</span>
+                    </div>
 
                     <div id="participantQrReader" class="qr-reader-container" style="margin-bottom: 20px;"></div>
 
@@ -152,8 +178,34 @@
                             Skann <span id="targetNameInScanner">personens</span> QR-kode
                         </h3>
                         <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
-                            Hold QR-koden foran kameraet eller bruk strekkodeskanneren
+                            Skriv inn personens login-ord eller skann QR-koden
                         </p>
+
+                        <!-- Target Login Word Input -->
+                        <div id="targetCodeInputSection" class="code-input-section" style="margin-bottom: 25px;">
+                            <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn personens login-ord</p>
+                            <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                                <input
+                                    type="text"
+                                    id="targetCodeInput"
+                                    placeholder="F.eks: 4H"
+                                    style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
+                                    autocomplete="off"
+                                    maxlength="10"
+                                >
+                                <button id="targetCodeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
+                                    ➡️
+                                </button>
+                            </div>
+                            <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
+                                💡 Finner du på personens deltakerkort
+                            </p>
+                            <div id="targetCodeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
+                        </div>
+
+                        <div class="divider">
+                            <span>eller skann QR-kode</span>
+                        </div>
 
                         <div id="targetQrReader" class="qr-reader-container" style="margin-bottom: 20px;"></div>
 
@@ -335,6 +387,7 @@
 
     <!-- Camera detector -->
     <script src="/js/camera-detector.js"></script>
+    <script src="/js/participant-auth.js"></script>
 
     <!-- QR Scanner wrapper -->
     <script src="/js/scanner.js"></script>

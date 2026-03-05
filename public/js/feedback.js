@@ -85,6 +85,20 @@ class FeedbackForm {
         this.anonymousBtn.addEventListener('click', () => this.chooseAnonymous());
         this.identifyBtn.addEventListener('click', () => this.chooseIdentify());
 
+        // Login word input
+        const participantCodeInput = document.getElementById('participantCodeInput');
+        const codeLoginBtn = document.getElementById('codeLoginBtn');
+        if (codeLoginBtn) {
+            codeLoginBtn.addEventListener('click', () => this.handleLoginWithCode());
+        }
+        if (participantCodeInput) {
+            participantCodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleLoginWithCode();
+                }
+            });
+        }
+
         // Scanner controls
         this.startCameraScanBtn.addEventListener('click', () => this.toggleScanning());
         this.cancelScanBtn.addEventListener('click', () => this.cancelScan());
@@ -569,6 +583,82 @@ class FeedbackForm {
         this.showSection(this.step1);
         this.participantInfo.classList.add('hidden');
         this.continueScanBtn.classList.add('hidden');
+    }
+
+    async handleLoginWithCode() {
+        const participantCodeInput = document.getElementById('participantCodeInput');
+        const codeLoginBtn = document.getElementById('codeLoginBtn');
+
+        if (typeof participantAuth === 'undefined') {
+            console.error('participantAuth not available');
+            this.showCodeStatus('Autentiseringssystem ikke tilgjengelig', 'error');
+            return;
+        }
+
+        const code = participantCodeInput.value.trim();
+
+        if (!code) {
+            this.showCodeStatus('Vennligst skriv inn ditt login-ord', 'error');
+            participantCodeInput.focus();
+            return;
+        }
+
+        // Disable button and show loading
+        codeLoginBtn.disabled = true;
+        codeLoginBtn.textContent = '⏳';
+        this.showCodeStatus('Logger inn...', 'info');
+
+        try {
+            const participant = await participantAuth.loginWithCode(code);
+
+            if (participant) {
+                console.log('Login successful:', participant.first_name);
+                this.currentParticipant = participant;
+
+                // Display participant info
+                this.participantName.textContent = `${participant.first_name} ${participant.last_name}`;
+                const details = [];
+                if (participant.age) details.push(`${participant.age} år`);
+                if (participant.club) details.push(participant.club);
+                this.participantDetails.textContent = details.join(' • ');
+
+                this.participantInfo.classList.remove('hidden');
+                this.continueScanBtn.classList.remove('hidden');
+
+                // Hide camera scan button
+                this.startCameraScanBtn.style.display = 'none';
+
+                // Clear input
+                participantCodeInput.value = '';
+
+                this.showCodeStatus('✅ Innlogget!', 'success');
+
+                // Reset button
+                codeLoginBtn.disabled = false;
+                codeLoginBtn.textContent = '➡️';
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            this.showCodeStatus(error.message || 'Feil ved innlogging', 'error');
+            codeLoginBtn.disabled = false;
+            codeLoginBtn.textContent = '➡️';
+        }
+    }
+
+    showCodeStatus(message, type) {
+        const codeStatus = document.getElementById('codeStatus');
+        if (!codeStatus) return;
+
+        codeStatus.textContent = message;
+        codeStatus.className = `scan-status ${type}`;
+        codeStatus.classList.remove('hidden');
+
+        // Auto-hide after 3 seconds for non-error messages
+        if (type !== 'error') {
+            setTimeout(() => {
+                codeStatus.classList.add('hidden');
+            }, 3000);
+        }
     }
 
     proceedToStep2() {

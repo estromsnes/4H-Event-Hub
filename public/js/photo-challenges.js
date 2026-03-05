@@ -53,6 +53,20 @@
 
     // Event Listeners
     function setupEventListeners() {
+        // Login word input
+        const participantCodeInput = document.getElementById('participantCodeInput');
+        const codeLoginBtn = document.getElementById('codeLoginBtn');
+        if (codeLoginBtn) {
+            codeLoginBtn.addEventListener('click', handleLoginWithCode);
+        }
+        if (participantCodeInput) {
+            participantCodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleLoginWithCode();
+                }
+            });
+        }
+
         // QR Code scanner
         startScanBtn.addEventListener('click', startQRScanner);
         qrFileInput.addEventListener('change', handleQRFileUpload);
@@ -98,12 +112,68 @@
         }
     }
 
+    // Handle login with code/login word
+    async function handleLoginWithCode() {
+        const participantCodeInput = document.getElementById('participantCodeInput');
+        const codeLoginBtn = document.getElementById('codeLoginBtn');
+
+        if (typeof participantAuth === 'undefined') {
+            console.error('participantAuth not available');
+            showCodeStatus('Autentiseringssystem ikke tilgjengelig', 'error');
+            return;
+        }
+
+        const code = participantCodeInput.value.trim();
+
+        if (!code) {
+            showCodeStatus('Vennligst skriv inn ditt login-ord', 'error');
+            participantCodeInput.focus();
+            return;
+        }
+
+        codeLoginBtn.disabled = true;
+        codeLoginBtn.textContent = '⏳';
+        showCodeStatus('Logger inn...', 'info');
+
+        try {
+            const participant = await participantAuth.loginWithCode(code);
+
+            if (participant) {
+                console.log('Login successful:', participant.first_name);
+                await lookupParticipant(participant.participant_code, true); // true = skip decode (already clean)
+                participantCodeInput.value = '';
+                codeLoginBtn.disabled = false;
+                codeLoginBtn.textContent = '➡️';
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            showCodeStatus(error.message || 'Feil ved innlogging', 'error');
+            codeLoginBtn.disabled = false;
+            codeLoginBtn.textContent = '➡️';
+        }
+    }
+
+    function showCodeStatus(message, type) {
+        const codeStatus = document.getElementById('codeStatus');
+        if (!codeStatus) return;
+
+        codeStatus.textContent = message;
+        codeStatus.className = `scan-status ${type}`;
+        codeStatus.classList.remove('hidden');
+
+        if (type !== 'error') {
+            setTimeout(() => {
+                codeStatus.classList.add('hidden');
+            }, 3000);
+        }
+    }
+
     // Lookup Participant
-    async function lookupParticipant(qrData) {
+    async function lookupParticipant(qrData, skipDecode = false) {
         showStatus('info', 'Søker etter deltaker...');
 
-        // Decode barcode input (fixes Norwegian keyboard layout issues)
-        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
+        // Decode barcode input (fixes Norwegian keyboard layout issues) - skip if already decoded (from login)
+        const decodedData = skipDecode ? qrData : GlobalBarcodeScanner.decodeBarcodeInput(qrData);
 
         // Parse QR code - try JSON first
         let participantCode;
@@ -128,7 +198,6 @@
                 } else {
                     showStatus('error', 'Feil ved oppslag. Prøv igjen.');
                 }
-                barcodeInput.value = '';
                 return;
             }
 
@@ -138,7 +207,6 @@
             // Check if participant has a team
             if (!participant.team) {
                 showStatus('error', 'Du må være tildelt et lag for å delta i bildeoppgaver.');
-                barcodeInput.value = '';
                 return;
             }
 
@@ -152,7 +220,6 @@
         } catch (error) {
             console.error('Error looking up participant:', error);
             showStatus('error', 'Nettverksfeil. Sjekk tilkoblingen og prøv igjen.');
-            barcodeInput.value = '';
         }
     }
 

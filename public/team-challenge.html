@@ -91,6 +91,32 @@
                     </div>
                 </div>
 
+                <!-- Login Word Input Section -->
+                <div id="codeInputSection" class="code-input-section" style="margin-bottom: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn login-ord</p>
+                    <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                        <input
+                            type="text"
+                            id="participantCodeInput"
+                            placeholder="F.eks: 4H"
+                            style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
+                            autocomplete="off"
+                            maxlength="10"
+                        >
+                        <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
+                            ➡️
+                        </button>
+                    </div>
+                    <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
+                        💡 Finner du på deltakerkortet
+                    </p>
+                    <div id="codeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
+                </div>
+
+                <div class="divider">
+                    <span>eller skann QR-kode</span>
+                </div>
+
                 <div id="qr-reader" style="margin-bottom: 20px;"></div>
 
                 <button id="startCameraBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
@@ -242,6 +268,7 @@
         document.addEventListener('DOMContentLoaded', loadEventInfo);
     </script>
     <script src="/js/camera-detector.js"></script>
+    <script src="/js/participant-auth.js"></script>
     <script src="/js/barcode-scanner-global.js"></script>
     <script src="/js/scanner.js"></script>
     <script src="/js/camera.js"></script>

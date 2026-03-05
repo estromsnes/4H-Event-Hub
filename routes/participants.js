@@ -150,8 +150,8 @@ router.get('/:code', (req, res) => {
     // Decode URL encoding and handle plus signs (SK+2026+001 → SK-2026-001)
     code = decodeURIComponent(code).replace(/\+/g, '-').trim().toUpperCase();
 
-    // Determine if this looks like a login word (letters only, 4-10 chars) or participant code
-    const isLoginWord = /^[A-ZÆØÅ]+\d*$/.test(code) && code.length >= 3 && code.length <= 10;
+    // Determine if this looks like a login word (letters only, no digits, 3-10 chars) or participant code
+    const isLoginWord = /^[A-ZÆØÅ]+$/.test(code) && code.length >= 3 && code.length <= 10;
 
     // Build query based on input type
     let query, params;

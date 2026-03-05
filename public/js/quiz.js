@@ -103,6 +103,20 @@ class QuizManager {
     }
 
     initEventListeners() {
+        // Login word input
+        const participantCodeInput = document.getElementById('participantCodeInput');
+        const codeLoginBtn = document.getElementById('codeLoginBtn');
+        if (codeLoginBtn) {
+            codeLoginBtn.addEventListener('click', () => this.handleLoginWithCode());
+        }
+        if (participantCodeInput) {
+            participantCodeInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.handleLoginWithCode();
+                }
+            });
+        }
+
         // Scanner button
         this.startParticipantScanBtn.addEventListener('click', () => this.toggleParticipantScanner());
 
@@ -197,9 +211,64 @@ class QuizManager {
         }
     }
 
-    async handleParticipantScan(qrData) {
+    async handleLoginWithCode() {
+        const participantCodeInput = document.getElementById('participantCodeInput');
+        const codeLoginBtn = document.getElementById('codeLoginBtn');
+
+        if (typeof participantAuth === 'undefined') {
+            console.error('participantAuth not available');
+            this.showCodeStatus('Autentiseringssystem ikke tilgjengelig', 'error');
+            return;
+        }
+
+        const code = participantCodeInput.value.trim();
+
+        if (!code) {
+            this.showCodeStatus('Vennligst skriv inn ditt login-ord', 'error');
+            participantCodeInput.focus();
+            return;
+        }
+
+        codeLoginBtn.disabled = true;
+        codeLoginBtn.textContent = '⏳';
+        this.showCodeStatus('Logger inn...', 'info');
+
+        try {
+            const participant = await participantAuth.loginWithCode(code);
+
+            if (participant) {
+                console.log('Login successful:', participant.first_name);
+                await this.handleParticipantScan(participant.participant_code, true);
+                participantCodeInput.value = '';
+                codeLoginBtn.disabled = false;
+                codeLoginBtn.textContent = '➡️';
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            this.showCodeStatus(error.message || 'Feil ved innlogging', 'error');
+            codeLoginBtn.disabled = false;
+            codeLoginBtn.textContent = '➡️';
+        }
+    }
+
+    showCodeStatus(message, type) {
+        const codeStatus = document.getElementById('codeStatus');
+        if (!codeStatus) return;
+
+        codeStatus.textContent = message;
+        codeStatus.className = `scan-status ${type}`;
+        codeStatus.classList.remove('hidden');
+
+        if (type !== 'error') {
+            setTimeout(() => {
+                codeStatus.classList.add('hidden');
+            }, 3000);
+        }
+    }
+
+    async handleParticipantScan(qrData, skipDecode = false) {
         console.log('Raw QR data:', qrData);
-        const decodedData = GlobalBarcodeScanner.decodeBarcodeInput(qrData);
+        const decodedData = skipDecode ? qrData : GlobalBarcodeScanner.decodeBarcodeInput(qrData);
         console.log('Decoded data:', decodedData);
         let participantCode;
 
