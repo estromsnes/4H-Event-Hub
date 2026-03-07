@@ -281,6 +281,14 @@ class EventHub {
 
     async loadProgram() {
         try {
+            // Fetch event info to get start date
+            const eventResponse = await fetch('/api/event');
+            let eventStartDate = null;
+            if (eventResponse.ok) {
+                const eventData = await eventResponse.json();
+                eventStartDate = eventData.start_date;
+            }
+
             const response = await fetch('/api/program');
             if (!response.ok) throw new Error('Failed to load program');
 
@@ -298,12 +306,32 @@ class EventHub {
                 days[item.day_number].push(item);
             });
 
+            // Helper function to get day name from date
+            const getDayName = (dayNumber) => {
+                if (!eventStartDate) {
+                    return `Dag ${dayNumber}`;
+                }
+
+                try {
+                    // Parse start date and add (dayNumber - 1) days
+                    const startDate = new Date(eventStartDate);
+                    const targetDate = new Date(startDate);
+                    targetDate.setDate(startDate.getDate() + (dayNumber - 1));
+
+                    // Get Norwegian day name
+                    const dayNames = ['Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag'];
+                    return dayNames[targetDate.getDay()];
+                } catch (e) {
+                    console.error('Error parsing date:', e);
+                    return `Dag ${dayNumber}`;
+                }
+            };
+
             // Render program in columns
             let html = '';
-            const dayNames = ['', 'Fredag', 'Lørdag', 'Søndag', 'Mandag', 'Tirsdag', 'Onsdag', 'Torsdag'];
 
             Object.keys(days).sort((a, b) => a - b).forEach(dayNum => {
-                const dayName = dayNames[dayNum] || `Dag ${dayNum}`;
+                const dayName = getDayName(parseInt(dayNum));
 
                 html += `
                     <div class="program-day">
@@ -452,8 +480,8 @@ class EventHub {
                 </div>
                 <div class="participant-name">${p.name}</div>
                 <div class="participant-info">
-                    ${p.age} år
-                    ${p.team ? `<br>🏆 ${p.team}` : ''}
+                    ${p.age ? `${p.age} år` : ''}
+                    ${p.team ? `${p.age ? '<br>' : ''}🏆 ${p.team}` : ''}
                 </div>
             </div>
         `).join('');
@@ -473,7 +501,7 @@ class EventHub {
 
         // Set participant details
         document.getElementById('detailName').textContent = participant.name;
-        document.getElementById('detailAge').textContent = participant.age;
+        document.getElementById('detailAge').textContent = participant.age || '-';
         document.getElementById('detailClub').textContent = participant.club || '-';
         document.getElementById('detailRole').textContent = participant.role || '-';
         document.getElementById('detailTeam').textContent = participant.team || 'Ikke tildelt';

@@ -280,11 +280,11 @@ async function initAdmin() {
     // Load sleeping rooms
     await loadRooms();
 
-    // Generate initial participant code
-    await generateNextCode();
-
-    // Load participants
+    // Load participants first to get existing codes
     await loadParticipants();
+
+    // Then generate initial participant code based on loaded data
+    await generateNextCode();
 
     // Re-render teams and rooms now that participants are loaded
     renderTeams();
@@ -1507,7 +1507,7 @@ async function generateNextCode() {
     if (participants.length > 0) {
         const codes = participants
             .map(p => p.participant_code)
-            .filter(code => code.startsWith(`SK-${year}-`));
+            .filter(code => code && code.startsWith(`SK-${year}-`));
 
         if (codes.length > 0) {
             const numbers = codes.map(code => {
@@ -1515,7 +1515,13 @@ async function generateNextCode() {
                 return parseInt(parts[2]) || 0;
             });
             nextParticipantNumber = Math.max(...numbers) + 1;
+        } else {
+            // No participants with current year code, start from 1
+            nextParticipantNumber = 1;
         }
+    } else {
+        // No participants at all, start from 1
+        nextParticipantNumber = 1;
     }
 
     const code = `SK-${year}-${String(nextParticipantNumber).padStart(3, '0')}`;
@@ -1892,11 +1898,12 @@ async function handleAddParticipant(e) {
 
         // Reset form
         addParticipantForm.reset();
-        nextParticipantNumber++;
-        await generateNextCode();
 
-        // Reload participants
+        // Reload participants first to get fresh data
         await loadParticipants();
+
+        // Then generate next code based on the updated participant list
+        await generateNextCode();
     } catch (err) {
         console.error('Error adding participant:', err);
         showFormStatus(err.message, 'error');
