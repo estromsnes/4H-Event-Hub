@@ -211,7 +211,7 @@
         @media print {
             @page {
                 size: A4;
-                margin: 10mm;
+                margin: 8mm;
             }
 
             body {
@@ -229,42 +229,72 @@
 
             .cards-grid {
                 grid-template-columns: repeat(3, 1fr);
-                gap: 15px;
+                gap: 10px;
             }
 
             .card {
-                padding: 15px;
+                padding: 10px;
                 box-shadow: none;
                 border: 2px dashed #333;
                 page-break-inside: avoid;
+                height: auto;
             }
 
-            .card-qr {
-                max-width: 150px;
+            .card-header {
+                margin-bottom: 8px;
+                padding-bottom: 6px;
             }
 
-            .card-name {
-                font-size: 16px;
-            }
-
-            .login-word-label {
-                font-size: 11px;
+            .card-logo {
+                width: 45px;
                 margin-bottom: 5px;
             }
 
+            .card-event-name {
+                font-size: 11px;
+                margin-bottom: 3px;
+            }
+
+            .card-qr {
+                max-width: 120px;
+                margin: 8px auto;
+            }
+
+            .card-name {
+                font-size: 14px;
+                margin: 6px 0;
+            }
+
+            .login-word-section {
+                margin: 8px 0;
+            }
+
+            .login-word-label {
+                font-size: 9px;
+                margin-bottom: 4px;
+            }
+
             .card-login-word {
-                font-size: 18px;
-                padding: 8px 15px;
+                font-size: 15px;
+                padding: 6px 12px;
+                letter-spacing: 2px;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
 
+            .card-info {
+                margin-top: 8px;
+                padding-top: 6px;
+            }
+
             .card-info p {
-                font-size: 12px;
+                font-size: 10px;
+                margin: 4px 0;
             }
 
             .card-code {
-                font-size: 10px;
+                font-size: 9px;
+                margin-top: 6px;
             }
         }
     </style>

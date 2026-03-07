@@ -286,7 +286,8 @@ class EventHub {
             let eventStartDate = null;
             if (eventResponse.ok) {
                 const eventData = await eventResponse.json();
-                eventStartDate = eventData.start_date;
+                // Try both start_date and start_datetime fields
+                eventStartDate = eventData.start_date || eventData.start_datetime;
             }
 
             const response = await fetch('/api/program');
