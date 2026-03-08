@@ -22,6 +22,14 @@ class QRScanner {
         this.onScanSuccess = onSuccess;
         this.onScanError = onError;
 
+        // Check if Html5Qrcode is available
+        if (typeof Html5Qrcode === 'undefined') {
+            const errorMsg = 'Html5Qrcode library not loaded. Please check your internet connection.';
+            console.error(errorMsg);
+            if (onError) onError(errorMsg);
+            return;
+        }
+
         // If there's an existing instance, clear it first
         if (this.html5QrCode) {
             try {

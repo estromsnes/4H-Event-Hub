@@ -10,8 +10,6 @@
     <link rel="stylesheet" href="/css/index.css">
     <link rel="stylesheet" href="/css/qr-scanner.css">
     <link rel="stylesheet" href="/css/welcome.css">
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 </head>
 <body>
     <!-- Welcome Link (for registration staff) -->
@@ -111,6 +109,11 @@
     </div>
 
 
+    <!-- Load external libraries first -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+
+    <!-- Load app scripts after libraries are loaded -->
     <script src="/js/camera-detector.js"></script>
     <script src="/js/participant-auth.js"></script>
     <script src="/js/session-tracker.js"></script>

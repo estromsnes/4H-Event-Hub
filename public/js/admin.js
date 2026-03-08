@@ -790,7 +790,7 @@ function closeTeamModal() {
 function populateTeamMembers(teamName) {
     // Filter participants who are on this team with role "Deltaker"
     const teamMembers = participants.filter(p =>
-        p.team === teamName && p.role === 'Deltaker' && p.active
+        p.team === teamName && p.role === 'Deltaker' && p.active === 1
     );
 
     if (teamMembers.length === 0) {
@@ -839,8 +839,14 @@ window.removeParticipantFromTeam = async function(participantCode, teamName) {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                ...participant,
-                team: null
+                first_name: participant.first_name,
+                last_name: participant.last_name,
+                age: participant.age,
+                home_location: participant.home_location,
+                club: participant.club,
+                role: participant.role,
+                team: null,  // Remove from team
+                notes: participant.notes
             })
         });
 
@@ -849,7 +855,7 @@ window.removeParticipantFromTeam = async function(participantCode, teamName) {
             throw new Error(error.error || 'Failed to remove participant from team');
         }
 
-        // Reload participants
+        // Reload participants and wait for it to complete
         await loadParticipants();
 
         // Refresh the team members list

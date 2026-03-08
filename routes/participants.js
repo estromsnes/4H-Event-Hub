@@ -271,7 +271,7 @@ router.put('/:code', (req, res) => {
              home_location = COALESCE(?, home_location),
              club = COALESCE(?, club),
              role = COALESCE(?, role),
-             team = COALESCE(?, team),
+             team = ?,
              notes = COALESCE(?, notes)
          WHERE participant_code = ? AND active = 1`,
         [first_name, last_name, age, home_location, club, role, team, notes, code],
