@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sosial Bingo - 4H Event Hub</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="/css/qr-scanner.css">
+    <link rel="stylesheet" href="/css/profile.css">
+    <link rel="stylesheet" href="/css/bingo.css">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+</head>
+<body>
+    <!-- Back Button -->
+    <a href="/participant.html" class="back-btn" title="Tilbake">← Tilbake</a>
+
+    <!-- Settings Icon -->
+    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
+
+    <!-- Event Header -->
+    <header class="event-header">
+        <img id="eventLogo" class="event-logo hidden" alt="Event logo">
+        <h1 class="event-title">🎲 Sosial Bingo</h1>
+    </header>
+
+    <div class="container">
+
+        <!-- Participant Scan View -->
+        <div id="participantScanView" class="view">
+            <div class="container">
+                <div class="team-selector">
+                    <h1>🎲</h1>
+                    <h2>Identifiser deg</h2>
+                    <p style="color: var(--text-light); margin-bottom: 30px;">Skriv inn login-ord eller skann QR-koden din</p>
+
+                    <!-- Login Word Input Section -->
+                    <div id="codeInputSection" class="code-input-section" style="margin-bottom: 25px;">
+                        <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
+                        <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                            <input
+                                type="text"
+                                id="loginWordInput"
+                                placeholder="F.eks: 4H"
+                                style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
+                                autocomplete="off"
+                                maxlength="50"
+                            >
+                            <button id="loginWordBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
+                                ➡️
+                            </button>
+                        </div>
+                        <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
+                            💡 Finner du på deltakerkortet
+                        </p>
+                        <div id="codeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
+                    </div>
+
+                    <div class="divider">
+                        <span>eller skann QR-kode</span>
+                    </div>
+
+                    <div id="participantScanner" style="margin-bottom: 20px;"></div>
+
+                    <button id="startParticipantScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
+                        📷 Start Kamera-Skanning
+                    </button>
+
+                    <label id="uploadParticipantQRBtn" for="participantQRFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                        🖼️ Last opp bilde av QR
+                    </label>
+                    <input type="file" id="participantQRFileInput" accept="image/*" style="display: none;">
+
+                    <div id="scanStatus" class="scan-status hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions View -->
+        <div id="instructionsView" class="view hidden">
+            <div class="instructions-container">
+                <h2>Velkommen til Sosial Bingo!</h2>
+
+                <div class="info-card">
+                    <h3>🎯 Hvordan spille:</h3>
+                    <ol>
+                        <li>Du får et bingo-kort med 25 oppgaver (5x5)</li>
+                        <li>Hver oppgave beskriver noe du må finne hos andre deltakere</li>
+                        <li>Når du finner noen som oppfyller kriteriet, trykk på ruten og scan deres QR-kode</li>
+                        <li>Midten av kortet er en "fri rute" som allerede er fullført</li>
+                    </ol>
+                </div>
+
+                <div class="info-card">
+                    <h3>🏆 Vinnerbetingelser:</h3>
+                    <ul>
+                        <li><strong>Rad/Kolonne/Diagonal:</strong> Få 5 på rad (horisontalt, vertikalt eller diagonalt)</li>
+                        <li><strong>Flest oppgaver:</strong> Fullfør så mange oppgaver som mulig</li>
+                        <li><strong>Fullt kort:</strong> Fullfør alle 25 oppgavene!</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h3>⭐ Poeng:</h3>
+                    <ul>
+                        <li><span id="pointsPerTask">10</span> poeng per oppgave</li>
+                        <li><span id="bonusRowPoints">+50</span> poeng for hver rad/kolonne/diagonal</li>
+                        <li><span id="bonusFullCardPoints">+100</span> poeng for fullt kort!</li>
+                    </ul>
+                </div>
+
+                <button id="startBingoBtn" class="button primary large">
+                    🎲 Start Bingo!
+                </button>
+            </div>
+        </div>
+
+        <!-- Card View (Main Game) -->
+        <div id="cardView" class="view hidden">
+            <div class="challenges-container">
+                <!-- Participant Info -->
+                <div class="team-selector-mini">
+                    <h2>Din informasjon</h2>
+                    <div class="team-badge" id="teamBadge">
+                        <span id="teamNameDisplay">-</span>
+                    </div>
+                    <div style="margin-top: 10px; color: var(--text-light);">
+                        <span id="participantNameDisplay">-</span>
+                    </div>
+                </div>
+
+                <!-- Progress -->
+                <div class="progress-bar-container">
+                    <div class="progress-text">
+                        <span id="tasksCompleted">0</span> av 25 oppgaver fullført
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;">
+                            <span id="progressPercent">0%</span>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; text-align: center;">
+                        <div>
+                            <div class="stat-value" id="achievementsCount" style="color: var(--primary-green); font-size: 24px; font-weight: bold;">0</div>
+                            <div class="stat-label" style="font-size: 12px; color: var(--text-gray);">Achievements</div>
+                        </div>
+                        <div>
+                            <div class="stat-value" id="pointsEarned" style="color: var(--primary-green); font-size: 24px; font-weight: bold;">0</div>
+                            <div class="stat-label" style="font-size: 12px; color: var(--text-gray);">Poeng</div>
+                        </div>
+                        <div>
+                            <button id="viewLeaderboardBtn" class="button secondary" style="padding: 8px 12px; font-size: 14px;">
+                                🏆 Resultater
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bingo Header -->
+                <div class="challenges-header">
+                    <h1>🎲 Sosial Bingo</h1>
+                    <p style="color: var(--text-light); font-size: 18px;">Møt andre deltakere og fyll ut bingo-kortet</p>
+                </div>
+
+                <!-- Bingo Grid -->
+                <div id="bingoGrid" class="bingo-grid">
+                    <!-- Grid cells will be generated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan Task View -->
+        <div id="scanTaskView" class="view hidden">
+            <div class="scan-container">
+                <button id="backToCardBtn" class="button secondary small">← Tilbake</button>
+
+                <h2>Scan deltaker</h2>
+                <div id="currentTaskInfo" class="task-info-card">
+                    <!-- Task info will be inserted here -->
+                </div>
+
+                <div id="taskScanner" class="qr-scanner"></div>
+
+                <div class="scan-actions">
+                    <button id="startTaskScanBtn" class="button primary large">
+                        📷 Start Scanning
+                    </button>
+                    <button id="uploadTaskQRBtn" class="button secondary">
+                        📁 Last opp bilde
+                    </button>
+                    <input type="file" id="taskQRFileInput" accept="image/*" style="display: none;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievement View (Modal overlay) -->
+        <div id="achievementModal" class="modal hidden">
+            <div class="modal-content achievement-modal">
+                <div id="achievementContent">
+                    <!-- Achievement content will be inserted here -->
+                </div>
+                <button id="closeAchievementBtn" class="button primary large">
+                    Fortsett!
+                </button>
+            </div>
+        </div>
+
+        <!-- Leaderboard View -->
+        <div id="leaderboardView" class="view hidden">
+            <button id="backToCardFromLeaderboardBtn" class="button secondary small">← Tilbake</button>
+
+            <h2>🏆 Resultatliste</h2>
+
+            <div id="leaderboardContainer">
+                <!-- Leaderboard will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Status Message -->
+        <div id="statusMessage" class="status-message hidden"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/camera-detector.js"></script>
+    <script src="/js/participant-auth.js"></script>
+    <script src="/js/barcode-scanner-global.js"></script>
+    <script src="/js/scanner.js"></script>
+    <script src="/js/qr-upload-visibility.js"></script>
+    <script src="/js/bingo.js"></script>
+</body>
+</html>

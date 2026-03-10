@@ -122,9 +122,17 @@ body {
 .activities-section {
     padding: 0 20px;
     display: grid;
+    grid-template-columns: 1fr;
     gap: 20px;
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto 30px;
+}
+
+/* 2-column layout for larger screens */
+@media (min-width: 900px) {
+    .activities-section {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 .activity-card {
@@ -187,6 +195,10 @@ body {
 
 .game-card {
     --card-color: #95E1D3;
+}
+
+.bingo-card {
+    --card-color: #feca57;
 }
 
 .activity-icon {
@@ -335,6 +347,18 @@ body {
 
 .activity-card:nth-child(4) {
     animation-delay: 0.4s;
+}
+
+.activity-card:nth-child(5) {
+    animation-delay: 0.5s;
+}
+
+.activity-card:nth-child(6) {
+    animation-delay: 0.6s;
+}
+
+.activity-card:nth-child(7) {
+    animation-delay: 0.7s;
 }
 
 /* Personal Dashboard */

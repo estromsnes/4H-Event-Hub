@@ -28,6 +28,9 @@ router.get('/', async (req, res) => {
         // 8. Tic-tac-toe statistics
         const ticTacToe = await getTicTacToeStats(db);
 
+        // 8.5. Bingo statistics
+        const bingoStats = await getBingoStats(db);
+
         // 9. Activity over time
         const activityOverTime = await getActivityOverTime(db);
 
@@ -51,6 +54,7 @@ router.get('/', async (req, res) => {
             photoChallenges,
             scavengerHunt,
             ticTacToe,
+            bingoStats,
             activityOverTime,
             awards,
             liveFeed,
@@ -218,13 +222,21 @@ async function getActivityDistribution(db) {
         });
     });
 
+    const bingoParticipants = await new Promise((resolve, reject) => {
+        db.get('SELECT COUNT(DISTINCT participant_code) as count FROM bingo_stats', [], (err, row) => {
+            if (err) reject(err);
+            else resolve(row ? row.count : 0);
+        });
+    });
+
     return {
         quiz: quizParticipants,
         teamChallenge: teamChallengeParticipants,
         scavenger: scavengerParticipants,
         ticTacToe: ticTacToeParticipants,
         photoChallenges: photoParticipants,
-        selfieChain: selfieChainParticipants
+        selfieChain: selfieChainParticipants,
+        bingo: bingoParticipants
     };
 }
 
@@ -515,6 +527,71 @@ async function getTicTacToeStats(db) {
         topPlayers,
         totalDraws,
         totalGames
+    };
+}
+
+async function getBingoStats(db) {
+    // Overall statistics
+    const overall = await new Promise((resolve, reject) => {
+        db.get(`SELECT
+            COUNT(DISTINCT bs.participant_code) as total_participants,
+            AVG(bs.tasks_completed) as avg_tasks_completed,
+            SUM(bs.rows_completed) as total_rows,
+            SUM(bs.columns_completed) as total_columns,
+            SUM(bs.diagonals_completed) as total_diagonals,
+            SUM(bs.full_card_completed) as total_full_cards,
+            MAX(bs.total_points) as highest_points
+            FROM bingo_stats bs
+            JOIN participants p ON bs.participant_code = p.participant_code
+            WHERE p.no_show = 0`, [], (err, row) => {
+            if (err) reject(err);
+            else resolve(row || {});
+        });
+    });
+
+    // Most popular tasks
+    const popularTasks = await new Promise((resolve, reject) => {
+        db.all(`SELECT
+            bt.task_text,
+            bt.category,
+            COUNT(*) as completion_count
+            FROM bingo_completions bc
+            JOIN bingo_tasks bt ON bc.task_id = bt.id
+            GROUP BY bt.id
+            ORDER BY completion_count DESC
+            LIMIT 5`, [], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
+
+    // Top performers
+    const topPerformers = await new Promise((resolve, reject) => {
+        db.all(`SELECT
+            p.first_name || ' ' || p.last_name as name,
+            bs.tasks_completed,
+            bs.total_points,
+            bs.full_card_completed
+            FROM bingo_stats bs
+            JOIN participants p ON bs.participant_code = p.participant_code
+            WHERE p.no_show = 0
+            ORDER BY bs.total_points DESC
+            LIMIT 5`, [], (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+        });
+    });
+
+    return {
+        totalParticipants: overall.total_participants || 0,
+        avgTasksCompleted: parseFloat(overall.avg_tasks_completed || 0).toFixed(1),
+        totalRows: overall.total_rows || 0,
+        totalColumns: overall.total_columns || 0,
+        totalDiagonals: overall.total_diagonals || 0,
+        totalFullCards: overall.total_full_cards || 0,
+        highestPoints: overall.highest_points || 0,
+        popularTasks,
+        topPerformers
     };
 }
 

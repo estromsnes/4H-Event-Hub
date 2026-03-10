@@ -31,6 +31,7 @@ function renderStatistics(data) {
     renderPhotoChallengeStats(data.photoChallenges);
     renderScavengerStats(data.scavengerHunt);
     renderTicTacToeStats(data.ticTacToe);
+    renderBingoStats(data.bingoStats);
     renderLiveFeed(data.liveFeed);
 }
 
@@ -98,7 +99,7 @@ function renderActivityDistribution(distribution) {
     statsCharts.activityDistribution = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Quiz', 'Samle laget', 'Bildeoppgaver', 'QR Skattejakt', 'Tripp-Trapp-Tresko', 'Selfie-kjedet'],
+            labels: ['Quiz', 'Samle laget', 'Bildeoppgaver', 'QR Skattejakt', 'Tripp-Trapp-Tresko', 'Selfie-kjedet', 'Bingo'],
             datasets: [{
                 data: [
                     distribution.quiz,
@@ -106,7 +107,8 @@ function renderActivityDistribution(distribution) {
                     distribution.photoChallenges,
                     distribution.scavenger,
                     distribution.ticTacToe,
-                    distribution.selfieChain || 0
+                    distribution.selfieChain || 0,
+                    distribution.bingo || 0
                 ],
                 backgroundColor: [
                     '#667eea',
@@ -114,7 +116,8 @@ function renderActivityDistribution(distribution) {
                     '#4facfe',
                     '#43e97b',
                     '#fa709a',
-                    '#ff6b6b'
+                    '#ff6b6b',
+                    '#feca57'
                 ],
                 borderWidth: 2,
                 borderColor: '#fff'
@@ -592,6 +595,73 @@ function renderTicTacToeStats(stats) {
         `;
     } else {
         html += '<p style="text-align: center; color: #999; margin-top: 20px;">Ingen data ennå</p>';
+    }
+
+    container.innerHTML = html;
+}
+
+// Bingo Statistics
+function renderBingoStats(stats) {
+    const container = document.getElementById('bingoStats');
+
+    if (!stats || stats.totalParticipants === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #999; margin-top: 20px;">Ingen data ennå</p>';
+        return;
+    }
+
+    let html = `
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; color: white;">
+                <div style="font-size: 32px; font-weight: bold;">${stats.totalParticipants}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Deltakere</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #f093fb, #f5576c); border-radius: 10px; color: white;">
+                <div style="font-size: 32px; font-weight: bold;">${stats.avgTasksCompleted}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Snitt oppgaver</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #4facfe, #00f2fe); border-radius: 10px; color: white;">
+                <div style="font-size: 32px; font-weight: bold;">${stats.totalRows + stats.totalColumns + stats.totalDiagonals}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Achievements</div>
+            </div>
+            <div style="text-align: center; padding: 15px; background: linear-gradient(135deg, #feca57, #ff9ff3); border-radius: 10px; color: white;">
+                <div style="font-size: 32px; font-weight: bold;">${stats.totalFullCards}</div>
+                <div style="font-size: 14px; opacity: 0.9;">Fulle kort</div>
+            </div>
+        </div>
+    `;
+
+    if (stats.topPerformers && stats.topPerformers.length > 0) {
+        html += `
+            <div style="margin-bottom: 20px;">
+                <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">🏆 Topp 5 spillere</h4>
+                ${stats.topPerformers.map((player, index) => `
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: ${index === 0 ? '#ffd700' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : '#f5f5f5'}; border-radius: 8px; margin-bottom: 8px;">
+                        <div style="font-size: 20px; font-weight: bold; min-width: 30px; text-align: center;">${index + 1}</div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold;">${player.name}</div>
+                            <div style="font-size: 13px; color: #666;">${player.tasks_completed}/25 oppgaver • ${player.total_points} poeng${player.full_card_completed ? ' • 🏆 Fullt kort!' : ''}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    if (stats.popularTasks && stats.popularTasks.length > 0) {
+        html += `
+            <div>
+                <h4 style="margin-top: 0; margin-bottom: 15px; color: #333;">📊 Mest populære oppgaver</h4>
+                <ol style="margin: 0; padding-left: 20px;">
+                    ${stats.popularTasks.map(task => `
+                        <li style="margin-bottom: 8px;">
+                            <strong>${task.task_text}</strong>
+                            <span style="color: #666; font-size: 13px;"> - ${task.completion_count} ganger</span>
+                            <span style="background: #e3f2fd; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-left: 8px;">${task.category}</span>
+                        </li>
+                    `).join('')}
+                </ol>
+            </div>
+        `;
     }
 
     container.innerHTML = html;

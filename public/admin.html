@@ -656,6 +656,7 @@
             <button class="tab-button" data-tab="program">📅 Program</button>
             <button class="tab-button" data-tab="photo-challenges">📸 Bildeoppgaver</button>
             <button class="tab-button" data-tab="selfie-chain">🤳 Selfie-kjedet</button>
+            <button class="tab-button" data-tab="bingo">🎲 Bingo</button>
             <button class="tab-button" data-tab="sleeping-rooms">🛏️ Soverom</button>
             <button class="tab-button" data-tab="feedback">💬 Tilbakemeldinger<span id="feedbackBadge" class="badge hidden">0</span></button>
             <button class="tab-button" data-tab="adminqr">🔑 Admin QR</button>
@@ -1412,6 +1413,12 @@
                         <h3 style="margin-top: 0;">🤳 Selfie-kjedet</h3>
                         <div id="selfieChainStats"></div>
                     </div>
+
+                    <!-- Bingo -->
+                    <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin-top: 0;">🎲 Bingo</h3>
+                        <div id="bingoStats"></div>
+                    </div>
                 </div>
 
                 <!-- Live Feed -->
@@ -1509,6 +1516,78 @@ Klokkeslett: {{TIME}}</textarea>
             </div>
         </div>
         <!-- End Printer Tab -->
+
+        <!-- Bingo Tab -->
+        <div id="bingoTab" class="tab-content">
+            <div class="section">
+                <h2>🎲 Sosial Bingo</h2>
+                <div id="bingoStatus" class="alert hidden"></div>
+
+                <!-- Configuration Section -->
+                <div class="section">
+                    <h3>⚙️ Konfigurasjon</h3>
+                    <form id="bingoConfigForm">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="checkbox" id="bingoActive">
+                                    <span>Aktivert</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>Tidsbegrensning (minutter):</label>
+                                <input type="number" id="bingoTimeLimit" class="form-control" min="0" value="60">
+                            </div>
+                            <div class="form-group">
+                                <label>Poeng per oppgave:</label>
+                                <input type="number" id="bingoPointsPerTask" class="form-control" min="1" value="10">
+                            </div>
+                            <div class="form-group">
+                                <label>Bonus for rad/kolonne/diagonal:</label>
+                                <input type="number" id="bingoBonusRow" class="form-control" min="0" value="50">
+                            </div>
+                            <div class="form-group">
+                                <label>Bonus for fullt kort:</label>
+                                <input type="number" id="bingoBonusFullCard" class="form-control" min="0" value="100">
+                            </div>
+                        </div>
+                        <button type="submit" class="button primary">💾 Lagre konfigurasjon</button>
+                    </form>
+                </div>
+
+                <!-- Tasks Management Section -->
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;">📋 Bingo-oppgaver</h3>
+                        <button id="addBingoTaskBtn" class="button primary">+ Ny oppgave</button>
+                    </div>
+                    <div id="bingoTasksList"></div>
+                </div>
+
+                <!-- Leaderboard Section -->
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0;">🏆 Resultatliste</h3>
+                        <button id="refreshBingoLeaderboardBtn" class="button secondary">🔄 Oppdater</button>
+                    </div>
+                    <div id="bingoLeaderboardContainer"></div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div class="section">
+                    <h3>📊 Statistikk</h3>
+                    <div id="bingoStatsContainer"></div>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="section" style="border: 2px solid #f44336;">
+                    <h3 style="color: #f44336;">⚠️ Farlig sone</h3>
+                    <p>Dette vil slette alle bingo-kort, fullføringer og statistikk. Kan ikke angres!</p>
+                    <button id="resetBingoBtn" class="button danger">🗑️ Nullstill alle bingo-data</button>
+                </div>
+            </div>
+        </div>
+        <!-- End Bingo Tab -->
 
         <!-- Sleeping Rooms Tab -->
         <div id="sleeping-roomsTab" class="tab-content">
@@ -3172,6 +3251,47 @@ Klokkeslett: {{TIME}}</textarea>
         }
 
     </script>
+
+    <!-- Bingo Task Modal -->
+    <div id="bingoTaskModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="bingoTaskModalTitle">Ny Bingo-oppgave</h2>
+                <button id="closeBingoTaskBtn" class="close-btn">✕</button>
+            </div>
+
+            <form id="bingoTaskForm">
+                <input type="hidden" id="bingoTaskId">
+
+                <div class="form-group">
+                    <label for="bingoTaskText">Oppgavetekst *</label>
+                    <input type="text" id="bingoTaskText" required placeholder="Finn noen som...">
+                </div>
+
+                <div class="form-group">
+                    <label for="bingoTaskCategory">Kategori</label>
+                    <select id="bingoTaskCategory" class="form-control">
+                        <option value="4H-erfaring">4H-erfaring</option>
+                        <option value="Hobbyer">Hobbyer</option>
+                        <option value="Interesser">Interesser</option>
+                        <option value="Personlig">Personlig</option>
+                        <option value="Annet">Annet</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="submit" class="button primary" style="flex: 1;">
+                        ✅ Lagre
+                    </button>
+                    <button type="button" id="cancelBingoTaskBtn" class="button secondary" style="flex: 1;">
+                        ❌ Avbryt
+                    </button>
+                </div>
+            </form>
+
+            <div id="bingoTaskModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
 
     <script src="/js/session-tracker.js"></script>
     <script src="/js/admin.js"></script>

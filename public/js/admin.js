@@ -5523,3 +5523,262 @@ window.editPhotoChallenge = editPhotoChallenge;
 window.deletePhotoChallenge = deletePhotoChallenge;
 window.openReviewSubmissionModal = openReviewSubmissionModal;
 window.showFeedbackDetail = showFeedbackDetail;
+
+// ============================================================================
+// BINGO MANAGEMENT
+// ============================================================================
+
+const bingoStatus = document.getElementById('bingoStatus');
+let bingoTasks = [];
+let bingoConfig = {};
+
+function showBingoStatus(message, type) {
+    bingoStatus.textContent = message;
+    bingoStatus.className = `alert ${type}`;
+    bingoStatus.classList.remove('hidden');
+
+    setTimeout(() => {
+        bingoStatus.classList.add('hidden');
+    }, 5000);
+}
+
+async function loadBingoConfig() {
+    try {
+        const response = await fetch('/api/bingo/admin/config', {
+            headers: { 'X-Admin-Token': sessionStorage.getItem('adminToken') }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('Unauthorized - please login again');
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        bingoConfig = await response.json();
+        document.getElementById('bingoActive').checked = bingoConfig.active;
+        document.getElementById('bingoTimeLimit').value = bingoConfig.time_limit_minutes || 60;
+        document.getElementById('bingoPointsPerTask').value = bingoConfig.points_per_task || 10;
+        document.getElementById('bingoBonusRow').value = bingoConfig.bonus_row_points || 50;
+        document.getElementById('bingoBonusFullCard').value = bingoConfig.bonus_full_card_points || 100;
+    } catch (err) {
+        console.error('Error loading bingo config:', err);
+    }
+}
+
+async function saveBingoConfig(e) {
+    e.preventDefault();
+    const config = {
+        active: document.getElementById('bingoActive').checked ? 1 : 0,
+        time_limit_minutes: parseInt(document.getElementById('bingoTimeLimit').value),
+        points_per_task: parseInt(document.getElementById('bingoPointsPerTask').value),
+        bonus_row_points: parseInt(document.getElementById('bingoBonusRow').value),
+        bonus_full_card_points: parseInt(document.getElementById('bingoBonusFullCard').value)
+    };
+    try {
+        const response = await fetch('/api/bingo/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Token': sessionStorage.getItem('adminToken') },
+            body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                showBingoStatus('Ikke autorisert. Vennligst logg inn på nytt.', 'error');
+                return;
+            }
+            const errorData = await response.json();
+            showBingoStatus(errorData.message || 'Kunne ikke lagre konfigurasjon', 'error');
+            return;
+        }
+
+        showBingoStatus('✅ Konfigurasjon lagret', 'success');
+        await loadBingoConfig();
+    } catch (err) {
+        console.error('Error saving bingo config:', err);
+        showBingoStatus('❌ Kunne ikke lagre konfigurasjon', 'error');
+    }
+}
+
+async function loadBingoTasks() {
+    try {
+        const response = await fetch('/api/bingo/admin/tasks');
+        bingoTasks = await response.json();
+        renderBingoTasks();
+    } catch (err) {
+        console.error('Error loading bingo tasks:', err);
+    }
+}
+
+function renderBingoTasks() {
+    const container = document.getElementById('bingoTasksList');
+    if (bingoTasks.length === 0) {
+        container.innerHTML = '<p style="color: #666;">Ingen oppgaver ennå</p>';
+        return;
+    }
+    let html = '<div style="display: grid; gap: 10px;">';
+    bingoTasks.forEach(task => {
+        const statusColor = task.active ? '#4caf50' : '#999';
+        html += `<div style="background: #f5f5f5; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;"><div>${task.task_text}</div><div style="font-size: 12px; color: #666; margin-top: 5px;">${task.category} · <span style="background: ${statusColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">${task.active ? 'Aktiv' : 'Inaktiv'}</span></div></div>
+            <div style="display: flex; gap: 10px;"><button onclick="editBingoTask(${task.id})" class="button secondary">✏️</button><button onclick="deleteBingoTask(${task.id})" class="button danger">🗑️</button></div></div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function openBingoTaskModal(taskId = null) {
+    const modal = document.getElementById('bingoTaskModal');
+    const form = document.getElementById('bingoTaskForm');
+    const title = document.getElementById('bingoTaskModalTitle');
+    form.reset();
+    document.getElementById('bingoTaskId').value = '';
+    if (taskId) {
+        const task = bingoTasks.find(t => t.id === taskId);
+        if (task) {
+            document.getElementById('bingoTaskId').value = task.id;
+            document.getElementById('bingoTaskText').value = task.task_text;
+            document.getElementById('bingoTaskCategory').value = task.category;
+            title.textContent = 'Rediger oppgave';
+        }
+    } else {
+        title.textContent = 'Ny oppgave';
+    }
+    modal.classList.remove('hidden');
+}
+
+function closeBingoTaskModal() {
+    document.getElementById('bingoTaskModal').classList.add('hidden');
+}
+
+async function saveBingoTask(e) {
+    e.preventDefault();
+    const taskId = document.getElementById('bingoTaskId').value;
+    const data = {
+        task_text: document.getElementById('bingoTaskText').value.trim(),
+        category: document.getElementById('bingoTaskCategory').value
+    };
+    try {
+        const url = taskId ? `/api/bingo/admin/tasks/${taskId}` : '/api/bingo/admin/tasks';
+        const method = taskId ? 'PUT' : 'POST';
+        const response = await fetch(url, {
+            method, headers: { 'Content-Type': 'application/json', 'X-Admin-Token': sessionStorage.getItem('adminToken') },
+            body: JSON.stringify(data)
+        });
+        if (response.ok) {
+            await loadBingoTasks();
+            closeBingoTaskModal();
+            showBingoStatus('✅ Oppgave lagret', 'success');
+        }
+    } catch (err) {
+        console.error('Error saving bingo task:', err);
+    }
+}
+
+async function deleteBingoTask(taskId) {
+    if (!confirm('Sikker på at du vil slette denne oppgaven?')) return;
+    try {
+        const response = await fetch(`/api/bingo/admin/tasks/${taskId}`, {
+            method: 'DELETE', headers: { 'X-Admin-Token': sessionStorage.getItem('adminToken') }
+        });
+        if (response.ok) {
+            await loadBingoTasks();
+            showBingoStatus('✅ Oppgave slettet', 'success');
+        }
+    } catch (err) {
+        console.error('Error deleting bingo task:', err);
+    }
+}
+
+async function loadBingoLeaderboard() {
+    try {
+        const response = await fetch('/api/bingo/leaderboard');
+        const leaderboard = await response.json();
+        renderBingoLeaderboard(leaderboard);
+    } catch (err) {
+        console.error('Error loading bingo leaderboard:', err);
+    }
+}
+
+function renderBingoLeaderboard(leaderboard) {
+    const container = document.getElementById('bingoLeaderboardContainer');
+    if (leaderboard.length === 0) {
+        container.innerHTML = '<p style="color: #666;">Ingen resultater ennå</p>';
+        return;
+    }
+    let html = '<table class="table" style="width: 100%;"><thead><tr><th>Rank</th><th>Navn</th><th>Oppgaver</th><th>Achievements</th><th>Poeng</th></tr></thead><tbody>';
+    leaderboard.forEach(entry => {
+        const totalAch = entry.rows_completed + entry.columns_completed + entry.diagonals_completed + (entry.full_card_completed ? 1 : 0);
+        html += `<tr><td>${entry.rank}</td><td>${entry.first_name} ${entry.last_name}</td><td>${entry.tasks_completed}/25</td><td>${totalAch}${entry.full_card_completed ? ' 🏆' : ''}</td><td><strong>${entry.total_points}</strong></td></tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+async function loadBingoStats() {
+    try {
+        const response = await fetch('/api/bingo/admin/stats', {
+            headers: { 'X-Admin-Token': sessionStorage.getItem('adminToken') }
+        });
+        const stats = await response.json();
+        renderBingoStats(stats);
+    } catch (err) {
+        console.error('Error loading bingo stats:', err);
+    }
+}
+
+function renderBingoStats(stats) {
+    const container = document.getElementById('bingoStatsContainer');
+    let html = `<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+        <div class="stat-card"><div class="stat-value">${stats.overall.totalParticipants}</div><div class="stat-label">Deltakere</div></div>
+        <div class="stat-card"><div class="stat-value">${stats.overall.avgTasksCompleted}</div><div class="stat-label">Snitt oppgaver</div></div>
+        <div class="stat-card"><div class="stat-value">${stats.overall.totalRows + stats.overall.totalColumns + stats.overall.totalDiagonals}</div><div class="stat-label">Achievements</div></div>
+        <div class="stat-card"><div class="stat-value">${stats.overall.totalFullCards}</div><div class="stat-label">Fulle kort</div></div>
+    </div>`;
+    if (stats.popularTasks && stats.popularTasks.length > 0) {
+        html += '<h4>Mest populære oppgaver:</h4><ol>';
+        stats.popularTasks.forEach(task => { html += `<li>${task.task_text} (${task.completion_count}×)</li>`; });
+        html += '</ol>';
+    }
+    container.innerHTML = html;
+}
+
+async function resetBingo() {
+    if (!confirm('SIKKER på at du vil nullstille alle bingo-data? Kan ikke angres!')) return;
+    if (!confirm('Siste sjanse! Dette sletter alle kort, fullføringer og statistikk.')) return;
+    try {
+        const response = await fetch('/api/bingo/admin/reset', {
+            method: 'POST', headers: { 'X-Admin-Token': sessionStorage.getItem('adminToken') }
+        });
+        if (response.ok) {
+            showBingoStatus('✅ Bingo-data nullstilt', 'success');
+            await loadBingoLeaderboard();
+            await loadBingoStats();
+        }
+    } catch (err) {
+        console.error('Error resetting bingo:', err);
+    }
+}
+
+// Event listeners
+document.getElementById('bingoConfigForm')?.addEventListener('submit', saveBingoConfig);
+document.getElementById('addBingoTaskBtn')?.addEventListener('click', () => openBingoTaskModal());
+document.getElementById('closeBingoTaskBtn')?.addEventListener('click', closeBingoTaskModal);
+document.getElementById('cancelBingoTaskBtn')?.addEventListener('click', closeBingoTaskModal);
+document.getElementById('bingoTaskForm')?.addEventListener('submit', saveBingoTask);
+document.getElementById('refreshBingoLeaderboardBtn')?.addEventListener('click', loadBingoLeaderboard);
+document.getElementById('resetBingoBtn')?.addEventListener('click', resetBingo);
+
+const bingoTabButton = document.querySelector('[data-tab="bingo"]');
+if (bingoTabButton) {
+    bingoTabButton.addEventListener('click', async () => {
+        await loadBingoConfig();
+        await loadBingoTasks();
+        await loadBingoLeaderboard();
+        await loadBingoStats();
+    });
+}
+
+window.editBingoTask = (taskId) => openBingoTaskModal(taskId);
+window.deleteBingoTask = deleteBingoTask;
