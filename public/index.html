@@ -62,20 +62,38 @@
                 <button id="closeMobileModalBtn" class="close-btn">✕</button>
             </div>
             <div class="modal-body">
-                <p class="modal-description">Skann QR-koden med kameraet på mobilen din for å åpne siden på din egen enhet</p>
+                <p class="modal-description">Skann QR-kodene med kameraet på mobilen din for å koble til WiFi og åpne siden</p>
 
-                <div class="qr-code-wrapper">
-                    <div class="qr-code-container" id="qrCodeContainer">
-                        <div class="qr-loading">Genererer QR-kode...</div>
+                <!-- WiFi QR Code (if configured) -->
+                <div id="wifiQrSection" class="qr-section hidden" style="margin-bottom: 30px;">
+                    <h3 style="text-align: center; margin-bottom: 10px;">1️⃣ Koble til WiFi</h3>
+                    <div class="qr-code-wrapper">
+                        <div class="qr-code-container" id="wifiQrCodeContainer">
+                            <div class="qr-loading">Genererer WiFi QR-kode...</div>
+                        </div>
+                    </div>
+                    <div class="url-display" style="margin-top: 10px;">
+                        <span class="url-label">Nettverk:</span>
+                        <span class="url-text" id="wifiSsidText">-</span>
                     </div>
                 </div>
 
-                <div class="url-display" id="urlDisplay">
-                    <span class="url-label">URL:</span>
-                    <span class="url-text" id="urlText">Laster...</span>
+                <!-- Page URL QR Code -->
+                <div class="qr-section">
+                    <h3 id="urlQrTitle" style="text-align: center; margin-bottom: 10px;">2️⃣ Åpne siden</h3>
+                    <div class="qr-code-wrapper">
+                        <div class="qr-code-container" id="qrCodeContainer">
+                            <div class="qr-loading">Genererer QR-kode...</div>
+                        </div>
+                    </div>
+
+                    <div class="url-display" id="urlDisplay">
+                        <span class="url-label">URL:</span>
+                        <span class="url-text" id="urlText">Laster...</span>
+                    </div>
                 </div>
 
-                <p class="qr-hint">💡 Husk å koble til samme WiFi-nettverk først</p>
+                <p class="qr-hint" id="wifiHint" style="margin-top: 20px;">💡 Husk å koble til samme WiFi-nettverk først</p>
             </div>
         </div>
     </div>

@@ -240,6 +240,70 @@ class EventHub {
 
     async loadMobileAccessQR() {
         try {
+            // Fetch event info to check for WiFi settings
+            const eventResponse = await fetch('/api/event');
+            let wifiSsid = null;
+            let wifiPassword = null;
+
+            if (eventResponse.ok) {
+                const eventData = await eventResponse.json();
+                wifiSsid = eventData.wifi_ssid;
+                wifiPassword = eventData.wifi_password;
+            }
+
+            // Check if WiFi settings are configured
+            const hasWifi = wifiSsid && wifiPassword;
+            const wifiQrSection = document.getElementById('wifiQrSection');
+            const urlQrTitle = document.getElementById('urlQrTitle');
+            const wifiHint = document.getElementById('wifiHint');
+
+            if (hasWifi && wifiQrSection) {
+                // Show WiFi section
+                wifiQrSection.classList.remove('hidden');
+
+                // Update title for URL section
+                if (urlQrTitle) {
+                    urlQrTitle.textContent = '2️⃣ Åpne siden';
+                }
+
+                // Update hint
+                if (wifiHint) {
+                    wifiHint.textContent = '💡 Koble til WiFi først (steg 1), deretter skann steg 2';
+                }
+
+                // Generate WiFi QR code
+                // Format: WIFI:T:WPA;S:ssid;P:password;;
+                const wifiString = `WIFI:T:WPA;S:${wifiSsid};P:${wifiPassword};;`;
+                const wifiQrContainer = document.getElementById('wifiQrCodeContainer');
+                const wifiSsidText = document.getElementById('wifiSsidText');
+
+                if (wifiQrContainer) {
+                    const qrSize = 300;
+                    const wifiQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(wifiString)}&margin=10`;
+                    wifiQrContainer.innerHTML = `<img src="${wifiQrCodeUrl}" alt="WiFi QR Code" />`;
+                }
+
+                if (wifiSsidText) {
+                    wifiSsidText.textContent = wifiSsid;
+                }
+            } else {
+                // Hide WiFi section if no settings
+                if (wifiQrSection) {
+                    wifiQrSection.classList.add('hidden');
+                }
+
+                // Update title to remove step number
+                if (urlQrTitle) {
+                    urlQrTitle.textContent = 'Skann for å åpne';
+                }
+
+                // Keep original hint
+                if (wifiHint) {
+                    wifiHint.textContent = '💡 Husk å koble til samme WiFi-nettverk først';
+                }
+            }
+
+            // Load page URL
             const response = await fetch('/api/local-url');
             if (!response.ok) throw new Error('Failed to get local URL');
 
@@ -269,7 +333,7 @@ class EventHub {
                 qrContainer.innerHTML = `<img src="${qrCodeUrl}" alt="QR Code til ${url}" />`;
             }
 
-            console.log('Mobile access QR code loaded:', url);
+            console.log('Mobile access QR codes loaded. WiFi:', hasWifi ? 'Yes' : 'No');
         } catch (err) {
             console.error('Error loading mobile access QR:', err);
             const qrContainer = document.getElementById('qrCodeContainer');

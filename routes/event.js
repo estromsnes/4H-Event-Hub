@@ -153,7 +153,9 @@ router.put('/:id', (req, res) => {
         organizer_club,
         organizer_contact,
         allow_qr_upload,
-        enable_quiz_music
+        enable_quiz_music,
+        wifi_ssid,
+        wifi_password
     } = req.body;
 
     db.run(
@@ -169,6 +171,8 @@ router.put('/:id', (req, res) => {
              organizer_contact = COALESCE(?, organizer_contact),
              allow_qr_upload = COALESCE(?, allow_qr_upload),
              enable_quiz_music = COALESCE(?, enable_quiz_music),
+             wifi_ssid = COALESCE(?, wifi_ssid),
+             wifi_password = COALESCE(?, wifi_password),
              updated_date = datetime('now')
          WHERE id = ?`,
         [
@@ -183,6 +187,8 @@ router.put('/:id', (req, res) => {
             organizer_contact,
             allow_qr_upload,
             enable_quiz_music,
+            wifi_ssid,
+            wifi_password,
             id
         ],
         function(err) {

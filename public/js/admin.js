@@ -426,6 +426,10 @@ async function loadEventInfo() {
         allowQrUploadInput.checked = currentEvent.allow_qr_upload === 1;
         enableQuizMusicInput.checked = currentEvent.enable_quiz_music !== 0; // Default to true if undefined
 
+        // Load WiFi settings
+        wifiSSID.value = currentEvent.wifi_ssid || '';
+        wifiPassword.value = currentEvent.wifi_password || '';
+
         // Show logo preview if exists
         if (currentEvent.logo_path) {
             logoPreviewImg.src = currentEvent.logo_path + '?t=' + Date.now();
@@ -4419,7 +4423,11 @@ closePhotoChallengeBtn.addEventListener('click', closePhotoChallengeModal);
 cancelPhotoChallengeBtn.addEventListener('click', closePhotoChallengeModal);
 photoChallengeForm.addEventListener('submit', savePhotoChallenge);
 
-// Event Listeners - Participant Connection
+// Event Listeners - Participant Connection (WiFi)
+const saveWifiBtn = document.getElementById('saveWifiBtn');
+if (saveWifiBtn) {
+    saveWifiBtn.addEventListener('click', saveWifiSettings);
+}
 detectIPBtn.addEventListener('click', detectLocalIP);
 generateQRBtn.addEventListener('click', generateConnectionQR);
 showConnectionScreenBtn.addEventListener('click', showConnectionScreen);
@@ -5369,17 +5377,14 @@ async function updateFeedbackBadge() {
  */
 async function detectLocalIP() {
     try {
-        // Use the current hostname (will be local IP if accessed via IP)
-        const hostname = window.location.hostname;
-        const port = window.location.port;
-        const protocol = window.location.protocol;
-
-        // Construct URL to photo-challenges.html
-        let baseURL = `${protocol}//${hostname}`;
-        if (port) {
-            baseURL += `:${port}`;
+        // Fetch local IP from server
+        const response = await fetch('/api/local-url');
+        if (!response.ok) {
+            throw new Error('Failed to get local URL');
         }
-        const fullURL = `${baseURL}/photo-challenges.html`;
+
+        const data = await response.json();
+        const fullURL = data.url;
 
         serverURL.value = fullURL;
         currentConnectionURL = fullURL;
@@ -5388,6 +5393,67 @@ async function detectLocalIP() {
     } catch (error) {
         console.error('Error detecting IP:', error);
         alert('Kunne ikke finne IP-adresse. Vennligst skriv inn manuelt.');
+    }
+}
+
+/**
+ * Save WiFi settings to event database
+ */
+async function saveWifiSettings() {
+    const ssid = wifiSSID.value.trim();
+    const password = wifiPassword.value.trim();
+
+    // Check if event exists
+    if (!currentEvent || !currentEvent.id) {
+        const wifiStatus = document.getElementById('wifiStatus');
+        if (wifiStatus) {
+            wifiStatus.textContent = '❌ Vennligst opprett arrangement først';
+            wifiStatus.className = 'alert error';
+            wifiStatus.classList.remove('hidden');
+        }
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/event/${currentEvent.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                wifi_ssid: ssid || null,
+                wifi_password: password || null
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save WiFi settings');
+        }
+
+        // Update currentEvent with new data
+        const updatedEvent = await response.json();
+        currentEvent = updatedEvent;
+
+        // Show success message
+        const wifiStatus = document.getElementById('wifiStatus');
+        if (wifiStatus) {
+            wifiStatus.textContent = '✅ WiFi-innstillinger lagret!';
+            wifiStatus.className = 'alert success';
+            wifiStatus.classList.remove('hidden');
+            setTimeout(() => {
+                wifiStatus.classList.add('hidden');
+            }, 3000);
+        }
+
+        console.log('WiFi settings saved');
+    } catch (err) {
+        console.error('Error saving WiFi settings:', err);
+        const wifiStatus = document.getElementById('wifiStatus');
+        if (wifiStatus) {
+            wifiStatus.textContent = '❌ Kunne ikke lagre WiFi-innstillinger';
+            wifiStatus.className = 'alert error';
+            wifiStatus.classList.remove('hidden');
+        }
     }
 }
 
