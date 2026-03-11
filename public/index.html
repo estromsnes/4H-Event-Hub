@@ -236,7 +236,7 @@
     </div>
 
     <!-- Hidden barcode input for background scanning -->
-    <input type="text" id="barcode-input" style="position: absolute; left: -9999px;" autocomplete="off">
+    <input type="text" id="barcode-input" name="barcode-scanner" style="position: absolute; left: -9999px;" autocomplete="off">
 
     <!-- Send Message Modal -->
     <div id="sendMessageModal" class="modal hidden">
@@ -274,7 +274,8 @@
                     </p>
 
                     <div style="margin-bottom: 20px;">
-                        <input type="text" id="messageSenderCodeInput" placeholder="Ditt login-ord"
+                        <input type="text" id="messageSenderCodeInput" name="message-sender-code" placeholder="Ditt login-ord"
+                               autocomplete="username"
                                style="width: 100%; padding: 15px; font-size: 18px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px; border: 2px solid var(--primary-green); border-radius: 8px;">
                         <button id="messageCodeLoginBtn" class="button primary" style="width: 100%; margin-top: 10px; padding: 15px;">
                             ➡️ Logg inn
@@ -319,7 +320,8 @@
 
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; margin-bottom: 5px; font-weight: 600;">Tittel (valgfritt)</label>
-                        <input type="text" id="messageTitle" placeholder="F.eks: Takk for i dag!"
+                        <input type="text" id="messageTitle" name="message-title" placeholder="F.eks: Takk for i dag!"
+                               autocomplete="off"
                                maxlength="200" style="width: 100%; padding: 12px; font-size: 16px; border: 2px solid #ddd; border-radius: 8px;">
                         <div style="font-size: 12px; color: #666; margin-top: 3px; text-align: right;">
                             <span id="messageTitleCount">0</span> / 200 tegn
@@ -328,7 +330,8 @@
 
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; margin-bottom: 5px; font-weight: 600;">Melding *</label>
-                        <textarea id="messageText" placeholder="Skriv din melding her..."
+                        <textarea id="messageText" name="message-text" placeholder="Skriv din melding her..."
+                                  autocomplete="off"
                                   rows="6" maxlength="5000" style="width: 100%; padding: 12px; font-size: 16px; resize: vertical; border: 2px solid #ddd; border-radius: 8px;"></textarea>
                         <div style="font-size: 12px; color: #666; margin-top: 3px; text-align: right;">
                             <span id="messageTextCount">0</span> / 5000 tegn
