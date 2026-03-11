@@ -34,6 +34,28 @@
                                 fileInput.style.display = 'none';
                             }
                         }
+
+                        // Hide the divider immediately before the upload button
+                        // Look for previous sibling that is a divider with "eller"
+                        let previousElement = element.previousElementSibling;
+                        while (previousElement) {
+                            // Check if it's a divider with just "eller" text
+                            if (previousElement.classList.contains('divider')) {
+                                const dividerText = previousElement.textContent.trim();
+                                if (dividerText === 'eller') {
+                                    previousElement.style.display = 'none';
+                                    break;
+                                }
+                            }
+                            // Only check the immediate previous element and one before that
+                            // (in case there's a hidden input between them)
+                            if (previousElement.previousElementSibling &&
+                                previousElement.previousElementSibling.classList.contains('divider')) {
+                                previousElement = previousElement.previousElementSibling;
+                            } else {
+                                break;
+                            }
+                        }
                     }
                 }
             });

@@ -53,9 +53,12 @@
 
             <div id="scannerContainer" class="scanner-container">
                 <!-- Login Word Input Section -->
-                <div id="codeInputSection" class="code-input-section" style="margin-bottom: 25px;">
+                <div id="codeInputSection" class="code-input-section">
                     <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
                     <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                        <label for="participantCodeInput" class="visually-hidden">
+                            Din deltakerkode for Tilbakemelding
+                        </label>
                         <input
                             type="text"
                             id="participantCodeInput"
@@ -64,11 +67,15 @@
                             style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
                             autocomplete="username"
                             maxlength="10"
+                            aria-describedby="feedbackCodeHint"
                         >
-                        <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
-                            ➡️
+                        <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;" aria-label="Logg inn med deltakerkode">
+                            <span aria-hidden="true">➡️</span>
                         </button>
                     </div>
+                    <span id="feedbackCodeHint" class="visually-hidden">
+                        Skriv eller skann deltakerkoden din for å sende tilbakemelding med navn
+                    </span>
                     <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
                         💡 Finner du dette på ditt navneskilt/deltakerkort
                     </p>
@@ -76,7 +83,7 @@
                 </div>
 
                 <div class="divider">
-                    <span>eller skann QR-kode</span>
+                    <span>eller</span>
                 </div>
 
                 <div class="scanner-mode-indicator">
@@ -100,7 +107,7 @@
                     <span>eller</span>
                 </div>
 
-                <div id="qr-reader"></div>
+                <div id="qr-reader" style="margin-bottom: 20px;"></div>
 
                 <button id="startCameraScanBtn" class="button primary" style="width: 100%; max-width: 400px; font-size: 18px; padding: 20px; margin: 0 auto 15px auto; display: block;">
                     📷 Start Kamera-Skanning
@@ -207,6 +214,7 @@
     <script src="/js/participant-auth.js"></script>
     <script src="/js/session-tracker.js"></script>
     <script src="/js/scanner.js"></script>
+    <script src="/js/qr-upload-visibility.js"></script>
     <script src="/js/barcode-scanner-global.js"></script>
     <script src="/js/feedback.js"></script>
 </body>
