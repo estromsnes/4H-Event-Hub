@@ -8,25 +8,33 @@
     <link rel="stylesheet" href="/css/index.css">
 </head>
 <body>
+    <!-- Skip to main content -->
+    <a href="#main-content" class="skip-link">Hopp til hovedinnhold</a>
+
     <!-- Settings Icon -->
-    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
+    <a href="/admin.html" class="settings-icon" aria-label="Åpne admin-innstillinger">
+        <span aria-hidden="true">⚙️</span>
+    </a>
 
     <!-- Welcome Link (for registration staff) -->
-    <a href="/welcome.html" class="welcome-link" title="Innregistrering">
-        <span class="welcome-icon">📋</span>
+    <a href="/welcome.html" class="welcome-link" aria-label="Gå til innregistrering av deltakere">
+        <span class="welcome-icon" aria-hidden="true">📋</span>
         <span class="welcome-text">Innregistrering</span>
     </a>
 
     <!-- Event Header -->
-    <header class="event-header">
+    <header class="event-header" role="banner">
         <img src="/images/4H-logo-O2.png" class="header-4h-logo" alt="4H Logo">
         <img id="eventLogo" class="event-logo hidden" alt="Event logo">
         <h1 class="event-title" id="eventTitle">4H Event Hub</h1>
         <p class="event-subtitle" id="eventSubtitle">Laster...</p>
     </header>
 
-    <!-- Program Section -->
-    <section class="program-section">
+    <!-- Main Content -->
+    <main id="main-content" role="main">
+        <!-- Program Section -->
+        <section class="program-section" aria-labelledby="program-heading">
+            <h2 id="program-heading" class="visually-hidden">Program</h2>
         <div class="program-container" id="programContainer">
             <div class="loading">Laster program...</div>
         </div>
@@ -108,12 +116,18 @@
         <div class="participant-content" id="participantContent">
             <!-- Search Display -->
             <div class="search-display">
-                <div class="search-text" id="searchText">_</div>
-                <button id="resetBtn" class="reset-button" title="Nullstill søk">✕</button>
+                <label for="searchInput" class="visually-hidden">Søk etter deltaker</label>
+                <div class="search-text" id="searchText" role="textbox" aria-label="Søketekst" aria-live="polite">_</div>
+                <button id="resetBtn" class="reset-button" aria-label="Nullstill søk">
+                    <span aria-hidden="true">✕</span>
+                </button>
             </div>
 
+            <!-- Screen reader announcements -->
+            <div id="searchStatus" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
             <!-- On-screen Keyboard -->
-            <div class="keyboard" id="keyboard">
+            <div class="keyboard" id="keyboard" role="group" aria-label="Virtuelt tastatur for søk">
                 <!-- Row 1 -->
                 <div class="keyboard-row">
                     <button class="key" data-key="Q">Q</button>
@@ -157,7 +171,7 @@
 
             <!-- Participant Count -->
             <div class="participant-count">
-                <span id="participantCount">0</span> deltakere
+                <span id="participantCount" aria-live="polite" aria-atomic="true">0</span> deltakere
             </div>
 
             <!-- Participant Cards Grid -->
@@ -172,13 +186,16 @@
             </div>
         </div>
     </section>
+    </main>
 
     <!-- Participant Detail Modal -->
-    <div id="detailModal" class="modal hidden">
+    <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailModalTitle">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Deltakerinfo</h2>
-                <button id="closeModalBtn" class="close-btn">✕</button>
+                <h2 id="detailModalTitle">Deltakerinfo</h2>
+                <button id="closeModalBtn" class="close-btn" aria-label="Lukk deltakerinfo">
+                    <span aria-hidden="true">✕</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="detail-photo-container">

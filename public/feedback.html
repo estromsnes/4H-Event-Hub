@@ -143,15 +143,34 @@
 
             <!-- Title Input -->
             <div class="form-group">
-                <label for="titleDisplay">Tittel (valgfritt)</label>
-                <div class="input-display" id="titleDisplay" contenteditable="true">Klikk for å skrive tittel</div>
+                <label id="titleLabel" for="titleDisplay">Tittel (valgfritt)</label>
+                <div
+                    class="input-display"
+                    id="titleDisplay"
+                    contenteditable="true"
+                    role="textbox"
+                    aria-labelledby="titleLabel"
+                    aria-multiline="false"
+                    aria-placeholder="Klikk for å skrive tittel"
+                    tabindex="0"
+                >Klikk for å skrive tittel</div>
                 <div id="titleKeyboard" class="keyboard-container hidden"></div>
             </div>
 
             <!-- Message Input -->
             <div class="form-group">
-                <label for="messageDisplay">Melding *</label>
-                <div class="input-display message-display" id="messageDisplay" contenteditable="true">Klikk for å skrive melding</div>
+                <label id="messageLabel" for="messageDisplay">Melding *</label>
+                <div
+                    class="input-display message-display"
+                    id="messageDisplay"
+                    contenteditable="true"
+                    role="textbox"
+                    aria-labelledby="messageLabel"
+                    aria-multiline="true"
+                    aria-placeholder="Klikk for å skrive melding"
+                    aria-required="true"
+                    tabindex="0"
+                >Klikk for å skrive melding</div>
                 <div id="messageKeyboard" class="keyboard-container hidden"></div>
             </div>
 

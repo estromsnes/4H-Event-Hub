@@ -9,10 +9,12 @@
 </head>
 <body>
     <!-- Back Button -->
-    <button class="back-btn" onclick="window.location.href='/participant.html'">← Tilbake</button>
+    <button class="back-btn" onclick="window.location.href='/participant.html'" aria-label="Tilbake til aktiviteter">← Tilbake</button>
 
     <!-- Settings Icon -->
-    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
+    <a href="/admin.html" class="settings-icon" aria-label="Åpne admin-innstillinger">
+        <span aria-hidden="true">⚙️</span>
+    </a>
 
     <div class="container">
         <!-- Header -->
@@ -35,6 +37,9 @@
                     <div id="codeInputSection" class="code-input-section" style="margin-bottom: 25px;">
                         <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
                         <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                            <label for="participantCodeInput" class="visually-hidden">
+                                Din deltakerkode for Selfie-kjedet
+                            </label>
                             <input
                                 type="text"
                                 id="participantCodeInput"
@@ -42,14 +47,18 @@
                                 style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
                                 autocomplete="off"
                                 maxlength="10"
+                                aria-describedby="codeHint"
                             >
-                            <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
-                                ➡️
+                            <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;" aria-label="Logg inn til Selfie-kjedet">
+                                <span aria-hidden="true">➡️</span>
                             </button>
                         </div>
                         <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
                             💡 Finner du på deltakerkortet
                         </p>
+                        <span id="codeHint" class="visually-hidden">
+                            Skriv eller skann deltakerkoden din for å starte Selfie-kjedet
+                        </span>
                         <div id="codeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
                     </div>
 

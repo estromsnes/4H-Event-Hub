@@ -51,6 +51,9 @@
                 <div id="codeInputSection" class="code-input-section">
                     <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
                     <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                        <label for="participantCodeInput" class="visually-hidden">
+                            Deltakerkode (F.eks: 4H001)
+                        </label>
                         <input
                             type="text"
                             id="participantCodeInput"
@@ -58,11 +61,15 @@
                             style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
                             autocomplete="off"
                             maxlength="10"
+                            aria-describedby="codeHint"
                         >
-                        <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
-                            ➡️
+                        <button id="codeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;" aria-label="Logg inn med deltakerkode">
+                            <span aria-hidden="true">➡️</span>
                         </button>
                     </div>
+                    <span id="codeHint" class="visually-hidden">
+                        Skriv inn din unike deltakerkode for å logge inn på din profil
+                    </span>
                     <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
                         💡 Finner du dette på ditt navneskilt/deltakerkort
                     </p>

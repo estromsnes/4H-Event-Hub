@@ -273,10 +273,12 @@
 </head>
 <body>
     <!-- Back Button -->
-    <a href="/participant.html" class="back-btn" title="Tilbake">← Tilbake</a>
+    <a href="/participant.html" class="back-btn" aria-label="Tilbake til aktiviteter">← Tilbake</a>
 
     <!-- Settings Icon -->
-    <a href="/admin.html" class="settings-icon" title="Admin">⚙️</a>
+    <a href="/admin.html" class="settings-icon" aria-label="Åpne admin-innstillinger">
+        <span aria-hidden="true">⚙️</span>
+    </a>
 
     <!-- Event Header -->
     <header class="event-header">
@@ -298,6 +300,9 @@
                 <div id="player1CodeInputSection" class="code-input-section" style="margin-bottom: 25px;">
                     <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
                     <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                        <label for="player1CodeInput" class="visually-hidden">
+                            Spiller 1 deltakerkode
+                        </label>
                         <input
                             type="text"
                             id="player1CodeInput"
@@ -305,11 +310,15 @@
                             style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
                             autocomplete="off"
                             maxlength="10"
+                            aria-describedby="player1Hint"
                         >
-                        <button id="player1CodeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
-                            ➡️
+                        <button id="player1CodeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;" aria-label="Logg inn spiller 1">
+                            <span aria-hidden="true">➡️</span>
                         </button>
                     </div>
+                    <span id="player1Hint" class="visually-hidden">
+                        Skriv eller skann deltakerkoden til spiller 1
+                    </span>
                     <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
                         💡 Finner du på deltakerkortet
                     </p>
@@ -355,6 +364,9 @@
                 <div id="player2CodeInputSection" class="code-input-section" style="margin-bottom: 25px;">
                     <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
                     <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                        <label for="player2CodeInput" class="visually-hidden">
+                            Spiller 2 deltakerkode
+                        </label>
                         <input
                             type="text"
                             id="player2CodeInput"
@@ -362,11 +374,15 @@
                             style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
                             autocomplete="off"
                             maxlength="10"
+                            aria-describedby="player2Hint"
                         >
-                        <button id="player2CodeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
-                            ➡️
+                        <button id="player2CodeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;" aria-label="Logg inn spiller 2">
+                            <span aria-hidden="true">➡️</span>
                         </button>
                     </div>
+                    <span id="player2Hint" class="visually-hidden">
+                        Skriv eller skann deltakerkoden til spiller 2
+                    </span>
                     <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
                         💡 Finner du på deltakerkortet
                     </p>

@@ -1213,7 +1213,8 @@ body {
 
 #messageTitle:focus,
 #messageSenderCodeInput:focus {
-    outline: none;
+    outline: 3px solid var(--primary-green);
+    outline-offset: 2px;
     border-color: var(--primary-green);
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
@@ -1232,7 +1233,8 @@ body {
 }
 
 #messageText:focus {
-    outline: none;
+    outline: 3px solid var(--primary-green);
+    outline-offset: 2px;
     border-color: var(--primary-green);
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
 }
