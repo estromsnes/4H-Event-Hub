@@ -57,10 +57,13 @@ class BingoGame {
             // Scan task
             backToCardBtn: document.getElementById('backToCardBtn'),
             currentTaskInfo: document.getElementById('currentTaskInfo'),
+            taskLoginWordInput: document.getElementById('taskLoginWordInput'),
+            taskLoginWordBtn: document.getElementById('taskLoginWordBtn'),
+            taskCodeStatus: document.getElementById('taskCodeStatus'),
             taskScanner: document.getElementById('taskScanner'),
             startTaskScanBtn: document.getElementById('startTaskScanBtn'),
-            uploadTaskQRBtn: document.getElementById('uploadTaskQRBtn'),
             taskQRFileInput: document.getElementById('taskQRFileInput'),
+            taskScanStatus: document.getElementById('taskScanStatus'),
 
             // Achievement modal
             achievementModal: document.getElementById('achievementModal'),
@@ -105,12 +108,22 @@ class BingoGame {
 
         // Card view
         this.elements.viewLeaderboardBtn.addEventListener('click', () => this.showLeaderboard());
-        this.elements.refreshCardBtn.addEventListener('click', () => this.loadCard());
+        if (this.elements.refreshCardBtn) {
+            this.elements.refreshCardBtn.addEventListener('click', () => this.loadCard());
+        }
 
         // Scan task
         this.elements.backToCardBtn.addEventListener('click', () => this.showView('cardView'));
+        if (this.elements.taskLoginWordBtn) {
+            this.elements.taskLoginWordBtn.addEventListener('click', () => this.handleTaskLoginWord());
+        }
+        if (this.elements.taskLoginWordInput) {
+            this.elements.taskLoginWordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') this.handleTaskLoginWord();
+            });
+        }
         this.elements.startTaskScanBtn.addEventListener('click', () => this.startTaskScan());
-        this.elements.uploadTaskQRBtn.addEventListener('click', () => this.elements.taskQRFileInput.click());
+        // Note: Upload button is now a <label for="taskQRFileInput">, so no click handler needed
         this.elements.taskQRFileInput.addEventListener('change', (e) => this.handleTaskQRUpload(e));
 
         // Achievement modal
@@ -446,8 +459,16 @@ class BingoGame {
         this.elements.currentTaskInfo.innerHTML = `
             <h3>${task.task_text}</h3>
             <p class="task-category">📂 ${task.category}</p>
-            <p>Scan QR-koden til en deltaker som oppfyller dette kriteriet</p>
+            <p>Skriv inn personens login-ord eller scan QR-koden til en deltaker som oppfyller dette kriteriet</p>
         `;
+
+        // Reset input and status
+        if (this.elements.taskLoginWordInput) {
+            this.elements.taskLoginWordInput.value = '';
+        }
+        if (this.elements.taskCodeStatus) {
+            this.elements.taskCodeStatus.classList.add('hidden');
+        }
 
         this.showView('scanTaskView');
     }
@@ -490,6 +511,63 @@ class BingoGame {
         } catch (err) {
             console.error('[Bingo] Error scanning task file:', err);
             this.showStatus('Kunne ikke lese QR-kode fra bilde', 'error');
+        }
+    }
+
+    async handleTaskLoginWord() {
+        const code = this.elements.taskLoginWordInput.value.trim().toUpperCase();
+
+        if (!code) {
+            this.showTaskCodeStatus('Vennligst skriv inn login-ord', 'error');
+            return;
+        }
+
+        this.elements.taskLoginWordBtn.disabled = true;
+        this.elements.taskLoginWordBtn.textContent = '⏳';
+        this.showTaskCodeStatus('Verifiserer...', 'info');
+
+        try {
+            // Verify that the participant exists
+            const response = await fetch(`/api/participants/${code}`);
+
+            if (!response.ok) {
+                throw new Error('Deltaker ikke funnet');
+            }
+
+            const participant = await response.json();
+
+            // Show success message briefly
+            this.showTaskCodeStatus(`✅ Funnet: ${participant.first_name} ${participant.last_name}`, 'success');
+
+            // Clear input
+            this.elements.taskLoginWordInput.value = '';
+
+            // Wait a moment for user to see the success message
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // Process the scan with the participant code
+            await this.handleTaskScan(code);
+
+        } catch (error) {
+            console.error('[Bingo] Error verifying login word:', error);
+            this.showTaskCodeStatus('❌ Ugyldig login-ord. Prøv igjen.', 'error');
+        } finally {
+            this.elements.taskLoginWordBtn.disabled = false;
+            this.elements.taskLoginWordBtn.textContent = '➡️';
+        }
+    }
+
+    showTaskCodeStatus(message, type = 'info') {
+        if (!this.elements.taskCodeStatus) return;
+
+        this.elements.taskCodeStatus.textContent = message;
+        this.elements.taskCodeStatus.className = `scan-status ${type}`;
+        this.elements.taskCodeStatus.classList.remove('hidden');
+
+        if (type === 'error') {
+            setTimeout(() => {
+                this.elements.taskCodeStatus.classList.add('hidden');
+            }, 3000);
         }
     }
 

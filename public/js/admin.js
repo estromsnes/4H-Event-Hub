@@ -315,6 +315,9 @@ async function initAdmin() {
     // Load feedback
     await loadFeedback();
 
+    // Load participant messages
+    await loadMessages();
+
     // Setup event listeners
     eventInfoForm.addEventListener('submit', handleSaveEventInfo);
     eventLogoInput.addEventListener('change', handleLogoPreview);
@@ -5366,6 +5369,390 @@ async function updateFeedbackBadge() {
 
 // ==============================================
 // END FEEDBACK MANAGEMENT FUNCTIONS
+// ==============================================
+
+// ==============================================
+// PARTICIPANT MESSAGES MANAGEMENT FUNCTIONS
+// ==============================================
+
+// DOM Elements for Messages
+const messagesFilter = document.getElementById('messagesFilter');
+const refreshMessagesBtn = document.getElementById('refreshMessagesBtn');
+const messagesList = document.getElementById('messagesList');
+const messagesCount = document.getElementById('messagesCount');
+const messagesBadge = document.getElementById('messagesBadge');
+
+// Message modal elements
+const messageModal = document.getElementById('messageModal');
+const closeMessageBtn = document.getElementById('closeMessageBtn');
+const messageModalTitle = document.getElementById('messageModalTitle');
+const messageModalMessage = document.getElementById('messageModalMessage');
+const messageModalFrom = document.getElementById('messageModalFrom');
+const messageModalTo = document.getElementById('messageModalTo');
+const messageModalStatus = document.getElementById('messageModalStatus');
+const messageModalSubmitted = document.getElementById('messageModalSubmitted');
+const messageModalReviewed = document.getElementById('messageModalReviewed');
+const messageAdminNotesSection = document.getElementById('messageAdminNotesSection');
+const messageAdminNotes = document.getElementById('messageAdminNotes');
+const approveMessageBtn = document.getElementById('approveMessageBtn');
+const rejectMessageBtn = document.getElementById('rejectMessageBtn');
+const resetMessageBtn = document.getElementById('resetMessageBtn');
+const deleteMessageBtn = document.getElementById('deleteMessageBtn');
+
+// Reject modal elements
+const rejectMessageModal = document.getElementById('rejectMessageModal');
+const closeRejectModalBtn = document.getElementById('closeRejectModalBtn');
+const rejectReasonInput = document.getElementById('rejectReasonInput');
+const confirmRejectBtn = document.getElementById('confirmRejectBtn');
+const cancelRejectBtn = document.getElementById('cancelRejectBtn');
+
+// State
+let allMessages = [];
+let currentMessage = null;
+
+// Event listeners
+if (messagesFilter) messagesFilter.addEventListener('change', renderMessages);
+if (refreshMessagesBtn) refreshMessagesBtn.addEventListener('click', loadMessages);
+if (closeMessageBtn) closeMessageBtn.addEventListener('click', closeMessageModal);
+if (approveMessageBtn) approveMessageBtn.addEventListener('click', approveMessage);
+if (rejectMessageBtn) rejectMessageBtn.addEventListener('click', openRejectModal);
+if (resetMessageBtn) resetMessageBtn.addEventListener('click', resetMessageStatus);
+if (deleteMessageBtn) deleteMessageBtn.addEventListener('click', deleteMessage);
+if (closeRejectModalBtn) closeRejectModalBtn.addEventListener('click', closeRejectModal);
+if (confirmRejectBtn) confirmRejectBtn.addEventListener('click', confirmRejectMessage);
+if (cancelRejectBtn) cancelRejectBtn.addEventListener('click', closeRejectModal);
+
+// Utility function for escaping HTML
+function escapeHtmlMessage(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function loadMessages() {
+    try {
+        const response = await fetch('/api/participant-messages');
+        if (!response.ok) {
+            throw new Error('Failed to load messages');
+        }
+
+        allMessages = await response.json();
+        renderMessages();
+        updateMessagesBadge();
+
+    } catch (error) {
+        console.error('Error loading messages:', error);
+        if (messagesList) {
+            messagesList.innerHTML = '<p style="color: #f44336; text-align: center; padding: 20px;">Kunne ikke laste meldinger</p>';
+        }
+    }
+}
+
+function renderMessages() {
+    if (!messagesList || !messagesCount) return;
+
+    let filteredMessages = [...allMessages];
+
+    // Apply filter
+    const filterValue = messagesFilter ? messagesFilter.value : 'all';
+    if (filterValue === 'pending') {
+        filteredMessages = filteredMessages.filter(m => m.status === 'pending');
+    } else if (filterValue === 'approved') {
+        filteredMessages = filteredMessages.filter(m => m.status === 'approved');
+    } else if (filterValue === 'rejected') {
+        filteredMessages = filteredMessages.filter(m => m.status === 'rejected');
+    } else if (filterValue === 'anonymous') {
+        filteredMessages = filteredMessages.filter(m => m.sender_is_anonymous === 1);
+    } else if (filterValue === 'identified') {
+        filteredMessages = filteredMessages.filter(m => m.sender_is_anonymous === 0);
+    }
+
+    messagesCount.textContent = filteredMessages.length;
+
+    if (filteredMessages.length === 0) {
+        messagesList.innerHTML = '<p style="text-align: center; padding: 40px; color: var(--text-light);">Ingen meldinger funnet</p>';
+        return;
+    }
+
+    messagesList.innerHTML = filteredMessages.map(msg => renderMessageCard(msg)).join('');
+
+    // Add click handlers to cards
+    filteredMessages.forEach(msg => {
+        const card = messagesList.querySelector(`[data-message-id="${msg.id}"]`);
+        if (card) {
+            card.addEventListener('click', () => showMessageDetail(msg.id));
+        }
+    });
+}
+
+function renderMessageCard(msg) {
+    let statusBadge, borderColor;
+    if (msg.status === 'pending') {
+        statusBadge = '<span style="background: #FF9800; color: white; padding: 5px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;">⏳ AVVENTER</span>';
+        borderColor = '#FF9800';
+    } else if (msg.status === 'approved') {
+        statusBadge = '<span style="background: #4CAF50; color: white; padding: 5px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;">✅ GODKJENT</span>';
+        borderColor = '#4CAF50';
+    } else {
+        statusBadge = '<span style="background: #f44336; color: white; padding: 5px 12px; border-radius: 12px; font-size: 13px; font-weight: 600;">❌ AVVIST</span>';
+        borderColor = '#f44336';
+    }
+
+    const fromName = msg.sender_is_anonymous === 1
+        ? '🕵️ Anonym'
+        : `${msg.sender_first_name || ''} ${msg.sender_last_name || ''} (${msg.sender_club || ''})`.trim();
+
+    const toName = `${msg.recipient_first_name || ''} ${msg.recipient_last_name || ''} (${msg.recipient_club || ''})`.trim();
+
+    const messagePreview = msg.message.length > 150
+        ? escapeHtmlMessage(msg.message.substring(0, 150)) + '...'
+        : escapeHtmlMessage(msg.message);
+
+    const submittedDate = new Date(msg.submitted_at).toLocaleString('no-NO', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    return `
+        <div class="team-card" data-message-id="${msg.id}" style="cursor: pointer; border-left: 5px solid ${borderColor}; transition: transform 0.2s, box-shadow 0.2s;">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                <h3 style="margin: 0; flex: 1;">${msg.title ? escapeHtmlMessage(msg.title) : 'Ingen tittel'}</h3>
+                ${statusBadge}
+            </div>
+            <div style="display: grid; gap: 8px; margin-bottom: 12px; font-size: 14px;">
+                <div><strong>Fra:</strong> ${escapeHtmlMessage(fromName)}</div>
+                <div><strong>Til:</strong> ${escapeHtmlMessage(toName)}</div>
+            </div>
+            <p style="color: var(--text-dark); margin-bottom: 10px; line-height: 1.5;">${messagePreview}</p>
+            <p style="font-size: 13px; color: var(--text-light);">📅 ${submittedDate}</p>
+        </div>
+    `;
+}
+
+async function showMessageDetail(messageId) {
+    const message = allMessages.find(m => m.id === messageId);
+    if (!message) return;
+
+    currentMessage = message;
+
+    // Populate modal fields
+    if (message.title) {
+        messageModalTitle.innerHTML = `<h3>${escapeHtmlMessage(message.title)}</h3>`;
+    } else {
+        messageModalTitle.innerHTML = '';
+    }
+
+    messageModalMessage.textContent = message.message;
+
+    const fromName = message.sender_is_anonymous === 1
+        ? '🕵️ Anonym'
+        : `${message.sender_first_name || ''} ${message.sender_last_name || ''} (${message.sender_club || ''})`.trim();
+    messageModalFrom.textContent = fromName;
+
+    const toName = `${message.recipient_first_name || ''} ${message.recipient_last_name || ''} (${message.recipient_club || ''})`.trim();
+    messageModalTo.textContent = toName;
+
+    // Status with color
+    let statusText, statusColor;
+    if (message.status === 'pending') {
+        statusText = '⏳ Avventer godkjenning';
+        statusColor = '#FF9800';
+    } else if (message.status === 'approved') {
+        statusText = '✅ Godkjent';
+        statusColor = '#4CAF50';
+    } else {
+        statusText = '❌ Avvist';
+        statusColor = '#f44336';
+    }
+    messageModalStatus.textContent = statusText;
+    messageModalStatus.style.color = statusColor;
+    messageModalStatus.style.fontWeight = '600';
+
+    messageModalSubmitted.textContent = new Date(message.submitted_at).toLocaleString('no-NO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    messageModalReviewed.textContent = message.reviewed_at
+        ? new Date(message.reviewed_at).toLocaleString('no-NO', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+        : '-';
+
+    // Admin notes
+    if (message.admin_notes) {
+        messageAdminNotes.textContent = message.admin_notes;
+        messageAdminNotesSection.classList.remove('hidden');
+    } else {
+        messageAdminNotesSection.classList.add('hidden');
+    }
+
+    // Show/hide buttons based on status
+    if (message.status === 'pending') {
+        approveMessageBtn.style.display = 'inline-block';
+        rejectMessageBtn.style.display = 'inline-block';
+        resetMessageBtn.style.display = 'none';
+    } else {
+        approveMessageBtn.style.display = 'none';
+        rejectMessageBtn.style.display = 'none';
+        resetMessageBtn.style.display = 'inline-block';
+    }
+
+    messageModal.classList.remove('hidden');
+}
+
+function closeMessageModal() {
+    messageModal.classList.add('hidden');
+    currentMessage = null;
+}
+
+async function approveMessage() {
+    if (!currentMessage) return;
+
+    if (!confirm('Godkjenn denne meldingen?\n\nMeldingen vil bli synlig for mottakeren.')) return;
+
+    try {
+        const response = await fetch(`/api/participant-messages/${currentMessage.id}/approve`, {
+            method: 'PUT'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to approve message');
+        }
+
+        await loadMessages();
+        closeMessageModal();
+        alert('Melding godkjent! ✅');
+
+    } catch (error) {
+        console.error('Error approving message:', error);
+        alert('Kunne ikke godkjenne melding. Prøv igjen.');
+    }
+}
+
+function openRejectModal() {
+    rejectReasonInput.value = '';
+    rejectMessageModal.classList.remove('hidden');
+}
+
+function closeRejectModal() {
+    rejectMessageModal.classList.add('hidden');
+}
+
+async function confirmRejectMessage() {
+    if (!currentMessage) return;
+
+    const reason = rejectReasonInput.value.trim();
+
+    try {
+        const response = await fetch(`/api/participant-messages/${currentMessage.id}/reject`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_notes: reason || null })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to reject message');
+        }
+
+        closeRejectModal();
+        await loadMessages();
+        closeMessageModal();
+        alert('Melding avvist ❌');
+
+    } catch (error) {
+        console.error('Error rejecting message:', error);
+        alert('Kunne ikke avvise melding. Prøv igjen.');
+    }
+}
+
+async function resetMessageStatus() {
+    if (!currentMessage) return;
+
+    if (!confirm('Tilbakestill denne meldingen til "Avventer godkjenning"?')) return;
+
+    try {
+        const response = await fetch(`/api/participant-messages/${currentMessage.id}/reset`, {
+            method: 'PUT'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to reset message');
+        }
+
+        await loadMessages();
+        showMessageDetail(currentMessage.id);
+
+    } catch (error) {
+        console.error('Error resetting message:', error);
+        alert('Kunne ikke tilbakestille melding. Prøv igjen.');
+    }
+}
+
+async function deleteMessage() {
+    if (!currentMessage) return;
+
+    if (!confirm('Er du sikker på at du vil slette denne meldingen?\n\nDenne handlingen kan ikke angres.')) return;
+
+    try {
+        const response = await fetch(`/api/participant-messages/${currentMessage.id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to delete message');
+        }
+
+        closeMessageModal();
+        await loadMessages();
+        alert('Melding slettet');
+
+    } catch (error) {
+        console.error('Error deleting message:', error);
+        alert('Kunne ikke slette melding. Prøv igjen.');
+    }
+}
+
+async function updateMessagesBadge() {
+    try {
+        const response = await fetch('/api/participant-messages/count/pending');
+        if (!response.ok) {
+            throw new Error('Failed to get count');
+        }
+
+        const data = await response.json();
+        const count = data.count || 0;
+
+        if (messagesBadge) {
+            if (count > 0) {
+                messagesBadge.textContent = count;
+                messagesBadge.classList.remove('hidden');
+            } else {
+                messagesBadge.classList.add('hidden');
+            }
+        }
+
+    } catch (error) {
+        console.error('Error updating messages badge:', error);
+        // Don't show error to user, just log it
+    }
+}
+
+// Auto-refresh badge every 30 seconds
+setInterval(updateMessagesBadge, 30000);
+
+// ==============================================
+// END PARTICIPANT MESSAGES MANAGEMENT FUNCTIONS
 // ==============================================
 
 // ==============================================

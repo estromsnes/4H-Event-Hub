@@ -489,6 +489,9 @@ function showProfileView() {
     // Load participant stats
     loadParticipantStats();
 
+    // Load received messages
+    loadReceivedMessages(currentParticipant.participant_code);
+
     // Show confirmation section or confirmed status
     updateConfirmationUI();
 
@@ -855,6 +858,73 @@ async function loadParticipantStats() {
         console.error('Error loading participant stats:', err);
         statsActivities.textContent = '0';
         statsPoints.textContent = '0';
+    }
+}
+
+// Utility function to escape HTML and prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Load received messages for the participant
+async function loadReceivedMessages(participantCode) {
+    const messagesSection = document.getElementById('receivedMessagesSection');
+    const messagesList = document.getElementById('receivedMessagesList');
+
+    if (!messagesSection || !messagesList) return;
+
+    try {
+        const response = await fetch(`/api/participant-messages/recipient/${participantCode}`);
+
+        if (!response.ok) {
+            console.error('Error fetching messages:', response.statusText);
+            messagesList.innerHTML = '<div class="no-messages">Kunne ikke laste meldinger</div>';
+            messagesSection.classList.remove('hidden');
+            return;
+        }
+
+        const messages = await response.json();
+
+        if (messages.length === 0) {
+            messagesList.innerHTML = '<div class="no-messages">Du har ikke mottatt noen meldinger ennå 📭</div>';
+            messagesSection.classList.remove('hidden');
+            return;
+        }
+
+        // Render messages
+        messagesList.innerHTML = messages.map(msg => {
+            const senderName = msg.sender_is_anonymous === 1
+                ? '🕵️ Anonym'
+                : `${msg.sender_first_name} ${msg.sender_last_name}`;
+
+            const submittedTime = new Date(msg.submitted_at).toLocaleString('no-NO', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            return `
+                <div class="message-card">
+                    ${msg.title ? `<h3 class="message-title">${escapeHtml(msg.title)}</h3>` : ''}
+                    <p class="message-text">${escapeHtml(msg.message)}</p>
+                    <div class="message-meta">
+                        <span class="message-from">${escapeHtml(senderName)}</span>
+                        <span class="message-date">${submittedTime}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        messagesSection.classList.remove('hidden');
+
+    } catch (err) {
+        console.error('Error loading messages:', err);
+        messagesList.innerHTML = '<div class="no-messages">Kunne ikke laste meldinger</div>';
+        messagesSection.classList.remove('hidden');
     }
 }
 

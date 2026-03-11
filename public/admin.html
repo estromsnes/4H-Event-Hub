@@ -659,6 +659,7 @@
             <button class="tab-button" data-tab="bingo">🎲 Bingo</button>
             <button class="tab-button" data-tab="sleeping-rooms">🛏️ Soverom</button>
             <button class="tab-button" data-tab="feedback">💬 Tilbakemeldinger<span id="feedbackBadge" class="badge hidden">0</span></button>
+            <button class="tab-button" data-tab="messages">✉️ Meldinger<span id="messagesBadge" class="badge hidden">0</span></button>
             <button class="tab-button" data-tab="adminqr">🔑 Admin QR</button>
             <button class="tab-button" data-tab="stats">📊 Statistikk</button>
             <button class="tab-button" data-tab="database">🗄️ Database</button>
@@ -1647,6 +1648,31 @@ Klokkeslett: {{TIME}}</textarea>
         </div>
         <!-- End Feedback Tab -->
 
+        <!-- Messages Tab -->
+        <div id="messagesTab" class="tab-content">
+            <div class="section no-print">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">✉️ Deltakermeldinger (<span id="messagesCount">0</span>)</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="messagesFilter" class="form-control" style="width: auto;">
+                            <option value="all">Alle meldinger</option>
+                            <option value="pending">Avventer godkjenning</option>
+                            <option value="approved">Godkjente</option>
+                            <option value="rejected">Avviste</option>
+                            <option value="anonymous">Anonyme</option>
+                            <option value="identified">Med navn</option>
+                        </select>
+                        <button id="refreshMessagesBtn" class="button primary">🔄 Oppdater</button>
+                    </div>
+                </div>
+
+                <div id="messagesList" style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Messages populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+        <!-- End Messages Tab -->
+
         <!-- Admin QR Tab -->
         <div id="adminqrTab" class="tab-content">
             <div class="section">
@@ -2510,6 +2536,92 @@ Klokkeslett: {{TIME}}</textarea>
             </div>
 
             <div id="feedbackModalStatus" class="hidden mt-2"></div>
+        </div>
+    </div>
+
+    <!-- Message Detail Modal -->
+    <div id="messageModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✉️ Melding</h2>
+                <button id="closeMessageBtn" class="close-btn">✕</button>
+            </div>
+
+            <div id="messageModalBody" style="padding: 25px;">
+                <div id="messageModalTitle" style="font-size: 20px; font-weight: bold; color: var(--primary-dark); margin-bottom: 15px;"></div>
+
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <p id="messageModalMessage" style="white-space: pre-wrap; word-wrap: break-word; color: var(--text-dark); margin: 0; line-height: 1.6;"></p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 10px 15px; margin-bottom: 20px; font-size: 14px;">
+                    <strong>Fra:</strong>
+                    <span id="messageModalFrom">-</span>
+
+                    <strong>Til:</strong>
+                    <span id="messageModalTo">-</span>
+
+                    <strong>Status:</strong>
+                    <span id="messageModalStatus">-</span>
+
+                    <strong>Innsendt:</strong>
+                    <span id="messageModalSubmitted">-</span>
+
+                    <strong>Gjennomgått:</strong>
+                    <span id="messageModalReviewed">-</span>
+                </div>
+
+                <div id="messageAdminNotesSection" class="hidden" style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #FF9800;">
+                    <strong style="color: #E65100;">Admin-notater:</strong>
+                    <p id="messageAdminNotes" style="margin: 8px 0 0 0; color: #555;"></p>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button id="approveMessageBtn" class="button primary" style="flex: 1; min-width: 150px;">
+                        ✅ Godkjenn
+                    </button>
+                    <button id="rejectMessageBtn" class="button secondary" style="flex: 1; min-width: 150px; background: #FF9800; color: white;">
+                        ❌ Avvis
+                    </button>
+                    <button id="resetMessageBtn" class="button secondary" style="flex: 1; min-width: 150px;">
+                        🔄 Tilbakestill
+                    </button>
+                    <button id="deleteMessageBtn" class="button secondary" style="flex: 1; min-width: 150px; background: #f44336; color: white;">
+                        🗑️ Slett
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Message Modal -->
+    <div id="rejectMessageModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>❌ Avvis melding</h2>
+                <button id="closeRejectModalBtn" class="close-btn">✕</button>
+            </div>
+
+            <div style="padding: 25px;">
+                <p style="color: var(--text-light); margin-bottom: 15px;">
+                    Du kan legge til en grunn til avvisningen (valgfritt). Dette vises bare for admin.
+                </p>
+
+                <textarea id="rejectReasonInput"
+                          placeholder="Grunn til avvisning (valgfritt)..."
+                          rows="4"
+                          style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"
+                ></textarea>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button id="confirmRejectBtn" class="button primary" style="flex: 1; background: #f44336; color: white;">
+                        ❌ Avvis melding
+                    </button>
+                    <button id="cancelRejectBtn" class="button secondary" style="flex: 1;">
+                        Avbryt
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -564,6 +564,9 @@ class EventHub {
         const participant = this.participants.find(p => p.participant_code === code);
         if (!participant) return;
 
+        // Store participant code in modal for MessageSender to access
+        this.detailModal.dataset.participantCode = code;
+
         // Set participant details
         document.getElementById('detailName').textContent = participant.name;
         document.getElementById('detailAge').textContent = participant.age || '-';
@@ -701,7 +704,329 @@ class EventHub {
     }
 }
 
+// ============================================
+// MESSAGE SENDING FUNCTIONALITY
+// ============================================
+
+class MessageSender {
+    constructor() {
+        this.currentRecipient = null;  // { code, name }
+        this.isAnonymous = null;       // true/false
+        this.currentSender = null;      // participant object
+        this.currentStep = 1;
+
+        // DOM elements
+        this.modal = document.getElementById('sendMessageModal');
+        this.sendMessageBtn = document.getElementById('sendMessageBtn');
+        this.closeBtn = document.getElementById('closeMessageModalBtn');
+
+        // Steps
+        this.step1 = document.getElementById('messageStep1');
+        this.step2 = document.getElementById('messageStep2');
+        this.step3 = document.getElementById('messageStep3');
+        this.successStep = document.getElementById('messageSuccessStep');
+
+        // Step 1
+        this.recipientName = document.getElementById('messageRecipientName');
+        this.anonymousBtn = document.getElementById('messageAnonymousBtn');
+        this.identifyBtn = document.getElementById('messageIdentifyBtn');
+
+        // Step 2
+        this.senderCodeInput = document.getElementById('messageSenderCodeInput');
+        this.codeLoginBtn = document.getElementById('messageCodeLoginBtn');
+        this.senderInfo = document.getElementById('messageSenderInfo');
+        this.senderName = document.getElementById('messageSenderName');
+        this.senderDetails = document.getElementById('messageSenderDetails');
+        this.cancelScanBtn = document.getElementById('messageCancelScanBtn');
+        this.continueScanBtn = document.getElementById('messageContinueScanBtn');
+        this.scanStatus = document.getElementById('messageScanStatus');
+
+        // Step 3
+        this.identityBadge = document.getElementById('messageIdentityBadge');
+        this.identityText = document.getElementById('messageIdentityText');
+        this.titleInput = document.getElementById('messageTitle');
+        this.textInput = document.getElementById('messageText');
+        this.titleCount = document.getElementById('messageTitleCount');
+        this.textCount = document.getElementById('messageTextCount');
+        this.backBtn = document.getElementById('messageBackBtn');
+        this.submitBtn = document.getElementById('messageSubmitBtn');
+        this.submitStatus = document.getElementById('messageSubmitStatus');
+
+        // Success
+        this.newBtn = document.getElementById('messageNewBtn');
+        this.closeSuccessBtn = document.getElementById('messageCloseBtn');
+
+        this.init();
+    }
+
+    init() {
+        // Open modal when "Send melding" is clicked
+        this.sendMessageBtn.addEventListener('click', () => this.openModal());
+
+        // Close modal
+        this.closeBtn.addEventListener('click', () => this.closeModal());
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.closeModal();
+        });
+
+        // Step 1
+        this.anonymousBtn.addEventListener('click', () => this.chooseAnonymous());
+        this.identifyBtn.addEventListener('click', () => this.chooseIdentify());
+
+        // Step 2
+        this.codeLoginBtn.addEventListener('click', () => this.handleLoginWithCode());
+        this.senderCodeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.handleLoginWithCode();
+        });
+        this.cancelScanBtn.addEventListener('click', () => this.goToStep(1));
+        this.continueScanBtn.addEventListener('click', () => this.goToStep(3));
+
+        // Step 3
+        this.titleInput.addEventListener('input', () => this.updateCharCounts());
+        this.textInput.addEventListener('input', () => this.updateCharCounts());
+        this.backBtn.addEventListener('click', () => this.goToStep(1));
+        this.submitBtn.addEventListener('click', () => this.submitMessage());
+
+        // Success
+        this.newBtn.addEventListener('click', () => this.reset());
+        this.closeSuccessBtn.addEventListener('click', () => this.closeModal());
+    }
+
+    openModal() {
+        // Get current recipient from detail modal
+        const detailModal = document.getElementById('detailModal');
+        const detailName = document.getElementById('detailName')?.textContent;
+        const detailCode = detailModal?.dataset.participantCode;
+
+        if (!detailName || !detailCode) {
+            alert('Kunne ikke finne mottaker');
+            return;
+        }
+
+        this.currentRecipient = {
+            code: detailCode,
+            name: detailName
+        };
+
+        this.recipientName.textContent = detailName;
+        this.reset();
+        this.modal.classList.remove('hidden');
+    }
+
+    closeModal() {
+        this.modal.classList.add('hidden');
+        this.reset();
+    }
+
+    goToStep(step) {
+        this.currentStep = step;
+
+        // Hide all steps
+        this.step1.classList.add('hidden');
+        this.step2.classList.add('hidden');
+        this.step3.classList.add('hidden');
+        this.successStep.classList.add('hidden');
+
+        // Show current step
+        if (step === 1) this.step1.classList.remove('hidden');
+        else if (step === 2) this.step2.classList.remove('hidden');
+        else if (step === 3) {
+            this.step3.classList.remove('hidden');
+            this.updateIdentityBadge();
+        }
+        else if (step === 'success') this.successStep.classList.remove('hidden');
+    }
+
+    chooseAnonymous() {
+        this.isAnonymous = true;
+        this.currentSender = null;
+        this.goToStep(3);
+    }
+
+    chooseIdentify() {
+        this.isAnonymous = false;
+        this.goToStep(2);
+    }
+
+    async handleLoginWithCode() {
+        const code = this.senderCodeInput.value.trim().toUpperCase();
+
+        if (!code) {
+            this.showScanStatus('Vennligst skriv inn ditt login-ord', 'error');
+            return;
+        }
+
+        this.codeLoginBtn.disabled = true;
+        this.codeLoginBtn.textContent = '⏳ Logger inn...';
+        this.showScanStatus('Logger inn...', 'info');
+
+        try {
+            // Direct API call
+            const response = await fetch(`/api/participants/${code}`);
+
+            if (!response.ok) {
+                throw new Error('Deltaker ikke funnet');
+            }
+
+            this.currentSender = await response.json();
+            this.displaySenderInfo();
+            this.showScanStatus('✅ Innlogget!', 'success');
+            this.continueScanBtn.classList.remove('hidden');
+
+        } catch (error) {
+            console.error('Login error:', error);
+            this.showScanStatus('❌ Ugyldig login-ord. Prøv igjen.', 'error');
+        } finally {
+            this.codeLoginBtn.disabled = false;
+            this.codeLoginBtn.textContent = '➡️ Logg inn';
+        }
+    }
+
+    displaySenderInfo() {
+        this.senderName.textContent = `${this.currentSender.first_name} ${this.currentSender.last_name}`;
+        const details = [];
+        if (this.currentSender.age) details.push(`${this.currentSender.age} år`);
+        if (this.currentSender.club) details.push(this.currentSender.club);
+        this.senderDetails.textContent = details.join(' • ');
+        this.senderInfo.classList.remove('hidden');
+    }
+
+    showScanStatus(message, type) {
+        this.scanStatus.textContent = message;
+        this.scanStatus.className = `scan-status ${type}`;
+        this.scanStatus.style.padding = '10px';
+        this.scanStatus.style.borderRadius = '8px';
+        this.scanStatus.style.textAlign = 'center';
+        this.scanStatus.style.fontWeight = '600';
+
+        if (type === 'error') {
+            this.scanStatus.style.background = '#ffebee';
+            this.scanStatus.style.color = '#c62828';
+        } else if (type === 'success') {
+            this.scanStatus.style.background = '#e8f5e9';
+            this.scanStatus.style.color = '#2e7d32';
+        } else {
+            this.scanStatus.style.background = '#e3f2fd';
+            this.scanStatus.style.color = '#1565c0';
+        }
+
+        this.scanStatus.classList.remove('hidden');
+    }
+
+    updateIdentityBadge() {
+        if (this.isAnonymous) {
+            this.identityText.innerHTML = '🕵️ Du sender anonymt';
+            this.identityBadge.style.background = '#f3e5f5';
+            this.identityBadge.style.border = '2px solid #9c27b0';
+        } else if (this.currentSender) {
+            this.identityText.innerHTML = `👤 Du sender som: ${this.currentSender.first_name} ${this.currentSender.last_name}`;
+            this.identityBadge.style.background = '#e3f2fd';
+            this.identityBadge.style.border = '2px solid #2196F3';
+        }
+    }
+
+    updateCharCounts() {
+        this.titleCount.textContent = this.titleInput.value.length;
+        this.textCount.textContent = this.textInput.value.length;
+
+        // Enable/disable submit button
+        const hasMessage = this.textInput.value.trim().length > 0;
+        this.submitBtn.disabled = !hasMessage;
+    }
+
+    async submitMessage() {
+        if (!this.textInput.value.trim()) {
+            this.showSubmitStatus('❌ Melding er påkrevd', 'error');
+            return;
+        }
+
+        this.submitBtn.disabled = true;
+        this.submitBtn.textContent = '⏳ Sender...';
+        this.showSubmitStatus('Sender melding...', 'info');
+
+        try {
+            const payload = {
+                recipient_code: this.currentRecipient.code,
+                sender_code: this.isAnonymous ? null : this.currentSender?.participant_code,
+                title: this.titleInput.value.trim() || null,
+                message: this.textInput.value.trim(),
+                is_anonymous: this.isAnonymous ? 1 : 0
+            };
+
+            const response = await fetch('/api/participant-messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Kunne ikke sende melding');
+            }
+
+            // Success!
+            console.log('Message sent successfully');
+            this.goToStep('success');
+
+        } catch (error) {
+            console.error('Submit error:', error);
+            this.showSubmitStatus(error.message || '❌ Kunne ikke sende melding', 'error');
+            this.submitBtn.disabled = false;
+            this.submitBtn.textContent = 'Send inn';
+        }
+    }
+
+    showSubmitStatus(message, type) {
+        this.submitStatus.textContent = message;
+        this.submitStatus.style.padding = '10px';
+        this.submitStatus.style.borderRadius = '8px';
+        this.submitStatus.style.textAlign = 'center';
+        this.submitStatus.style.fontWeight = '600';
+
+        if (type === 'error') {
+            this.submitStatus.style.background = '#ffebee';
+            this.submitStatus.style.color = '#c62828';
+        } else if (type === 'success') {
+            this.submitStatus.style.background = '#e8f5e9';
+            this.submitStatus.style.color = '#2e7d32';
+        } else {
+            this.submitStatus.style.background = '#e3f2fd';
+            this.submitStatus.style.color = '#1565c0';
+        }
+
+        this.submitStatus.classList.remove('hidden');
+    }
+
+    reset() {
+        this.isAnonymous = null;
+        this.currentSender = null;
+        this.currentStep = 1;
+
+        // Reset inputs
+        this.senderCodeInput.value = '';
+        this.titleInput.value = '';
+        this.textInput.value = '';
+
+        // Reset UI
+        this.senderInfo.classList.add('hidden');
+        this.continueScanBtn.classList.add('hidden');
+        this.scanStatus.classList.add('hidden');
+        this.submitStatus.classList.add('hidden');
+
+        // Reset counts
+        this.updateCharCounts();
+
+        // Go to step 1
+        this.goToStep(1);
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     new EventHub();
+
+    // Initialize message sender if modal exists
+    if (document.getElementById('sendMessageModal')) {
+        new MessageSender();
+    }
 });

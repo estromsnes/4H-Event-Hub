@@ -98,6 +98,7 @@ const statisticsRouter = require('./routes/statistics');
 const feedbackRouter = require('./routes/feedback');
 const selfieChainRouter = require('./routes/selfie-chain');
 const bingoRouter = require('./routes/bingo');
+const participantMessagesRouter = require('./routes/participant-messages');
 
 // Set admin credentials for auth router
 authRouter.setAdminCredentials(ADMIN_ACCESS_KEY, ADMIN_PIN);
@@ -123,6 +124,7 @@ app.use('/api/statistics', statisticsRouter);
 app.use('/api/feedback', feedbackRouter);
 app.use('/api/selfie-chain', selfieChainRouter);
 app.use('/api/bingo', bingoRouter);
+app.use('/api/participant-messages', participantMessagesRouter);
 
 // Root redirect to profile page (main interface)
 app.get('/', (req, res) => {

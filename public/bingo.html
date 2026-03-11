@@ -177,22 +177,54 @@
             <div class="scan-container">
                 <button id="backToCardBtn" class="button secondary small">← Tilbake</button>
 
-                <h2>Scan deltaker</h2>
+                <h2>Verifiser med deltaker</h2>
                 <div id="currentTaskInfo" class="task-info-card">
                     <!-- Task info will be inserted here -->
+                </div>
+
+                <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                    Skriv inn personens login-ord eller skann QR-koden
+                </p>
+
+                <!-- Login Word Input Section -->
+                <div id="taskCodeInputSection" class="code-input-section" style="margin-bottom: 25px;">
+                    <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn personens login-ord</p>
+                    <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
+                        <input
+                            type="text"
+                            id="taskLoginWordInput"
+                            placeholder="F.eks: 4H"
+                            style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
+                            autocomplete="off"
+                            maxlength="10"
+                        >
+                        <button id="taskLoginWordBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
+                            ➡️
+                        </button>
+                    </div>
+                    <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
+                        💡 Finner du på personens deltakerkort
+                    </p>
+                    <div id="taskCodeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
+                </div>
+
+                <div class="divider">
+                    <span>eller skann QR-kode</span>
                 </div>
 
                 <div id="taskScanner" class="qr-scanner"></div>
 
                 <div class="scan-actions">
-                    <button id="startTaskScanBtn" class="button primary large">
-                        📷 Start Scanning
+                    <button id="startTaskScanBtn" class="button primary large" style="width: 100%; margin-bottom: 15px;">
+                        📷 Start Kamera-Skanning
                     </button>
-                    <button id="uploadTaskQRBtn" class="button secondary">
-                        📁 Last opp bilde
-                    </button>
+                    <label for="taskQRFileInput" class="button secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                        🖼️ Last opp bilde av QR
+                    </label>
                     <input type="file" id="taskQRFileInput" accept="image/*" style="display: none;">
                 </div>
+
+                <div id="taskScanStatus" class="scan-status hidden"></div>
             </div>
         </div>
 
