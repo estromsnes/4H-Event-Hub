@@ -2,6 +2,8 @@
 
 En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer og arrangement. Applikasjonen gir deltakere en interaktiv opplevelse med spill, konkurranser, profiler og program-oversikt.
 
+> **🚀 Ny bruker? Start her!** Les [QUICKSTART.md](QUICKSTART.md) for en super-enkel guide (15 minutter fra null til ferdig!)
+
 ## 📋 Innholdsfortegnelse
 
 - [Funksjoner](#-funksjoner)
@@ -89,6 +91,16 @@ En sosial aktivitet hvor deltakere møter hverandre og tar selfies sammen!
 - Støtte for både touchskjerm og vanlig tastatur
 
 ### For Arrangører (Admin)
+
+#### 🎮 Aktivitets-styring
+- **Aktivere/Deaktivere aktiviteter**: Skru enkelt på/av alle aktiviteter under "Spill og utfordringer"
+- Uniform checkbox-basert styring for alle aktiviteter
+- Deltakere ser kun aktive aktiviteter i aktivitetsoversikten
+- Inaktive aktiviteter skjules automatisk fra:
+  - Aktivitetslisten på deltakersiden
+  - Resultattavle-faner
+  - Direkte URL-tilgang (viser "ikke tilgjengelig" melding)
+- Konfigurerbar for: Quiz, QR Skattejakt, Tripp-Trapp-Tresko, Samle laget, Bildeoppgaver, Selfie-kjedet, Sosial Bingo
 
 #### 📋 Arrangement
 - Opprett og rediger arrangementinformasjon
@@ -254,10 +266,11 @@ Hvis du har lastet ned en nyere versjon av koden, kjør migrasjonene:
 
 ```bash
 node database/migrate-add-event-info.js
+node database/migrate-add-participant-fields.js
 node database/migrate-add-teams-table.js
 node database/migrate-add-scavenger-hunt.js
 node database/migrate-add-tic-tac-toe.js
-node database/migrate-add-quiz.js
+node database/migrate-add-quiz-base.js
 node database/migrate-add-event-start-time.js
 node database/migrate-add-program.js
 node database/migrate-add-courses.js
@@ -265,9 +278,28 @@ node database/migrate-add-photo-challenges.js
 node database/migrate-add-feedback.js
 node database/migrate-add-participant-confirmed.js
 node database/migrate-add-no-show.js
+node database/migrate-add-bingo.js
+node database/migrate-add-selfie-chain.js
+node database/migrate-add-team-challenge.js
+node database/migrate-add-login-word.js
+node database/migrate-add-wifi.js
+node database/migrate-add-sleeping-rooms.js
+node database/migrate-add-qr-upload-setting.js
+node database/migrate-add-quiz-music-setting.js
+node database/migrate-add-quiz-multiple-answers.js
+node database/migrate-add-participant-messages.js
+node database/migrate-add-activity-configs.js
+node database/migrate-fix-quiz-constraint.js
+node database/migrate-fix-quiz-answers-constraint.js
+node database/migrate-update-team-challenge-points.js
 ```
 
 *Tips: Du kan kjøre alle migrasjonene på en gang uten feil - skript som allerede er kjørt vil bli hoppet over.*
+
+**Eller kjør alle på en gang:**
+```bash
+node database/migrate.js
+```
 
 ### Last inn Testdata (Valgfritt)
 
@@ -350,14 +382,23 @@ Server running on port 3000
 1. **📋 Arrangement** - Rediger arrangementinfo, last opp logo
 2. **🏆 Lag** - Administrer lag, bulk-opprett, se medlemmer
 3. **👥 Deltakere** - Legg til, rediger, slett deltakere, tildel lag
-4. **🎯 QR Skattejakt** - Opprett sjekkpunkter, se leaderboard
-5. **🎮 Tripp-Trapp-Tresko** - Se spill, nullstill
-6. **🧠 Quiz** - Administrer spørsmål, se leaderboard
-7. **🤳 Selfie-kjedet** - Konfigurer varianter, se statistikk og nettverk
-8. **📅 Program** - Opprett program for arrangementet
-9. **💬 Tilbakemeldinger** - Se og administrer tilbakemeldinger fra deltakere
-10. **📊 Statistikk** - Oversikt, analyse og bekreftelsestatistikk (KPI-kort med bekreftede/ubekreftede deltakere)
-11. **🗄️ Database** - Last testdata, nullstill database
+4. **📸 Samle laget** - Aktiver/deaktiver aktivitet, se leaderboard og lagbilder
+5. **🎭 Bildeoppgaver** - Opprett oppgaver, godkjenn/avvis innsendte bilder, gi poeng
+6. **🤳 Selfie-kjedet** - Konfigurer varianter, se statistikk og nettverk, aktiver/deaktiver
+7. **🎲 Sosial Bingo** - Opprett bingo-oppgaver, konfigurer poeng, aktiver/deaktiver
+8. **🎯 QR Skattejakt** - Opprett sjekkpunkter, se leaderboard, aktiver/deaktiver
+9. **🎮 Tripp-Trapp-Tresko** - Se spill, nullstill, aktiver/deaktiver
+10. **🧠 Quiz** - Administrer spørsmål, se leaderboard, aktiver/deaktiver
+11. **📅 Program** - Opprett program for arrangementet
+12. **💬 Tilbakemeldinger** - Se og administrer tilbakemeldinger fra deltakere
+13. **📊 Statistikk** - Oversikt, analyse og bekreftelsestatistikk (KPI-kort med bekreftede/ubekreftede deltakere)
+14. **🗄️ Database** - Last testdata, nullstill database
+
+**Aktivitets-styring i hver aktivitet-tab:**
+- Hver aktivitet (Quiz, Skattejakt, osv.) har nå en "Konfigurasjon"-seksjon
+- Enkel checkbox for å aktivere/deaktivere aktiviteten
+- Inaktive aktiviteter vises ikke for deltakere
+- Endringer trer i kraft øyeblikkelig
 
 ## 📖 Bruksanvisning
 
@@ -737,6 +778,9 @@ For utskrift av QR-koder:
 - `POST /api/courses/enroll` - Meld deltaker på kurs
 - `DELETE /api/courses/unenroll` - Meld deltaker av kurs
 
+### Aktiviteter (Felles)
+- `GET /api/activities/status` - Hent status (aktiv/inaktiv) for alle aktiviteter
+
 ### Quiz
 - `GET /api/quiz/questions` - Hent alle quiz-spørsmål
 - `POST /api/quiz/questions` - Opprett spørsmål
@@ -745,6 +789,8 @@ For utskrift av QR-koder:
 - `POST /api/quiz/start` - Start quiz-økt
 - `POST /api/quiz/answer` - Send inn svar
 - `GET /api/quiz/leaderboard` - Hent leaderboard
+- `GET /api/quiz/admin/config` - Hent quiz-konfigurasjon (aktiv/inaktiv)
+- `POST /api/quiz/admin/config` - Oppdater quiz-konfigurasjon
 
 ### QR Skattejakt
 - `GET /api/scavenger/checkpoints` - Hent alle sjekkpunkter
@@ -752,6 +798,28 @@ For utskrift av QR-koder:
 - `POST /api/scavenger/start` - Start skattejakt-økt
 - `POST /api/scavenger/scan` - Registrer scan
 - `GET /api/scavenger/leaderboard` - Hent leaderboard
+- `GET /api/scavenger/admin/config` - Hent skattejakt-konfigurasjon
+- `POST /api/scavenger/admin/config` - Oppdater skattejakt-konfigurasjon
+
+### Tripp-Trapp-Tresko
+- `GET /api/tic-tac-toe/admin/config` - Hent konfigurasjon
+- `POST /api/tic-tac-toe/admin/config` - Oppdater konfigurasjon
+
+### Samle laget
+- `GET /api/team-challenge/admin/config` - Hent konfigurasjon
+- `POST /api/team-challenge/admin/config` - Oppdater konfigurasjon
+
+### Bildeoppgaver
+- `GET /api/photo-challenges/admin/config` - Hent konfigurasjon
+- `POST /api/photo-challenges/admin/config` - Oppdater konfigurasjon
+
+### Selfie-kjedet
+- `GET /api/selfie-chain/admin/config` - Hent konfigurasjon
+- `POST /api/selfie-chain/admin/config` - Oppdater konfigurasjon
+
+### Sosial Bingo
+- `GET /api/bingo/admin/config` - Hent konfigurasjon
+- `POST /api/bingo/admin/config` - Oppdater konfigurasjon
 
 ### Program
 - `GET /api/program` - Hent alle programpunkter
