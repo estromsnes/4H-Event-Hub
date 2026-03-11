@@ -380,6 +380,34 @@
         </div>
     </div>
 
+    <script>
+        // Check if selfie chain is active
+        async function checkActivityStatus() {
+            try {
+                const response = await fetch('/api/activities/status');
+                const activities = await response.json();
+
+                if (activities.selfie_chain && activities.selfie_chain.active === 0) {
+                    document.body.innerHTML = `
+                        <div style="text-align: center; padding: 50px; max-width: 600px; margin: 0 auto;">
+                            <h1 style="font-size: 3em;">🚫</h1>
+                            <h2>Selfie-kjedet er ikke tilgjengelig</h2>
+                            <p style="color: #666; margin: 20px 0;">Denne aktiviteten er deaktivert.</p>
+                            <a href="/participant.html" style="display: inline-block; padding: 12px 24px; background: #4CAF50; color: white; text-decoration: none; border-radius: 8px; margin-top: 20px;">Tilbake til aktiviteter</a>
+                        </div>
+                    `;
+                    return false;
+                }
+                return true;
+            } catch (err) {
+                console.error('Error checking activity status:', err);
+                return true; // Fail open hvis API ikke svarer
+            }
+        }
+
+        checkActivityStatus();
+    </script>
+
     <!-- Include QR Scanner library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <!-- Include jsQR for better file scanning -->

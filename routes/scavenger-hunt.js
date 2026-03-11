@@ -182,6 +182,12 @@ router.post('/start', async (req, res) => {
     }
 
     try {
+        // Check if scavenger hunt is active
+        const config = await getScavengerHuntConfig(db);
+        if (!config.active) {
+            return res.status(400).json({ error: 'QR Skattejakt er ikke aktivert' });
+        }
+
         // Check if team already has a session (active or completed)
         const existingSession = await new Promise((resolve, reject) => {
             db.get(
@@ -686,6 +692,80 @@ router.get('/participant/:code/stats', async (req, res) => {
     } catch (err) {
         console.error('Error fetching participant scavenger hunt stats:', err);
         res.status(500).json({ error: 'Kunne ikke hente statistikk' });
+    }
+});
+
+// ============================================================================
+// ADMIN CONFIGURATION ENDPOINTS
+// ============================================================================
+
+// Helper function to get scavenger hunt configuration
+async function getScavengerHuntConfig(db) {
+    return new Promise((resolve, reject) => {
+        db.get('SELECT * FROM scavenger_hunt_config ORDER BY id DESC LIMIT 1', (err, row) => {
+            if (err) reject(err);
+            else resolve(row || { active: 1 });
+        });
+    });
+}
+
+// GET /api/scavenger/admin/config - Get scavenger hunt configuration
+router.get('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+
+    try {
+        const config = await getScavengerHuntConfig(db);
+        res.json(config);
+    } catch (err) {
+        console.error('Error fetching scavenger hunt config:', err);
+        res.status(500).json({ error: 'Kunne ikke hente konfigurasjon' });
+    }
+});
+
+// POST /api/scavenger/admin/config - Update scavenger hunt configuration
+router.post('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+    const { active } = req.body;
+
+    if (typeof active !== 'number' || (active !== 0 && active !== 1)) {
+        return res.status(400).json({ error: 'Active må være 0 eller 1' });
+    }
+
+    try {
+        // Check if config exists
+        const existingConfig = await getScavengerHuntConfig(db);
+
+        if (existingConfig && existingConfig.id) {
+            // Update existing config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'UPDATE scavenger_hunt_config SET active = ? WHERE id = ?',
+                    [active, existingConfig.id],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        } else {
+            // Insert new config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'INSERT INTO scavenger_hunt_config (active) VALUES (?)',
+                    [active],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        }
+
+        const updatedConfig = await getScavengerHuntConfig(db);
+        res.json(updatedConfig);
+    } catch (err) {
+        console.error('Error updating scavenger hunt config:', err);
+        res.status(500).json({ error: 'Kunne ikke oppdatere konfigurasjon' });
     }
 });
 

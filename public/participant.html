@@ -22,69 +22,8 @@
     </header>
 
     <!-- Activity Buttons -->
-    <section class="activities-section">
-        <a href="/team-challenge.html" class="activity-card challenge-card">
-            <div class="activity-icon">📸</div>
-            <div class="activity-content">
-                <h2 class="activity-title">Samle laget</h2>
-                <p class="activity-description">Samle laget og ta lagbilde</p>
-            </div>
-            <div class="activity-arrow">›</div>
-        </a>
-
-        <a href="/photo-challenges.html" class="activity-card photo-card">
-            <div class="activity-icon">🎭</div>
-            <div class="activity-content">
-                <h2 class="activity-title">Bildeoppgaver</h2>
-                <p class="activity-description">Ta morsomme bilder sammen med laget</p>
-            </div>
-            <div class="activity-arrow">›</div>
-        </a>
-
-        <a href="/selfie-chain.html" class="activity-card selfie-card">
-            <div class="activity-icon">🤳</div>
-            <div class="activity-content">
-                <h2 class="activity-title">Selfie-kjedet</h2>
-                <p class="activity-description">Finn personer og ta selfies sammen</p>
-            </div>
-            <div class="activity-arrow">›</div>
-        </a>
-
-        <a href="/bingo.html" class="activity-card bingo-card">
-            <div class="activity-icon">🎲</div>
-            <div class="activity-content">
-                <h2 class="activity-title">Sosial Bingo</h2>
-                <p class="activity-description">Møt andre deltakere og fyll ut bingo-kortet</p>
-            </div>
-            <div class="activity-arrow">›</div>
-        </a>
-
-        <a href="/quiz.html" class="activity-card quiz-card">
-            <div class="activity-icon">🧠</div>
-            <div class="activity-content">
-                <h2 class="activity-title">Quiz</h2>
-                <p class="activity-description">Test kunnskapen til deg og laget ditt</p>
-            </div>
-            <div class="activity-arrow">›</div>
-        </a>
-
-        <a href="/scavenger-hunt.html" class="activity-card hunt-card">
-            <div class="activity-icon">🎯</div>
-            <div class="activity-content">
-                <h2 class="activity-title">QR Skattejakt</h2>
-                <p class="activity-description">Finn alle sjekkpunktene rundt på stedet</p>
-            </div>
-            <div class="activity-arrow">›</div>
-        </a>
-
-        <a href="/tic-tac-toe.html" class="activity-card game-card">
-            <div class="activity-icon">⭕</div>
-            <div class="activity-content">
-                <h2 class="activity-title">Tripp-Trapp-Tresko</h2>
-                <p class="activity-description">Spill mot en annen deltaker eller lag</p>
-            </div>
-            <div class="activity-arrow">›</div>
-        </a>
+    <section class="activities-section" id="activitiesContainer">
+        <p class="text-center" style="color: var(--text-light);">Laster aktiviteter...</p>
     </section>
 
     <!-- Additional Links -->
@@ -121,8 +60,102 @@
             }
         }
 
+        // Load active activities
+        async function loadActiveActivities() {
+            try {
+                const response = await fetch('/api/activities/status');
+                const activities = await response.json();
+
+                const container = document.getElementById('activitiesContainer');
+                container.innerHTML = '';
+
+                // Activity details mapping
+                const activityDetails = {
+                    team_challenge: {
+                        url: '/team-challenge.html',
+                        desc: 'Samle laget og ta lagbilde',
+                        class: 'challenge-card'
+                    },
+                    photo_challenges: {
+                        url: '/photo-challenges.html',
+                        desc: 'Ta morsomme bilder sammen med laget',
+                        class: 'photo-card'
+                    },
+                    selfie_chain: {
+                        url: '/selfie-chain.html',
+                        desc: 'Finn personer og ta selfies sammen',
+                        class: 'selfie-card'
+                    },
+                    bingo: {
+                        url: '/bingo.html',
+                        desc: 'Møt andre deltakere og fyll ut bingo-kortet',
+                        class: 'bingo-card'
+                    },
+                    quiz: {
+                        url: '/quiz.html',
+                        desc: 'Test kunnskapen til deg og laget ditt',
+                        class: 'quiz-card'
+                    },
+                    scavenger_hunt: {
+                        url: '/scavenger-hunt.html',
+                        desc: 'Finn alle sjekkpunktene rundt på stedet',
+                        class: 'hunt-card'
+                    },
+                    tic_tac_toe: {
+                        url: '/tic-tac-toe.html',
+                        desc: 'Spill mot en annen deltaker eller lag',
+                        class: 'game-card'
+                    }
+                };
+
+                // Show only active activities
+                for (const [key, activity] of Object.entries(activities)) {
+                    if (activity.active === 1) {
+                        const details = activityDetails[key];
+                        if (details) {
+                            const card = createActivityCard(
+                                activity.icon,
+                                activity.name,
+                                details.desc,
+                                details.url,
+                                details.class
+                            );
+                            container.appendChild(card);
+                        }
+                    }
+                }
+
+                if (container.children.length === 0) {
+                    container.innerHTML = '<p class="text-center" style="color: var(--text-light);">Ingen aktiviteter er tilgjengelige akkurat nå.</p>';
+                }
+            } catch (err) {
+                console.error('Error loading activities:', err);
+                const container = document.getElementById('activitiesContainer');
+                container.innerHTML = '<p class="text-center" style="color: #f44336;">Kunne ikke laste aktiviteter. Prøv igjen senere.</p>';
+            }
+        }
+
+        // Create activity card element
+        function createActivityCard(icon, title, description, url, className) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.className = `activity-card ${className}`;
+
+            a.innerHTML = `
+                <div class="activity-icon">${icon}</div>
+                <div class="activity-content">
+                    <h2 class="activity-title">${title}</h2>
+                    <p class="activity-description">${description}</p>
+                </div>
+                <div class="activity-arrow">›</div>
+            `;
+
+            return a;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadEventInfo();
+            loadActiveActivities();
         });
     </script>
     <script src="/js/session-tracker.js"></script>

@@ -650,6 +650,7 @@
             <button class="tab-button" data-tab="teams">🏆 Lag</button>
             <button class="tab-button" data-tab="participants">👥 Deltakere</button>
             <button class="tab-button" data-tab="courses">📚 Kurs</button>
+            <button class="tab-button" data-tab="team-challenge">📸 Samle laget</button>
             <button class="tab-button" data-tab="scavenger">🎯 QR Skattejakt</button>
             <button class="tab-button" data-tab="tictactoe">🎮 Tripp-Trapp-Tresko</button>
             <button class="tab-button" data-tab="quiz">🧠 Quiz</button>
@@ -1030,8 +1031,46 @@
         </div>
         <!-- End Courses Tab -->
 
+        <!-- Team Challenge Tab -->
+        <div id="team-challengeTab" class="tab-content">
+            <!-- Configuration Section -->
+            <div class="section">
+                <h2>📸 Samle laget</h2>
+                <h3>⚙️ Konfigurasjon</h3>
+                <form id="teamChallengeConfigForm">
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="teamChallengeActive">
+                            <span>Aktivert</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="button primary">💾 Lagre konfigurasjon</button>
+                </form>
+                <div id="teamChallengeConfigStatus" class="hidden mt-2"></div>
+                <p style="color: var(--text-light); margin-top: 15px;">
+                    "Samle laget" lar lagmedlemmer scanne hverandres QR-koder og ta lagbilde.
+                </p>
+            </div>
+        </div>
+        <!-- End Team Challenge Tab -->
+
         <!-- Scavenger Hunt Tab -->
         <div id="scavengerTab" class="tab-content">
+        <!-- Configuration Section -->
+        <div class="section">
+            <h3>⚙️ Konfigurasjon</h3>
+            <form id="scavHuntConfigForm">
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="scavHuntActive">
+                        <span>Aktivert</span>
+                    </label>
+                </div>
+                <button type="submit" class="button primary">💾 Lagre konfigurasjon</button>
+            </form>
+            <div id="scavHuntConfigStatus" class="hidden mt-2"></div>
+        </div>
+
         <!-- Checkpoint Management Section -->
         <div class="section no-print">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -1060,6 +1099,21 @@
 
         <!-- Tic-Tac-Toe Tab -->
         <div id="tictactoeTab" class="tab-content">
+            <!-- Configuration Section -->
+            <div class="section">
+                <h3>⚙️ Konfigurasjon</h3>
+                <form id="tttConfigForm">
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="tttActive">
+                            <span>Aktivert</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="button primary">💾 Lagre konfigurasjon</button>
+                </form>
+                <div id="tttConfigStatus" class="hidden mt-2"></div>
+            </div>
+
             <!-- Tic-Tac-Toe Games Management Section -->
             <div class="section no-print">
                 <h2>Administrer Tripp-Trapp-Tresko Spill</h2>
@@ -1076,6 +1130,21 @@
 
         <!-- Quiz Tab -->
         <div id="quizTab" class="tab-content">
+            <!-- Configuration Section -->
+            <div class="section">
+                <h3>⚙️ Konfigurasjon</h3>
+                <form id="quizConfigForm">
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="quizActive">
+                            <span>Aktivert</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="button primary">💾 Lagre konfigurasjon</button>
+                </form>
+                <div id="quizConfigStatus" class="hidden mt-2"></div>
+            </div>
+
             <!-- Quiz Questions Management Section -->
             <div class="section no-print">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -1123,6 +1192,24 @@
 
         <!-- Photo Challenges Tab -->
         <div id="photo-challengesTab" class="tab-content">
+            <!-- Configuration Section -->
+            <div class="section">
+                <h3>⚙️ Konfigurasjon</h3>
+                <form id="photoChallengesConfigForm">
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="photoChallengesActive">
+                            <span>Aktivert</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="button primary">💾 Lagre konfigurasjon</button>
+                </form>
+                <div id="photoChallengesConfigStatus" class="hidden mt-2"></div>
+                <p style="color: var(--text-light); font-size: 14px; margin-top: 10px;">
+                    💡 Merk: Du kan også aktivere/deaktivere individuelle oppgaver nedenfor
+                </p>
+            </div>
+
             <!-- Challenge Management Section -->
             <div class="section no-print">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -1204,11 +1291,10 @@
                 <form id="selfieChainConfigForm">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
                         <div class="form-group">
-                            <label for="scActive">Status</label>
-                            <select id="scActive" required>
-                                <option value="0">❌ Inaktiv</option>
-                                <option value="1">✅ Aktiv</option>
-                            </select>
+                            <label style="display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="scActive">
+                                <span>Aktivert</span>
+                            </label>
                         </div>
 
                         <div class="form-group">
@@ -2942,7 +3028,7 @@ Klokkeslett: {{TIME}}</textarea>
 
                 // Populate form
                 if (config && config.id) {
-                    document.getElementById('scActive').value = config.active || 0;
+                    document.getElementById('scActive').checked = config.active === 1;
                     document.getElementById('scTimeLimit').value = config.time_limit_minutes || 120;
                     document.getElementById('scPointsPerSelfie').value = config.points_per_selfie || 50;
                     document.getElementById('scVariant').value = config.variant || 'linear';
@@ -3179,7 +3265,7 @@ Klokkeslett: {{TIME}}</textarea>
             statusDiv.classList.remove('hidden');
 
             const config = {
-                active: parseInt(document.getElementById('scActive').value),
+                active: document.getElementById('scActive').checked ? 1 : 0,
                 time_limit_minutes: parseInt(document.getElementById('scTimeLimit').value),
                 points_per_selfie: parseInt(document.getElementById('scPointsPerSelfie').value),
                 variant: document.getElementById('scVariant').value

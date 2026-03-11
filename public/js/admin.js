@@ -6235,3 +6235,341 @@ if (bingoTabButton) {
 
 window.editBingoTask = (taskId) => openBingoTaskModal(taskId);
 window.deleteBingoTask = deleteBingoTask;
+
+// ============================================================================
+// QUIZ CONFIGURATION
+// ============================================================================
+
+async function loadQuizConfig() {
+    try {
+        const response = await fetch('/api/quiz/admin/config', {
+            headers: { 'X-Admin-Token': sessionStorage.getItem('adminToken') }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('Unauthorized - please login again');
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const config = await response.json();
+        document.getElementById('quizActive').checked = config.active;
+    } catch (err) {
+        console.error('Error loading quiz config:', err);
+    }
+}
+
+async function saveQuizConfig(e) {
+    e.preventDefault();
+    const config = {
+        active: document.getElementById('quizActive').checked ? 1 : 0
+    };
+    try {
+        const response = await fetch('/api/quiz/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Token': sessionStorage.getItem('adminToken') },
+            body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                showStatus('quizConfigStatus', 'Ikke autorisert. Vennligst logg inn på nytt.', 'error');
+                return;
+            }
+            const errorData = await response.json();
+            showStatus('quizConfigStatus', errorData.message || 'Kunne ikke lagre konfigurasjon', 'error');
+            return;
+        }
+
+        showStatus('quizConfigStatus', '✅ Konfigurasjon lagret', 'success');
+        await loadQuizConfig();
+    } catch (err) {
+        console.error('Error saving quiz config:', err);
+        showStatus('quizConfigStatus', '❌ Kunne ikke lagre konfigurasjon', 'error');
+    }
+}
+
+// ============================================================================
+// SCAVENGER HUNT CONFIGURATION
+// ============================================================================
+
+async function loadScavHuntConfig() {
+    try {
+        const response = await fetch('/api/scavenger/admin/config', {
+            headers: { 'X-Admin-Token': sessionStorage.getItem('adminToken') }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('Unauthorized - please login again');
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const config = await response.json();
+        document.getElementById('scavHuntActive').checked = config.active;
+    } catch (err) {
+        console.error('Error loading scavenger hunt config:', err);
+    }
+}
+
+async function saveScavHuntConfig(e) {
+    e.preventDefault();
+    const config = {
+        active: document.getElementById('scavHuntActive').checked ? 1 : 0
+    };
+    try {
+        const response = await fetch('/api/scavenger/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Token': sessionStorage.getItem('adminToken') },
+            body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                showStatus('scavHuntConfigStatus', 'Ikke autorisert. Vennligst logg inn på nytt.', 'error');
+                return;
+            }
+            const errorData = await response.json();
+            showStatus('scavHuntConfigStatus', errorData.message || 'Kunne ikke lagre konfigurasjon', 'error');
+            return;
+        }
+
+        showStatus('scavHuntConfigStatus', '✅ Konfigurasjon lagret', 'success');
+        await loadScavHuntConfig();
+    } catch (err) {
+        console.error('Error saving scavenger hunt config:', err);
+        showStatus('scavHuntConfigStatus', '❌ Kunne ikke lagre konfigurasjon', 'error');
+    }
+}
+
+// ============================================================================
+// TIC TAC TOE CONFIGURATION
+// ============================================================================
+
+async function loadTttConfig() {
+    try {
+        const response = await fetch('/api/tic-tac-toe/admin/config', {
+            headers: { 'X-Admin-Token': sessionStorage.getItem('adminToken') }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('Unauthorized - please login again');
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const config = await response.json();
+        document.getElementById('tttActive').checked = config.active;
+    } catch (err) {
+        console.error('Error loading tic tac toe config:', err);
+    }
+}
+
+async function saveTttConfig(e) {
+    e.preventDefault();
+    const config = {
+        active: document.getElementById('tttActive').checked ? 1 : 0
+    };
+    try {
+        const response = await fetch('/api/tic-tac-toe/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Token': sessionStorage.getItem('adminToken') },
+            body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                showStatus('tttConfigStatus', 'Ikke autorisert. Vennligst logg inn på nytt.', 'error');
+                return;
+            }
+            const errorData = await response.json();
+            showStatus('tttConfigStatus', errorData.message || 'Kunne ikke lagre konfigurasjon', 'error');
+            return;
+        }
+
+        showStatus('tttConfigStatus', '✅ Konfigurasjon lagret', 'success');
+        await loadTttConfig();
+    } catch (err) {
+        console.error('Error saving tic tac toe config:', err);
+        showStatus('tttConfigStatus', '❌ Kunne ikke lagre konfigurasjon', 'error');
+    }
+}
+
+// ============================================================================
+// TEAM CHALLENGE CONFIGURATION
+// ============================================================================
+
+async function loadTeamChallengeConfig() {
+    try {
+        const response = await fetch('/api/team-challenge/admin/config', {
+            headers: { 'X-Admin-Token': sessionStorage.getItem('adminToken') }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('Unauthorized - please login again');
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const config = await response.json();
+        document.getElementById('teamChallengeActive').checked = config.active;
+    } catch (err) {
+        console.error('Error loading team challenge config:', err);
+    }
+}
+
+async function saveTeamChallengeConfig(e) {
+    e.preventDefault();
+    const config = {
+        active: document.getElementById('teamChallengeActive').checked ? 1 : 0
+    };
+    try {
+        const response = await fetch('/api/team-challenge/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Token': sessionStorage.getItem('adminToken') },
+            body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                showStatus('teamChallengeConfigStatus', 'Ikke autorisert. Vennligst logg inn på nytt.', 'error');
+                return;
+            }
+            const errorData = await response.json();
+            showStatus('teamChallengeConfigStatus', errorData.message || 'Kunne ikke lagre konfigurasjon', 'error');
+            return;
+        }
+
+        showStatus('teamChallengeConfigStatus', '✅ Konfigurasjon lagret', 'success');
+        await loadTeamChallengeConfig();
+    } catch (err) {
+        console.error('Error saving team challenge config:', err);
+        showStatus('teamChallengeConfigStatus', '❌ Kunne ikke lagre konfigurasjon', 'error');
+    }
+}
+
+// ============================================================================
+// PHOTO CHALLENGES CONFIGURATION
+// ============================================================================
+
+async function loadPhotoChallengesConfig() {
+    try {
+        const response = await fetch('/api/photo-challenges/admin/config', {
+            headers: { 'X-Admin-Token': sessionStorage.getItem('adminToken') }
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.error('Unauthorized - please login again');
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const config = await response.json();
+        document.getElementById('photoChallengesActive').checked = config.active;
+    } catch (err) {
+        console.error('Error loading photo challenges config:', err);
+    }
+}
+
+async function savePhotoChallengesConfig(e) {
+    e.preventDefault();
+    const config = {
+        active: document.getElementById('photoChallengesActive').checked ? 1 : 0
+    };
+    try {
+        const response = await fetch('/api/photo-challenges/admin/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Token': sessionStorage.getItem('adminToken') },
+            body: JSON.stringify(config)
+        });
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                showStatus('photoChallengesConfigStatus', 'Ikke autorisert. Vennligst logg inn på nytt.', 'error');
+                return;
+            }
+            const errorData = await response.json();
+            showStatus('photoChallengesConfigStatus', errorData.message || 'Kunne ikke lagre konfigurasjon', 'error');
+            return;
+        }
+
+        showStatus('photoChallengesConfigStatus', '✅ Konfigurasjon lagret', 'success');
+        await loadPhotoChallengesConfig();
+    } catch (err) {
+        console.error('Error saving photo challenges config:', err);
+        showStatus('photoChallengesConfigStatus', '❌ Kunne ikke lagre konfigurasjon', 'error');
+    }
+}
+
+// ============================================================================
+// HELPER FUNCTION FOR STATUS MESSAGES
+// ============================================================================
+
+function showStatus(elementId, message, type) {
+    const statusElement = document.getElementById(elementId);
+    if (!statusElement) return;
+
+    statusElement.textContent = message;
+    statusElement.className = `alert ${type}`;
+    statusElement.classList.remove('hidden');
+
+    setTimeout(() => {
+        statusElement.classList.add('hidden');
+    }, 5000);
+}
+
+// ============================================================================
+// EVENT LISTENERS FOR NEW CONFIG FORMS
+// ============================================================================
+
+document.getElementById('quizConfigForm')?.addEventListener('submit', saveQuizConfig);
+document.getElementById('scavHuntConfigForm')?.addEventListener('submit', saveScavHuntConfig);
+document.getElementById('tttConfigForm')?.addEventListener('submit', saveTttConfig);
+document.getElementById('teamChallengeConfigForm')?.addEventListener('submit', saveTeamChallengeConfig);
+document.getElementById('photoChallengesConfigForm')?.addEventListener('submit', savePhotoChallengesConfig);
+
+// Load config when tabs are clicked
+const quizTabButton = document.querySelector('[data-tab="quiz"]');
+if (quizTabButton) {
+    quizTabButton.addEventListener('click', async () => {
+        await loadQuizConfig();
+    });
+}
+
+const scavengerTabButton = document.querySelector('[data-tab="scavenger"]');
+if (scavengerTabButton) {
+    scavengerTabButton.addEventListener('click', async () => {
+        await loadScavHuntConfig();
+    });
+}
+
+const tictactoeTabButton = document.querySelector('[data-tab="tictactoe"]');
+if (tictactoeTabButton) {
+    tictactoeTabButton.addEventListener('click', async () => {
+        await loadTttConfig();
+    });
+}
+
+const teamChallengeTabButton = document.querySelector('[data-tab="team-challenge"]');
+if (teamChallengeTabButton) {
+    teamChallengeTabButton.addEventListener('click', async () => {
+        await loadTeamChallengeConfig();
+    });
+}
+
+const photoChallengesTabButton = document.querySelector('[data-tab="photo-challenges"]');
+if (photoChallengesTabButton) {
+    photoChallengesTabButton.addEventListener('click', async () => {
+        await loadPhotoChallengesConfig();
+    });
+}

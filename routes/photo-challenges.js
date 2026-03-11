@@ -38,21 +38,35 @@ const upload = multer({
 });
 
 // GET all challenges (active only for participants, all for admin)
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     const db = req.app.locals.db;
     const showAll = req.query.admin === 'true';
 
-    const query = showAll
-        ? 'SELECT * FROM photo_challenges ORDER BY order_number ASC, id ASC'
-        : 'SELECT * FROM photo_challenges WHERE active = 1 ORDER BY order_number ASC, id ASC';
-
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('Error fetching challenges:', err);
-            return res.status(500).json({ error: 'Failed to fetch challenges' });
+    try {
+        // Check global config (only for non-admin requests)
+        if (!showAll) {
+            const config = await getPhotoChallengesConfig(db);
+            if (!config.active) {
+                return res.json([]); // Return empty array if photo challenges is disabled globally
+            }
         }
+
+        const query = showAll
+            ? 'SELECT * FROM photo_challenges ORDER BY order_number ASC, id ASC'
+            : 'SELECT * FROM photo_challenges WHERE active = 1 ORDER BY order_number ASC, id ASC';
+
+        const rows = await new Promise((resolve, reject) => {
+            db.all(query, [], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+
         res.json(rows);
-    });
+    } catch (err) {
+        console.error('Error fetching challenges:', err);
+        res.status(500).json({ error: 'Failed to fetch challenges' });
+    }
 });
 
 // GET specific challenge
@@ -391,6 +405,80 @@ router.get('/participant/:code/stats', async (req, res) => {
     } catch (err) {
         console.error('Error fetching participant photo challenge stats:', err);
         res.status(500).json({ error: 'Kunne ikke hente statistikk' });
+    }
+});
+
+// ============================================================================
+// ADMIN CONFIGURATION ENDPOINTS
+// ============================================================================
+
+// Helper function to get photo challenges configuration
+async function getPhotoChallengesConfig(db) {
+    return new Promise((resolve, reject) => {
+        db.get('SELECT * FROM photo_challenges_config ORDER BY id DESC LIMIT 1', (err, row) => {
+            if (err) reject(err);
+            else resolve(row || { active: 1 });
+        });
+    });
+}
+
+// GET /api/photo-challenges/admin/config - Get photo challenges configuration
+router.get('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+
+    try {
+        const config = await getPhotoChallengesConfig(db);
+        res.json(config);
+    } catch (err) {
+        console.error('Error fetching photo challenges config:', err);
+        res.status(500).json({ error: 'Kunne ikke hente konfigurasjon' });
+    }
+});
+
+// POST /api/photo-challenges/admin/config - Update photo challenges configuration
+router.post('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+    const { active } = req.body;
+
+    if (typeof active !== 'number' || (active !== 0 && active !== 1)) {
+        return res.status(400).json({ error: 'Active må være 0 eller 1' });
+    }
+
+    try {
+        // Check if config exists
+        const existingConfig = await getPhotoChallengesConfig(db);
+
+        if (existingConfig && existingConfig.id) {
+            // Update existing config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'UPDATE photo_challenges_config SET active = ? WHERE id = ?',
+                    [active, existingConfig.id],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        } else {
+            // Insert new config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'INSERT INTO photo_challenges_config (active) VALUES (?)',
+                    [active],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        }
+
+        const updatedConfig = await getPhotoChallengesConfig(db);
+        res.json(updatedConfig);
+    } catch (err) {
+        console.error('Error updating photo challenges config:', err);
+        res.status(500).json({ error: 'Kunne ikke oppdatere konfigurasjon' });
     }
 });
 

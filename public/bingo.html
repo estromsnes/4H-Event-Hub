@@ -256,6 +256,33 @@
     </div>
 
     <!-- Scripts -->
+    <script>
+        // Check if bingo is active
+        async function checkActivityStatus() {
+            try {
+                const response = await fetch('/api/activities/status');
+                const activities = await response.json();
+
+                if (activities.bingo && activities.bingo.active === 0) {
+                    document.body.innerHTML = `
+                        <div style="text-align: center; padding: 50px; max-width: 600px; margin: 0 auto;">
+                            <h1 style="font-size: 3em;">🚫</h1>
+                            <h2>Sosial Bingo er ikke tilgjengelig</h2>
+                            <p style="color: #666; margin: 20px 0;">Denne aktiviteten er deaktivert.</p>
+                            <a href="/participant.html" style="display: inline-block; padding: 12px 24px; background: #4CAF50; color: white; text-decoration: none; border-radius: 8px; margin-top: 20px;">Tilbake til aktiviteter</a>
+                        </div>
+                    `;
+                    return false;
+                }
+                return true;
+            } catch (err) {
+                console.error('Error checking activity status:', err);
+                return true; // Fail open hvis API ikke svarer
+            }
+        }
+
+        checkActivityStatus();
+    </script>
     <script src="/js/camera-detector.js"></script>
     <script src="/js/participant-auth.js"></script>
     <script src="/js/barcode-scanner-global.js"></script>

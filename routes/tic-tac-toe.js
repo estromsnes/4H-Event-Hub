@@ -11,6 +11,12 @@ router.post('/start', async (req, res) => {
     }
 
     try {
+        // Check if tic tac toe is active
+        const config = await getTicTacToeConfig(db);
+        if (!config.active) {
+            return res.status(400).json({ error: 'Tripp-Trapp-Tresko er ikke aktivert' });
+        }
+
         // Get participant info
         const participant = await new Promise((resolve, reject) => {
             db.get(
@@ -584,6 +590,80 @@ router.get('/participant/:code/stats', async (req, res) => {
     } catch (err) {
         console.error('Error fetching participant tic-tac-toe stats:', err);
         res.status(500).json({ error: 'Kunne ikke hente statistikk' });
+    }
+});
+
+// ============================================================================
+// ADMIN CONFIGURATION ENDPOINTS
+// ============================================================================
+
+// Helper function to get tic tac toe configuration
+async function getTicTacToeConfig(db) {
+    return new Promise((resolve, reject) => {
+        db.get('SELECT * FROM tic_tac_toe_config ORDER BY id DESC LIMIT 1', (err, row) => {
+            if (err) reject(err);
+            else resolve(row || { active: 1 });
+        });
+    });
+}
+
+// GET /api/tic-tac-toe/admin/config - Get tic tac toe configuration
+router.get('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+
+    try {
+        const config = await getTicTacToeConfig(db);
+        res.json(config);
+    } catch (err) {
+        console.error('Error fetching tic tac toe config:', err);
+        res.status(500).json({ error: 'Kunne ikke hente konfigurasjon' });
+    }
+});
+
+// POST /api/tic-tac-toe/admin/config - Update tic tac toe configuration
+router.post('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+    const { active } = req.body;
+
+    if (typeof active !== 'number' || (active !== 0 && active !== 1)) {
+        return res.status(400).json({ error: 'Active må være 0 eller 1' });
+    }
+
+    try {
+        // Check if config exists
+        const existingConfig = await getTicTacToeConfig(db);
+
+        if (existingConfig && existingConfig.id) {
+            // Update existing config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'UPDATE tic_tac_toe_config SET active = ? WHERE id = ?',
+                    [active, existingConfig.id],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        } else {
+            // Insert new config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'INSERT INTO tic_tac_toe_config (active) VALUES (?)',
+                    [active],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        }
+
+        const updatedConfig = await getTicTacToeConfig(db);
+        res.json(updatedConfig);
+    } catch (err) {
+        console.error('Error updating tic tac toe config:', err);
+        res.status(500).json({ error: 'Kunne ikke oppdatere konfigurasjon' });
     }
 });
 

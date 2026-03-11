@@ -374,6 +374,12 @@ router.post('/start', async (req, res) => {
     }
 
     try {
+        // Check if quiz is active
+        const config = await getQuizConfig(db);
+        if (!config.active) {
+            return res.status(400).json({ error: 'Quiz er ikke aktivert' });
+        }
+
         // Look up participant to get team
         const participant = await new Promise((resolve, reject) => {
             db.get(
@@ -934,6 +940,80 @@ router.get('/participant/:code/stats', async (req, res) => {
     } catch (err) {
         console.error('Error fetching participant quiz stats:', err);
         res.status(500).json({ error: 'Kunne ikke hente statistikk' });
+    }
+});
+
+// ============================================================================
+// ADMIN CONFIGURATION ENDPOINTS
+// ============================================================================
+
+// Helper function to get quiz configuration
+async function getQuizConfig(db) {
+    return new Promise((resolve, reject) => {
+        db.get('SELECT * FROM quiz_config ORDER BY id DESC LIMIT 1', (err, row) => {
+            if (err) reject(err);
+            else resolve(row || { active: 1 });
+        });
+    });
+}
+
+// GET /api/quiz/admin/config - Get quiz configuration
+router.get('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+
+    try {
+        const config = await getQuizConfig(db);
+        res.json(config);
+    } catch (err) {
+        console.error('Error fetching quiz config:', err);
+        res.status(500).json({ error: 'Kunne ikke hente konfigurasjon' });
+    }
+});
+
+// POST /api/quiz/admin/config - Update quiz configuration
+router.post('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+    const { active } = req.body;
+
+    if (typeof active !== 'number' || (active !== 0 && active !== 1)) {
+        return res.status(400).json({ error: 'Active må være 0 eller 1' });
+    }
+
+    try {
+        // Check if config exists
+        const existingConfig = await getQuizConfig(db);
+
+        if (existingConfig && existingConfig.id) {
+            // Update existing config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'UPDATE quiz_config SET active = ? WHERE id = ?',
+                    [active, existingConfig.id],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        } else {
+            // Insert new config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'INSERT INTO quiz_config (active) VALUES (?)',
+                    [active],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        }
+
+        const updatedConfig = await getQuizConfig(db);
+        res.json(updatedConfig);
+    } catch (err) {
+        console.error('Error updating quiz config:', err);
+        res.status(500).json({ error: 'Kunne ikke oppdatere konfigurasjon' });
     }
 });
 

@@ -30,6 +30,12 @@ router.post('/start', async (req, res) => {
     }
 
     try {
+        // Check if team challenge is active
+        const config = await getTeamChallengeConfig(db);
+        if (!config.active) {
+            return res.status(400).json({ error: 'Samle laget er ikke aktivert' });
+        }
+
         // Get participant info
         const participant = await new Promise((resolve, reject) => {
             db.get(
@@ -732,5 +738,79 @@ function calculatePoints(scannedCount, totalMembers, hasPhoto) {
     const photoBonus = hasPhoto ? 30 : 0;
     return basePoints + allScannedBonus + photoBonus;
 }
+
+// ============================================================================
+// ADMIN CONFIGURATION ENDPOINTS
+// ============================================================================
+
+// Helper function to get team challenge configuration
+async function getTeamChallengeConfig(db) {
+    return new Promise((resolve, reject) => {
+        db.get('SELECT * FROM team_challenge_config ORDER BY id DESC LIMIT 1', (err, row) => {
+            if (err) reject(err);
+            else resolve(row || { active: 1 });
+        });
+    });
+}
+
+// GET /api/team-challenge/admin/config - Get team challenge configuration
+router.get('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+
+    try {
+        const config = await getTeamChallengeConfig(db);
+        res.json(config);
+    } catch (err) {
+        console.error('Error fetching team challenge config:', err);
+        res.status(500).json({ error: 'Kunne ikke hente konfigurasjon' });
+    }
+});
+
+// POST /api/team-challenge/admin/config - Update team challenge configuration
+router.post('/admin/config', async (req, res) => {
+    const db = req.app.locals.db;
+    const { active } = req.body;
+
+    if (typeof active !== 'number' || (active !== 0 && active !== 1)) {
+        return res.status(400).json({ error: 'Active må være 0 eller 1' });
+    }
+
+    try {
+        // Check if config exists
+        const existingConfig = await getTeamChallengeConfig(db);
+
+        if (existingConfig && existingConfig.id) {
+            // Update existing config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'UPDATE team_challenge_config SET active = ? WHERE id = ?',
+                    [active, existingConfig.id],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        } else {
+            // Insert new config
+            await new Promise((resolve, reject) => {
+                db.run(
+                    'INSERT INTO team_challenge_config (active) VALUES (?)',
+                    [active],
+                    (err) => {
+                        if (err) reject(err);
+                        else resolve();
+                    }
+                );
+            });
+        }
+
+        const updatedConfig = await getTeamChallengeConfig(db);
+        res.json(updatedConfig);
+    } catch (err) {
+        console.error('Error updating team challenge config:', err);
+        res.status(500).json({ error: 'Kunne ikke oppdatere konfigurasjon' });
+    }
+});
 
 module.exports = router;
