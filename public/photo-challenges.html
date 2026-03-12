@@ -579,6 +579,9 @@
         checkActivityStatus();
     </script>
 
+    <!-- Hidden barcode input for background scanning -->
+    <input type="text" id="barcode-input" name="barcode-scanner" style="position: absolute; left: -9999px;" autocomplete="off">
+
     <!-- Include html5-qrcode library from CDN -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <!-- jsQR for better file scanning -->

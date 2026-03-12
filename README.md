@@ -1,8 +1,38 @@
-# 4H Event Hub - Skautrollet 4H
+# 4H Arrangement Hjelper - Skautrollet 4H
 
-En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer og arrangement. Applikasjonen gir deltakere en interaktiv opplevelse med spill, konkurranser, profiler og program-oversikt.
+**En komplett løsning for 4H-arrangement - spar 5-10 timer administrasjon per arrangement!**
+
+En moderne Node.js webapplikasjon som gjør det enkelt å organisere og administrere 4H-leirer og kurs. Laget av en 4H-arrangør med mange års erfaring, basert på reelle utfordringer og testet på faktiske 4H-arrangement.
+
+### 💡 Problemet vi løser
+
+Som 4H-arrangør kjenner du dette:
+- "Hvilke kurs går jeg på?" - for hundrede gang
+- "Hvor skal jeg sove?" - spør alle deltakere
+- "Hva er programmet i morgen?" - hver eneste kveld
+- "Stemmer min informasjon?" - må sjekkes manuelt
+
+**Resultat:** 2+ timer daglig brukt på å svare på spørsmål deltakerne kunne funnet svar på selv.
+
+### ✨ Løsningen
+
+Med 4H Event Hub får deltakerne selvbetjening, og arrangørene får tid tilbake til det som betyr noe: **Fellesskapet**.
+
+**Estimert tidsbesparelse: 5-10 timer per arrangement (100 deltakere)**
+
+![Hardware Setup](doc_resources/pc.png)
+*Komplett oppsett med PC, strekkodeskanner og kamera - men fungerer like godt uten ekstrautstyr!*
 
 > **🚀 Ny bruker? Start her!** Les [QUICKSTART.md](QUICKSTART.md) for en super-enkel guide (15 minutter fra null til ferdig!)
+
+### 🎯 Hvorfor denne løsningen?
+
+- ✅ **Laget av 4H, for 4H** - Utviklet av klubbrådgiver med arrangørerfaring
+- ✅ **Testet i praksis** - Brukt på reelle 4H-leirer og kurs
+- ✅ **100% Gratis** - Åpen kildekode, ingen kostnader noensinne
+- ✅ **Fungerer uten ekstrautstyr** - Ingen strekkodeskanner? Bruk login-ord!
+- ✅ **15 minutter oppsett** - Klar til bruk på rekordtid
+- ✅ **Helt nytt i 4H-Norge** - Ingen andre kombinerer administrasjon og sosiale aktiviteter slik
 
 ## 📋 Innholdsfortegnelse
 
@@ -23,19 +53,25 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 
 #### 🎉 Velkomstside
 - **Dedikert velkomstside** for deltakere når de ankommer arrangementet
-- Skann QR-kode med strekkodeskanner eller webkamera
+- Skann QR-kode med strekkodeskanner eller webkamera, eller skriv inn login-ord
 - Automatisk redirect til profilside etter scanning
 - Vennlig velkommen-melding med deltakers navn
 - Enkel og rask onboarding-opplevelse
 
+![Velkomstside](doc_resources/velkomstside.png)
+*Velkomstsiden gjør det enkelt å komme i gang - skann QR-kode eller skriv inn login-ord*
+
 #### 📱 Min Profil
-- Skann QR-kode med strekkodeskanner eller webkamera
+- Skann QR-kode med strekkodeskanner eller webkamera, eller skriv inn login-ord
 - Vis deltakerprofil (navn, alder, hjemsted, klubb, rolle, lag)
 - **Bekreft informasjon**: Deltakere kan bekrefte at informasjonen stemmer (engangsoperasjon)
 - Se bekreftelsesstatus med grønn badge når bekreftet
 - Ta selfie med webkamera og lagre på profil
 - Se lagkamerater og lagets medlemmer
 - Se kurs du er påmeldt
+
+![Min Profil](doc_resources/min_profil.png)
+*Deltakerprofil med all informasjon, selfie og mulighet til å bekrefte data*
 
 #### 🏆 Lag & Konkurranser
 - **Lagutfordring**: Ta bilder av laget som oppfyller forskjellige oppgaver
@@ -44,6 +80,9 @@ En komplett Node.js webapplikasjon for å organisere og administrere 4H-leirer o
 - **Tic-Tac-Toe**: Spill bondesjakk mot andre lag
 - **Quiz**: Svar på quiz-spørsmål som lag og konkurer om beste tid
 - **QR Skattejakt**: Skann QR-koder på forskjellige steder og konkurer om best tid
+
+![Spill og Utfordringer](doc_resources/spill_og_utfordringer.png)
+*Mange artige aktiviteter og konkurranser som skaper fellesskap mellom deltakerne*
 
 #### 🤳 Selfie-kjedet
 En sosial aktivitet hvor deltakere møter hverandre og tar selfies sammen!
@@ -108,6 +147,9 @@ En sosial aktivitet hvor deltakere møter hverandre og tar selfies sammen!
 - Sett datoer, sted og arrangør
 - Statistikk over deltakere per rolle
 
+![Admin Arrangement](doc_resources/admin_arrangement.png)
+*Admin-panelet gjør det enkelt å administrere arrangementsinformasjon*
+
 #### 👥 Deltakere
 - Legg til nye deltakere med auto-genererte koder
 - Importer deltakere fra CSV
@@ -123,6 +165,9 @@ En sosial aktivitet hvor deltakere møter hverandre og tar selfies sammen!
 - **Filtrer no-show**: Vis kun deltakere som ikke har møtt opp
 - **Live statistikk**: Se antall bekreftede, ubekreftede og no-show i deltakerlisten
 - Eksporter deltakerliste
+
+![Admin Deltakere](doc_resources/admin_deltaker.png)
+*Komplett oversikt over alle deltakere med bekreftelse- og no-show-status*
 
 #### 🏆 Lag
 - Opprett nye lag
@@ -195,15 +240,26 @@ En sosial aktivitet hvor deltakere møter hverandre og tar selfies sammen!
 - **Kamera**: Native browser MediaDevices API
 - **File Upload**: Multer middleware
 
+**Designet for 4H-klubber:**
+- 💰 Ingen eksterne tjenester = 0 kroner i løpende kostnader
+- 🔒 All data lokalt = GDPR-vennlig og offline-klar
+- 🎯 Ingen teknisk erfaring nødvendig = Alle kan bruke det
+
 ## 📦 Installasjon
 
 ### Forutsetninger
 
+**Minimum (fungerer for alle):**
 - **Node.js** (v14 eller nyere) - [Last ned](https://nodejs.org/)
 - **npm** (kommer med Node.js)
-- **Git** (valgfritt, for kloning)
+- **En PC eller laptop** - Det er alt du trenger!
+
+**Valgfritt ekstrautstyr (forbedrer opplevelsen):**
 - **Webkamera** (for selfies og QR-scanning)
-- **Strekkodeskanner** (valgfritt, men anbefalt for arrangementer)
+- **Strekkodeskanner** (raskere enn å skrive login-ord)
+- **Touchskjerm** (for kiosk-modus ved inngang)
+
+> **💡 Tips:** Systemet fungerer perfekt med bare login-ord - ingen ekstrautstyr nødvendig!
 
 ### Steg 1: Last ned prosjektet
 
@@ -682,6 +738,9 @@ Server running on port 3000
 3. KPI-kortene har fargekodede gradienter for enkel avlesning
 4. Statistikken oppdateres i sanntid når du klikker "🔄 Oppdater"
 
+![Admin Statistikk](doc_resources/admin_statistikk.png)
+*Live statistikk med KPI-kort for bekreftelsesstatus og no-show oversikt*
+
 **Eksempel på KPI-visning:**
 - **Bekreftede**: "47 deltakere (75% av totalt)" - grønn gradient
 - **No-show**: "3 deltakere (5% av totalt)" - rød gradient
@@ -1086,9 +1145,19 @@ chrome --kiosk --app=http://localhost:3000/profile.html
 - Trykk **F11** for fullscreen
 - Skjul bookmarks bar (Ctrl+Shift+B)
 
+## 💚 Hvorfor er dette gratis?
+
+Fordi jeg selv er 4H-arrangør, og vet hvor stramme budsjetter klubbene har. Dette er mitt bidrag til 4H-familien.
+
+**Ingen skjulte kostnader. Ingen abonnementer. Ingen binding.**
+
+Åpen kildekode betyr at løsningen fungerer for alltid, og at dere kan tilpasse den til deres egne behov om dere ønsker det.
+
 ## 🤝 Bidra
 
 Dette er et klubbprosjekt for Skautrollet 4H. Forslag og forbedringer er velkomne!
+
+**Sammen gjør vi 4H-arrangement bedre - moderne, engasjerende og med mer tid til fellesskapet.**
 
 ## 📄 Lisens
 
@@ -1097,9 +1166,10 @@ MIT License - Fri programvare for 4H-klubber
 ## 📞 Support
 
 For spørsmål eller problemer:
-- Opprett en issue på GitHub
+- Opprett en issue på GitHub: https://github.com/estromsnes/4H-Event-Hub
 - Se [CONTRIBUTING.md](CONTRIBUTING.md) for bidragsinformasjon
-- Kontakt din lokale 4H-klubb for teknisk støtte
+- Kontakt: Espen Strømsnes, Skautrollet 4H, Toten
+- E-post: estromsnes@gmail.com
 
 ---
 

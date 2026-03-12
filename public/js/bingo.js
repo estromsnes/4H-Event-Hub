@@ -200,18 +200,22 @@ class BingoGame {
     }
 
     async handleParticipantScan(decodedText) {
-        console.log('[Bingo] Participant scanned:', decodedText);
+        console.log('[Bingo] Participant scanned (raw):', decodedText);
+
+        // Decode keyboard layout issues (Norwegian characters from barcode scanners)
+        const decoded = GlobalBarcodeScanner.decodeBarcodeInput(decodedText);
+        console.log('[Bingo] Participant scanned (decoded):', decoded);
 
         let participantCode;
         try {
-            const data = JSON.parse(decodedText);
+            const data = JSON.parse(decoded);
             if (data.type === 'participant' && data.code) {
                 participantCode = data.code;
             } else {
-                participantCode = decodedText;
+                participantCode = decoded;
             }
         } catch (e) {
-            participantCode = decodedText;
+            participantCode = decoded;
         }
 
         await this.loginParticipant(participantCode);
@@ -572,18 +576,22 @@ class BingoGame {
     }
 
     async handleTaskScan(decodedText) {
-        console.log('[Bingo] Task scanned:', decodedText);
+        console.log('[Bingo] Task scanned (raw):', decodedText);
+
+        // Decode keyboard layout issues (Norwegian characters from barcode scanners)
+        const decoded = GlobalBarcodeScanner.decodeBarcodeInput(decodedText);
+        console.log('[Bingo] Task scanned (decoded):', decoded);
 
         let scannedCode;
         try {
-            const data = JSON.parse(decodedText);
+            const data = JSON.parse(decoded);
             if (data.type === 'participant' && data.code) {
                 scannedCode = data.code;
             } else {
-                scannedCode = decodedText;
+                scannedCode = decoded;
             }
         } catch (e) {
-            scannedCode = decodedText;
+            scannedCode = decoded;
         }
 
         await this.recordCompletion(scannedCode);

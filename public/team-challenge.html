@@ -304,6 +304,10 @@
 
         checkActivityStatus();
     </script>
+
+    <!-- Hidden barcode input for background scanning -->
+    <input type="text" id="barcode-input" name="barcode-scanner" style="position: absolute; left: -9999px;" autocomplete="off">
+
     <script src="/js/camera-detector.js"></script>
     <script src="/js/participant-auth.js"></script>
     <script src="/js/barcode-scanner-global.js"></script>

@@ -7,7 +7,7 @@
 
 ## Slide 1: Introduksjon - Hvem er jeg?
 
-### 👤 Espen Strømmsnes
+### 👤 Espen Strømsnes
 - **Klubbrådgiver** i Skautrollet 4H, Toten
 - **Mange års erfaring** med å arrangere 4H-leirer og kurs
 - **Utvikler** av 4H Event Hub
@@ -473,7 +473,7 @@
 
 *"Sammen gjør vi 4H-arrangement bedre!"*
 
-**- Espen Strømmsnes**
+**- Espen Strømsnes**
 Klubbrådgiver, Skautrollet 4H
 
 ---
@@ -534,7 +534,7 @@ Klubbrådgiver, Skautrollet 4H
 - Bidra med forbedringer
 
 **Direktekontakt:**
-- Espen Strømmsnes
+- Espen Strømsnes
 - [din-epost]
 - Skautrollet 4H, Toten
 
