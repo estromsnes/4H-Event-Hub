@@ -671,6 +671,9 @@ Server running on port 3000
 3. Velg print i nettleseren
 4. Skriv ut på klistremerker eller kartong
 
+![Deltakerkort](doc_resources/deltakerkort.png)
+*Eksempel på deltakerkort med QR-kode og login-ord - kan skannes eller skrives inn manuelt*
+
 **For Skattejakt:**
 1. Gå til **QR Skattejakt** fanen
 2. Klikk **"Print QR"** på hvert sjekkpunkt

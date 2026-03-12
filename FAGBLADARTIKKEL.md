@@ -22,9 +22,9 @@ Løsningen baserer seg på moderne QR-teknologi, men fungerer like godt uten eks
 
 For oss arrangører betyr dette dramatisk redusert administrasjon:
 
-**Før arrangementet**: Legg inn data om arrangementet, program, kurs, soverom osv. Importer deltakerlisten fra CSV (eller legg inn manuelt), print ut QR-koder, og aktiver de aktivitetene dere ønsker å bruke. Legg inn programmet én gang - så ser alle det.
+**Før arrangementet**: Legg inn data om arrangementet, program, kurs, soverom. Importer deltakerlisten fra CSV (eller legg inn manuelt), skriv ut QR-koder, og aktiver de aktivitetene dere ønsker å bruke. Legg inn programmet én gang - så ser alle det.
 
-**Under arrangementet**: Få oversikt over hvem som har sjekket inn, marker no-show, print oppdaterte brannlister når som helst, og se hvem som har bekreftet sin informasjon. Alt på ett sted.
+**Under arrangementet**: Få oversikt over hvem som har sjekket inn, marker no-show, skriv ut oppdaterte brannlister når som helst, og se hvem som har bekreftet sin informasjon. Alt på ett sted.
 
 Systemet gir arrangøren live statistikk og oversikter. Soveromsoversikten viser hvem som bor hvor, og brannlister kan skrives ut automatisk når rommene er fordelt. Deltakerne kan enten være tildelt soverom eller velge selv, og bekrefter selv at kontaktinformasjonen deres stemmer.
 
@@ -41,7 +41,7 @@ Men 4H Arrangement Hjelper er langt mer enn et administrasjonssystem. Løsningen
 - **Bildeoppgaver** - Lagutfordringer som må godkjennes av arrangør
 - **Tripp-Trapp-Tresko** - Klassikeren i digital form
 
-Alle aktiviteter har live resultattavler, slik at deltakerne kan følge med på hvem som leder. Dette skaper engasjement og inkluderende konkurranse på tvers av aldersgrupper.
+Alle aktiviteter har live resultattavler, slik at deltakerne kan følge med på hvem som leder. Dette skaper engasjement og inkluderende konkurranse på tvers av aldersgrupper. Hvilke aktiviteter som skal vises styres i arrangements-administrasjonen.
 
 ## Moderne, sikkert og enkelt
 
@@ -51,7 +51,7 @@ Det beste? Dere trenger ingen teknisk erfaring. Følg den medfølgende hurtigsta
 
 ## Hvorfor gratis?
 
-Fordi jeg selv er 4H-arrangør, og vet hvor stramme budsjetter klubbene har. Dette er mitt bidrag til 4H-familien. Ingen skjulte kostnader, ingen abonnementer, ingen binding. Åpen kildekode betyr at løsningen fungerer for alltid, og at dere kan tilpasse den til deres egne behov om dere ønsker det.
+Fordi jeg selv er 4H klubbrådgiver, og vet hvor stramme budsjetter klubbene har. Dette er mitt bidrag til 4H-familien. Ingen skjulte kostnader, ingen abonnementer, ingen binding. Åpen kildekode betyr at løsningen fungerer for alltid, og at dere kan tilpasse den til deres egne behov om dere ønsker det.
 
 ## Helt nytt i 4H-sammenheng
 
@@ -67,7 +67,7 @@ Sammen gjør vi 4H-arrangement bedre - moderne, engasjerende og med mer tid til 
 
 **Mer informasjon:**
 - GitHub: https://github.com/estromsnes/4H-Event-Hub
-- Kontakt: Espen Strømsnes, Skautrollet 4H, Toten
+- Kontakt: Espen Strømsnes, Skautrollet 4H, Vestre Toten
 - E-post: estromsnes@gmail.com
 
 *4H Arrangement Hjelper er gratis, åpen kildekode-programvare utviklet av og for 4H-arrangører.*
