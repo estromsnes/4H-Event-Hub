@@ -1171,7 +1171,7 @@ MIT License - Fri programvare for 4H-klubber
 For spørsmål eller problemer:
 - Opprett en issue på GitHub: https://github.com/estromsnes/4H-Event-Hub
 - Se [CONTRIBUTING.md](CONTRIBUTING.md) for bidragsinformasjon
-- Kontakt: Espen Strømsnes, Skautrollet 4H, Toten
+- Kontakt: Espen Strømsnes, Skautrollet 4H, tlf 995 29 049
 - E-post: estromsnes@gmail.com
 
 ---

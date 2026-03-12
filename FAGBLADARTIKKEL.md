@@ -1,6 +1,6 @@
 # 4H Arrangement Hjelper - Digital løsning for kurs og leir
 
-**Spar timer på administrasjon og gi deltakerne mer tid til fellesskap**
+**Spar timer på administrasjon og gi deltakerne en morsom og informativ digital opplevelse**
 
 *Av Espen Strømsnes, klubbrådgiver i Skautrollet 4H, Vestre Toten*
 
@@ -8,7 +8,7 @@
 
 ## "Hvilke kurs går jeg på?" - for hundrede gang
 
-Som arrangør av 4H-leirer og kurs har jeg erfart det vi alle kjenner igjen: De samme spørsmålene kommer om og om igjen. "Hvor skal jeg sove?", "Hva er programmet i morgen?", "Stemmer min informasjon?". Har du arrangert leir eller kurs vet du allerede at det går mye tid til å svare på spørsmål som deltakerne kunne funnet svar på selv - hvis det bare fantes et system for det.
+Som arrangør av 4H-leirer og kurs har jeg erfart det vi alle kjenner igjen: De samme spørsmålene kommer om og om igjen. "Hvor skal jeg sove?", "Hva er programmet i morgen?", "Hvilke kurs skal jeg være med på?", "Stemmer min informasjon?". Har du arrangert leir eller kurs vet du allerede at det går mye tid til å svare på spørsmål som deltakerne kunne funnet svar på selv - hvis det bare fantes et system for det.
 
 Det fantes ikke. Så jeg lagde det.
 
@@ -67,7 +67,7 @@ Sammen gjør vi 4H-arrangement bedre - moderne, engasjerende og med mer tid til 
 
 **Mer informasjon:**
 - GitHub: https://github.com/estromsnes/4H-Event-Hub
-- Kontakt: Espen Strømsnes, Skautrollet 4H, Vestre Toten
+- Kontakt: Espen Strømsnes, Skautrollet 4H, tlf 995 29 049
 - E-post: estromsnes@gmail.com
 
 *4H Arrangement Hjelper er gratis, åpen kildekode-programvare utviklet av og for 4H-arrangører.*
