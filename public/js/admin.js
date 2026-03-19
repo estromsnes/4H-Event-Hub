@@ -3796,6 +3796,10 @@ const closeBulkEnrollBtn = document.getElementById('closeBulkEnrollBtn');
 const cancelBulkEnrollBtn = document.getElementById('cancelBulkEnrollBtn');
 const bulkEnrollModalStatus = document.getElementById('bulkEnrollModalStatus');
 
+// DOM Elements - Course Print Buttons
+const printCourseListBtn = document.getElementById('printCourseListBtn');
+const printTransportChecklistBtn = document.getElementById('printTransportChecklistBtn');
+
 // Event Listeners - Courses
 addCourseBtn.addEventListener('click', () => openCourseModal());
 closeCourseBtn.addEventListener('click', closeCourseModal);
@@ -3817,6 +3821,10 @@ closeBulkEnrollBtn.addEventListener('click', closeBulkEnrollModal);
 cancelBulkEnrollBtn.addEventListener('click', closeBulkEnrollModal);
 bulkEnrollForm.addEventListener('submit', saveBulkEnrollment);
 selectAllParticipants.addEventListener('change', toggleAllParticipants);
+
+// Event Listeners - Print Reports
+printCourseListBtn.addEventListener('click', printCourseList);
+printTransportChecklistBtn.addEventListener('click', printTransportChecklist);
 
 /**
  * Load all courses
@@ -4322,6 +4330,20 @@ async function saveBulkEnrollment(e) {
         bulkEnrollModalStatus.style.color = '#c62828';
         bulkEnrollModalStatus.classList.remove('hidden');
     }
+}
+
+/**
+ * Print course list report
+ */
+function printCourseList() {
+    window.open('/course-report.html', '_blank', 'width=1200,height=800');
+}
+
+/**
+ * Print transport checklist report
+ */
+function printTransportChecklist() {
+    window.open('/transport-checklist.html', '_blank', 'width=1200,height=800');
 }
 
 // ==============================================
