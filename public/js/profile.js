@@ -58,7 +58,7 @@ const confirmationSection = document.getElementById('confirmationSection');
 const confirmedStatus = document.getElementById('confirmedStatus');
 
 const welcomeModal = document.getElementById('welcomeModal');
-const welcomeCloseBtn = document.getElementById('welcomeCloseBtn');
+// welcomeCloseBtn no longer exists - onboarding uses onboardingDoneBtn and onboardingSkipBtn
 const welcomeTitle = document.getElementById('welcomeTitle');
 const statsActivities = document.getElementById('statsActivities');
 const statsPoints = document.getElementById('statsPoints');
@@ -148,7 +148,7 @@ async function initApp() {
     retakeBtn.addEventListener('click', retakePhoto);
     uploadBtn.addEventListener('click', uploadPhoto);
     confirmBtn.addEventListener('click', confirmParticipant);
-    welcomeCloseBtn.addEventListener('click', closeWelcomeModal);
+    // Note: welcomeCloseBtn is now handled in initializeOnboarding()
     changeRoomBtn.addEventListener('click', toggleRoomSelection);
 
     // Login word event listeners
@@ -404,7 +404,7 @@ async function loadParticipantByCode(participantCode) {
         retakeBtn.addEventListener('click', retakePhoto);
         uploadBtn.addEventListener('click', uploadPhoto);
         confirmBtn.addEventListener('click', confirmParticipant);
-        welcomeCloseBtn.addEventListener('click', closeWelcomeModal);
+        // welcomeCloseBtn is now handled in initializeOnboarding()
         changeRoomBtn.addEventListener('click', toggleRoomSelection);
 
         showProfileView();
@@ -412,7 +412,19 @@ async function loadParticipantByCode(participantCode) {
 
     } catch (err) {
         console.error('Error loading participant:', err);
-        alert('Kunne ikke laste deltakerprofil. Vennligst prøv igjen.');
+
+        // More detailed error message
+        let errorMsg = 'Kunne ikke laste deltakerprofil.';
+        if (err.message) {
+            errorMsg += ' ' + err.message;
+        }
+
+        alert(errorMsg + ' Vennligst prøv igjen.');
+
+        // Clear the session storage to avoid loop
+        sessionStorage.removeItem('welcomeParticipantCode');
+        sessionStorage.removeItem('fromWelcome');
+
         // Redirect back to welcome or show scanner
         window.location.href = '/welcome.html';
     }
@@ -498,6 +510,9 @@ function showProfileView() {
     // Check and show welcome modal if first visit
     checkAndShowWelcomeModal();
 
+    // Start tracking profile view time for checklist
+    startProfileViewTracking();
+
     // Deactivate global barcode scanner
     globalBarcodeScanner.deactivate();
 
@@ -546,6 +561,10 @@ async function confirmParticipant() {
 
         setTimeout(() => {
             updateConfirmationUI();
+            // Update onboarding checklist
+            if (typeof updateChecklistStatus === 'function') {
+                updateChecklistStatus();
+            }
         }, 1000);
 
     } catch (err) {
@@ -764,6 +783,10 @@ async function uploadPhoto() {
             closeCameraModal();
             // Refresh participant data to get new photo path
             refreshProfile();
+            // Update onboarding checklist
+            if (typeof updateChecklistStatus === 'function') {
+                setTimeout(() => updateChecklistStatus(), 500);
+            }
         }, 1500);
     } catch (err) {
         console.error('Error uploading photo:', err);
@@ -854,6 +877,11 @@ async function loadParticipantStats() {
         statsActivities.textContent = totalActivities;
         statsPoints.textContent = totalPoints;
 
+        // Update onboarding checklist
+        if (typeof updateChecklistStatus === 'function') {
+            updateChecklistStatus();
+        }
+
     } catch (err) {
         console.error('Error loading participant stats:', err);
         statsActivities.textContent = '0';
@@ -928,6 +956,13 @@ async function loadReceivedMessages(participantCode) {
     }
 }
 
+// ============================================================================
+// INTERACTIVE ONBOARDING FUNCTIONALITY
+// ============================================================================
+
+let currentOnboardingScreen = 1;
+const totalOnboardingScreens = 4;
+
 // Check and show welcome modal if first visit
 function checkAndShowWelcomeModal() {
     if (!currentParticipant) return;
@@ -939,15 +974,149 @@ function checkAndShowWelcomeModal() {
     // 1. User hasn't seen it before
     // 2. User is NOT yet confirmed (first time visiting profile)
     if (!hasSeenWelcome && currentParticipant.confirmed !== 1) {
-        // Update welcome title with event name
-        if (currentEventName && welcomeTitle) {
-            welcomeTitle.textContent = `Velkommen til ${currentEventName}!`;
+        // Update onboarding with participant info
+        const onboardingName = document.getElementById('onboardingName');
+        const onboardingEventName = document.getElementById('onboardingEventName');
+        const onboardingPreviewName = document.getElementById('onboardingPreviewName');
+        const onboardingPreviewAge = document.getElementById('onboardingPreviewAge');
+
+        if (onboardingName) {
+            onboardingName.textContent = currentParticipant.first_name;
         }
+        if (onboardingEventName && currentEventName) {
+            onboardingEventName.textContent = currentEventName;
+        }
+        if (onboardingPreviewName) {
+            onboardingPreviewName.textContent = `${currentParticipant.first_name} ${currentParticipant.last_name}`;
+        }
+        if (onboardingPreviewAge) {
+            onboardingPreviewAge.textContent = currentParticipant.age || '-';
+        }
+
+        // Initialize onboarding
+        currentOnboardingScreen = 1;
+        initializeOnboarding();
 
         // Show modal after a short delay for better UX
         setTimeout(() => {
             welcomeModal.classList.remove('hidden');
         }, 500);
+
+        // Show checklist after modal
+        showOnboardingChecklist();
+    }
+}
+
+// Track if onboarding is already initialized to prevent duplicate listeners
+let onboardingInitialized = false;
+
+// Initialize onboarding event listeners
+function initializeOnboarding() {
+    // Prevent duplicate initialization
+    if (onboardingInitialized) {
+        updateOnboardingScreen(1);
+        return;
+    }
+
+    const onboardingPrevBtn = document.getElementById('onboardingPrevBtn');
+    const onboardingNextBtn = document.getElementById('onboardingNextBtn');
+    const onboardingDoneBtn = document.getElementById('onboardingDoneBtn');
+    const onboardingSkipBtn = document.getElementById('onboardingSkipBtn');
+
+    if (onboardingPrevBtn) {
+        onboardingPrevBtn.addEventListener('click', previousOnboardingScreen);
+    }
+    if (onboardingNextBtn) {
+        onboardingNextBtn.addEventListener('click', nextOnboardingScreen);
+    }
+    if (onboardingDoneBtn) {
+        onboardingDoneBtn.addEventListener('click', closeWelcomeModal);
+    }
+    if (onboardingSkipBtn) {
+        onboardingSkipBtn.addEventListener('click', closeWelcomeModal);
+    }
+
+    // Add click listeners to dots
+    const dots = document.querySelectorAll('.onboarding-dots .dot');
+    dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            const screenNum = parseInt(dot.getAttribute('data-dot'));
+            goToOnboardingScreen(screenNum);
+        });
+    });
+
+    onboardingInitialized = true;
+
+    // Show first screen
+    updateOnboardingScreen(1);
+}
+
+// Navigate to next screen
+function nextOnboardingScreen() {
+    if (currentOnboardingScreen < totalOnboardingScreens) {
+        goToOnboardingScreen(currentOnboardingScreen + 1);
+    }
+}
+
+// Navigate to previous screen
+function previousOnboardingScreen() {
+    if (currentOnboardingScreen > 1) {
+        goToOnboardingScreen(currentOnboardingScreen - 1);
+    }
+}
+
+// Go to specific screen
+function goToOnboardingScreen(screenNum) {
+    if (screenNum < 1 || screenNum > totalOnboardingScreens) return;
+
+    const oldScreen = currentOnboardingScreen;
+    currentOnboardingScreen = screenNum;
+
+    updateOnboardingScreen(screenNum, oldScreen);
+}
+
+// Update onboarding screen display
+function updateOnboardingScreen(screenNum, oldScreen) {
+    // Update screens
+    const screens = document.querySelectorAll('.onboarding-screen');
+    screens.forEach((screen, index) => {
+        const screenNumber = index + 1;
+        screen.classList.remove('active', 'prev');
+
+        if (screenNumber === screenNum) {
+            screen.classList.add('active');
+        } else if (oldScreen && screenNumber === oldScreen && screenNumber < screenNum) {
+            screen.classList.add('prev');
+        }
+    });
+
+    // Update dots
+    const dots = document.querySelectorAll('.onboarding-dots .dot');
+    dots.forEach((dot, index) => {
+        if (index + 1 === screenNum) {
+            dot.classList.add('active');
+        } else {
+            dot.classList.remove('active');
+        }
+    });
+
+    // Update navigation buttons
+    const prevBtn = document.getElementById('onboardingPrevBtn');
+    const nextBtn = document.getElementById('onboardingNextBtn');
+    const doneBtn = document.getElementById('onboardingDoneBtn');
+
+    if (prevBtn) {
+        prevBtn.style.visibility = screenNum === 1 ? 'hidden' : 'visible';
+    }
+
+    if (nextBtn && doneBtn) {
+        if (screenNum === totalOnboardingScreens) {
+            nextBtn.style.display = 'none';
+            doneBtn.style.display = 'block';
+        } else {
+            nextBtn.style.display = 'block';
+            doneBtn.style.display = 'none';
+        }
     }
 }
 
@@ -961,6 +1130,134 @@ function closeWelcomeModal() {
     const welcomeKey = `welcomeShown_${currentParticipant.participant_code}`;
     localStorage.setItem(welcomeKey, 'true');
 }
+
+// Show onboarding checklist
+function showOnboardingChecklist() {
+    const checklist = document.getElementById('onboardingChecklist');
+    if (checklist) {
+        setTimeout(() => {
+            checklist.classList.remove('hidden');
+        }, 1000);
+
+        // Setup checklist toggle
+        const checklistToggle = document.getElementById('checklistToggle');
+        const checklistContent = document.querySelector('.checklist-content');
+
+        if (checklistToggle && checklistContent) {
+            checklistToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                checklistContent.classList.toggle('collapsed');
+                checklistToggle.textContent = checklistContent.classList.contains('collapsed') ? '+' : '−';
+            });
+
+            // Also toggle on header click
+            const checklistHeader = document.querySelector('.checklist-header');
+            if (checklistHeader) {
+                checklistHeader.addEventListener('click', () => {
+                    checklistContent.classList.toggle('collapsed');
+                    checklistToggle.textContent = checklistContent.classList.contains('collapsed') ? '+' : '−';
+                });
+            }
+        }
+
+        // Update checklist based on current state
+        updateChecklistStatus();
+    }
+}
+
+// Track profile viewing time
+let profileViewStartTime = null;
+let profileViewCheckInterval = null;
+
+// Update checklist status
+function updateChecklistStatus() {
+    if (!currentParticipant) return;
+
+    const checklistConfirm = document.getElementById('checklistConfirm');
+    const checklistSelfie = document.getElementById('checklistSelfie');
+    const checklistProfile = document.getElementById('checklistProfile');
+
+    // Check if confirmed
+    if (checklistConfirm && currentParticipant.confirmed === 1) {
+        checklistConfirm.classList.add('completed');
+    }
+
+    // Check if has selfie
+    if (checklistSelfie && currentParticipant.profile_photo_path) {
+        checklistSelfie.classList.add('completed');
+    }
+
+    // Check if has viewed profile (check localStorage)
+    if (checklistProfile) {
+        const profileViewedKey = `profileViewed_${currentParticipant.participant_code}`;
+        const hasViewedProfile = localStorage.getItem(profileViewedKey);
+
+        if (hasViewedProfile) {
+            checklistProfile.classList.add('completed');
+        }
+    }
+
+    // Hide checklist if all completed
+    if (checklistConfirm && checklistSelfie && checklistProfile &&
+        checklistConfirm.classList.contains('completed') &&
+        checklistSelfie.classList.contains('completed') &&
+        checklistProfile.classList.contains('completed')) {
+
+        const checklist = document.getElementById('onboardingChecklist');
+        if (checklist) {
+            setTimeout(() => {
+                checklist.style.animation = 'slideOut 0.5s ease-in forwards';
+                setTimeout(() => {
+                    checklist.remove();
+                }, 500);
+            }, 2000);
+        }
+    }
+}
+
+// Start tracking profile view time
+function startProfileViewTracking() {
+    if (!currentParticipant) return;
+
+    const profileViewedKey = `profileViewed_${currentParticipant.participant_code}`;
+    const hasViewedProfile = localStorage.getItem(profileViewedKey);
+
+    // If already viewed, don't track again
+    if (hasViewedProfile) return;
+
+    // Set start time
+    profileViewStartTime = Date.now();
+
+    // Check every second if 15 seconds have passed
+    profileViewCheckInterval = setInterval(() => {
+        const timeElapsed = Date.now() - profileViewStartTime;
+
+        // If 15 seconds have passed, mark as viewed
+        if (timeElapsed >= 15000) {
+            localStorage.setItem(profileViewedKey, 'true');
+            clearInterval(profileViewCheckInterval);
+
+            // Update checklist
+            updateChecklistStatus();
+        }
+    }, 1000);
+}
+
+// Add slideOut animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 
 // ============================================================================
 // LOGIN WORD AUTHENTICATION

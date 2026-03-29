@@ -395,6 +395,7 @@ async function initAdmin() {
     // Database management event listeners
     document.getElementById('loadDummyDataBtn').addEventListener('click', loadDummyData);
     document.getElementById('resetDatabaseBtn').addEventListener('click', resetDatabase);
+    document.getElementById('clearOnboardingBtn').addEventListener('click', clearOnboardingData);
 
     // Auto-generate new code when name changes
     firstNameInput.addEventListener('input', generateNextCode);
@@ -3730,6 +3731,74 @@ async function resetDatabase() {
     } catch (error) {
         console.error('Error resetting database:', error);
         statusDiv.textContent = '❌ Kunne ikke nullstille database';
+        statusDiv.style.background = '#ffcdd2';
+        statusDiv.style.color = '#c62828';
+
+        setTimeout(() => {
+            statusDiv.classList.add('hidden');
+        }, 5000);
+    }
+}
+
+// Clear onboarding data for all participants
+async function clearOnboardingData() {
+    const confirmation = confirm(
+        '🔄 Rydd onboarding-data\n\n' +
+        'Dette vil tilbakestille onboarding-status for alle deltakere:\n\n' +
+        '• Velkomst-dialogen vises igjen for alle\n' +
+        '• Sjekklisten starter på nytt\n' +
+        '• "Bekreft informasjon" må gjøres på nytt\n\n' +
+        'LocalStorage for onboarding vil bli ryddet fra denne nettleseren.\n' +
+        'Deltakere på andre enheter må rydde sine egne nettlesere.\n\n' +
+        'Er du sikker på at du vil fortsette?'
+    );
+
+    if (!confirmation) return;
+
+    const statusDiv = document.getElementById('databaseStatus');
+    statusDiv.textContent = 'Rydder onboarding-data...';
+    statusDiv.style.background = '#fff9e6';
+    statusDiv.style.color = '#F57C00';
+    statusDiv.classList.remove('hidden');
+
+    try {
+        // Clear localStorage for this browser
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('welcomeShown_') || key.startsWith('profileViewed_')) {
+                keysToRemove.push(key);
+            }
+        }
+
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+
+        // Reset database confirmed status
+        const response = await authenticatedFetch('/api/admin/clear-onboarding', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to clear onboarding data');
+        }
+
+        const result = await response.json();
+
+        statusDiv.textContent = `✅ ${result.message} (${keysToRemove.length} localStorage-oppføringer ryddet fra denne nettleseren)`;
+        statusDiv.style.background = '#c8e6c9';
+        statusDiv.style.color = '#2e7d32';
+
+        // Reload participants to show updated confirmed status
+        await loadParticipants();
+
+        setTimeout(() => {
+            statusDiv.classList.add('hidden');
+        }, 8000);
+
+    } catch (error) {
+        console.error('Error clearing onboarding data:', error);
+        statusDiv.textContent = '❌ Kunne ikke rydde onboarding-data: ' + error.message;
         statusDiv.style.background = '#ffcdd2';
         statusDiv.style.color = '#c62828';
 

@@ -270,76 +270,143 @@
         </div>
     </div>
 
-    <!-- Welcome Modal -->
+    <!-- Interactive Onboarding Modal -->
     <div id="welcomeModal" class="welcome-modal hidden">
         <div class="welcome-modal-content">
-            <div class="welcome-header">
-                <div class="welcome-icon">🎉</div>
-                <h2 id="welcomeTitle">Velkommen til 4H Event Hub!</h2>
-                <p>Flott at du er med!</p>
-            </div>
+            <!-- Onboarding Screens Container -->
+            <div class="onboarding-screens">
+                <!-- Screen 1: Welcome -->
+                <div class="onboarding-screen active" data-screen="1">
+                    <div class="onboarding-icon">👋</div>
+                    <h2 id="welcomeTitle">Hei <span id="onboardingName">!</span></h2>
+                    <p class="onboarding-subtitle">La oss starte!</p>
+                    <div class="onboarding-content">
+                        <p style="font-size: 20px; color: var(--text-dark); line-height: 1.6;">
+                            Velkommen til <span id="onboardingEventName">4H Event Hub</span>! 🎉
+                        </p>
+                        <p style="font-size: 18px; color: var(--text-light); margin-top: 15px;">
+                            Vi skal vise deg hvordan alt fungerer - det tar bare 30 sekunder!
+                        </p>
+                    </div>
+                </div>
 
-            <div class="welcome-activities">
-                <h3>Før du starter:</h3>
-                <div class="welcome-activity-list">
-                    <div class="welcome-activity-item" style="background: linear-gradient(135deg, #fff9e6, #fffaeb); border-left: 4px solid #FFC107;">
-                        <div class="welcome-activity-icon">✅</div>
-                        <div>
-                            <strong>Bekreft informasjonen din</strong>
-                            <p>Klikk "Kom i gang!" og bekreft at navn, alder og andre opplysninger stemmer på neste side</p>
+                <!-- Screen 2: Confirm Info -->
+                <div class="onboarding-screen" data-screen="2">
+                    <div class="onboarding-icon">✅</div>
+                    <h2>Steg 1 av 3</h2>
+                    <p class="onboarding-subtitle">Bekreft at infoen er riktig</p>
+                    <div class="onboarding-content">
+                        <div class="onboarding-visual">
+                            <div style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border-radius: 15px; padding: 25px; border: 3px solid #4CAF50;">
+                                <div style="font-size: 24px; margin-bottom: 10px;">📋</div>
+                                <p style="font-size: 18px; color: var(--text-dark); margin-bottom: 8px;">
+                                    <strong>Navn:</strong> <span id="onboardingPreviewName">-</span>
+                                </p>
+                                <p style="font-size: 18px; color: var(--text-dark);">
+                                    <strong>Alder:</strong> <span id="onboardingPreviewAge">-</span> år
+                                </p>
+                            </div>
                         </div>
+                        <p style="font-size: 16px; color: var(--text-light); margin-top: 20px;">
+                            Sjekk at navn og alder stemmer, og klikk på "Bekreft informasjon" knappen.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Screen 3: Take Selfie -->
+                <div class="onboarding-screen" data-screen="3">
+                    <div class="onboarding-icon">📸</div>
+                    <h2>Steg 2 av 3</h2>
+                    <p class="onboarding-subtitle">Ta et kult selfie!</p>
+                    <div class="onboarding-content">
+                        <div class="onboarding-visual">
+                            <div style="width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, #e3f2fd, #bbdefb); margin: 0 auto; display: flex; align-items: center; justify-content: center; border: 4px solid #2196F3; position: relative; overflow: hidden;">
+                                <div style="font-size: 80px;">🤳</div>
+                                <div style="position: absolute; bottom: 10px; right: 10px; background: #4CAF50; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white;">
+                                    <span style="font-size: 20px;">📷</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="font-size: 16px; color: var(--text-light); margin-top: 20px;">
+                            Klikk på "📸 Ta Selfie" knappen og ta et bilde av deg selv.
+                            Det gjør det lettere for andre å kjenne deg igjen!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Screen 4: Explore Profile -->
+                <div class="onboarding-screen" data-screen="4">
+                    <div class="onboarding-icon">👥</div>
+                    <h2>Steg 3 av 3</h2>
+                    <p class="onboarding-subtitle">Utforsk profilen din!</p>
+                    <div class="onboarding-content">
+                        <div class="onboarding-visual">
+                            <div style="background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-radius: 15px; padding: 25px; border: 3px solid #2196F3;">
+                                <div style="font-size: 24px; margin-bottom: 15px;">📋</div>
+                                <div style="text-align: left; font-size: 16px; color: var(--text-dark);">
+                                    <p style="margin: 8px 0;">🏆 <strong>Ditt lag</strong> - Se hvem du er på lag med</p>
+                                    <p style="margin: 8px 0;">📚 <strong>Dine kurs</strong> - Hvilke kurs er du påmeldt?</p>
+                                    <p style="margin: 8px 0;">📊 <strong>Din statistikk</strong> - Følg med på poeng</p>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="font-size: 16px; color: var(--text-light); margin-top: 20px;">
+                            Scroll nedover på profilen for å se alt!
+                        </p>
+                        <p style="font-size: 16px; color: var(--text-light); margin-top: 10px;">
+                            Når du er klar: Gå til <strong>"🎮 Spill og utfordringer"</strong> for morsomme aktiviteter! 🏆
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <div class="welcome-activities">
-                <h3>Deretter kan du:</h3>
-                <div class="welcome-activity-list">
-                    <div class="welcome-activity-item">
-                        <div class="welcome-activity-icon">📸</div>
-                        <div>
-                            <strong>Samle laget</strong>
-                            <p>Ta lagbilde med alle medlemmene</p>
-                        </div>
-                    </div>
-                    <div class="welcome-activity-item">
-                        <div class="welcome-activity-icon">🤳</div>
-                        <div>
-                            <strong>Selfie-kjedet</strong>
-                            <p>Finn andre deltakere og ta selfies sammen</p>
-                        </div>
-                    </div>
-                    <div class="welcome-activity-item">
-                        <div class="welcome-activity-icon">🧠</div>
-                        <div>
-                            <strong>Quiz</strong>
-                            <p>Test kunnskapen din alene eller med laget</p>
-                        </div>
-                    </div>
-                    <div class="welcome-activity-item">
-                        <div class="welcome-activity-icon">🎯</div>
-                        <div>
-                            <strong>QR Skattejakt</strong>
-                            <p>Finn alle sjekkpunktene rundt på stedet</p>
-                        </div>
-                    </div>
-                    <div class="welcome-activity-item">
-                        <div class="welcome-activity-icon">⭕</div>
-                        <div>
-                            <strong>Tripp-Trapp-Tresko</strong>
-                            <p>Spill mot andre deltakere eller lag</p>
-                        </div>
-                    </div>
-                </div>
+            <!-- Progress Dots -->
+            <div class="onboarding-dots">
+                <span class="dot active" data-dot="1"></span>
+                <span class="dot" data-dot="2"></span>
+                <span class="dot" data-dot="3"></span>
+                <span class="dot" data-dot="4"></span>
             </div>
 
-            <div class="welcome-tip">
-                💡 <strong>Tips:</strong> Alle aktiviteter gir poeng! Se din statistikk på profilen din.
+            <!-- Navigation Buttons -->
+            <div class="onboarding-nav">
+                <button id="onboardingPrevBtn" class="button secondary" style="visibility: hidden;">
+                    ← Forrige
+                </button>
+                <button id="onboardingNextBtn" class="button primary">
+                    Neste →
+                </button>
+                <button id="onboardingDoneBtn" class="button primary" style="display: none;">
+                    ✅ Kom i gang!
+                </button>
             </div>
 
-            <button id="welcomeCloseBtn" class="welcome-close-btn">
-                ✅ Kom i gang!
+            <!-- Skip Button -->
+            <button id="onboardingSkipBtn" class="onboarding-skip">
+                Hopp over →
             </button>
+        </div>
+    </div>
+
+    <!-- Onboarding Checklist Widget (Persistent) -->
+    <div id="onboardingChecklist" class="onboarding-checklist hidden">
+        <div class="checklist-header">
+            <span>🎯 Dine første steg</span>
+            <button id="checklistToggle" class="checklist-toggle" aria-label="Skjul/vis sjekkliste">−</button>
+        </div>
+        <div class="checklist-content">
+            <div class="checklist-item" id="checklistConfirm">
+                <span class="checklist-checkbox">☐</span>
+                <span class="checklist-text">Bekreft informasjon</span>
+            </div>
+            <div class="checklist-item" id="checklistSelfie">
+                <span class="checklist-checkbox">☐</span>
+                <span class="checklist-text">Ta et selfie</span>
+            </div>
+            <div class="checklist-item" id="checklistProfile">
+                <span class="checklist-checkbox">☐</span>
+                <span class="checklist-text">Se gjennom profilen din</span>
+            </div>
         </div>
     </div>
 

@@ -83,6 +83,36 @@ router.post('/reset', async (req, res) => {
     }
 });
 
+// POST clear onboarding data
+router.post('/clear-onboarding', async (req, res) => {
+    const db = req.app.locals.db;
+
+    try {
+        // Reset confirmed status for all participants
+        await new Promise((resolve, reject) => {
+            db.run(
+                `UPDATE participants SET
+                    confirmed = 0,
+                    confirmed_at = NULL`,
+                [],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve();
+                }
+            );
+        });
+
+        console.log('✅ Onboarding data cleared successfully');
+        res.json({
+            message: 'Onboarding-data er ryddet. Alle deltakere vil se velkomst-dialogen på nytt.'
+        });
+
+    } catch (err) {
+        console.error('❌ Error clearing onboarding data:', err);
+        res.status(500).json({ error: 'Kunne ikke rydde onboarding-data' });
+    }
+});
+
 // POST load dummy data
 router.post('/load-dummy-data', async (req, res) => {
     const db = req.app.locals.db;
