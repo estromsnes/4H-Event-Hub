@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/css/main.css">
     <link rel="stylesheet" href="/css/index.css">
     <link rel="stylesheet" href="/css/qr-scanner.css">
+    <link rel="stylesheet" href="/css/login-component.css">
     <style>
         .ttt-container {
             max-width: 600px;
@@ -296,50 +297,114 @@
                     Skriv inn login-ord eller skann QR-koden din
                 </p>
 
-                <!-- Player 1 Login Word Input -->
-                <div id="player1CodeInputSection" class="code-input-section" style="margin-bottom: 25px;">
+                <!-- PRIMARY LOGIN SECTION (Desktop: Barcode | Mobile: Login word) -->
+
+                <!-- Desktop Primary: Barcode Scanner -->
+                <div id="player1DesktopPrimaryLogin" class="primary-login-section">
+                    <div class="scanner-mode-indicator">
+                        <svg class="qr-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="8" height="8" rx="1"/>
+                            <rect x="14" y="2" width="8" height="8" rx="1"/>
+                            <rect x="2" y="14" width="8" height="8" rx="1"/>
+                            <rect x="4" y="4" width="4" height="4" fill="white"/>
+                            <rect x="16" y="4" width="4" height="4" fill="white"/>
+                            <rect x="4" y="16" width="4" height="4" fill="white"/>
+                            <rect x="14" y="14" width="2" height="2"/>
+                            <rect x="18" y="14" width="2" height="2"/>
+                            <rect x="14" y="18" width="2" height="2"/>
+                            <rect x="20" y="18" width="2" height="2"/>
+                            <rect x="12" y="12" width="2" height="2"/>
+                        </svg>
+                        <span>Skanner klar - skann QR-koden din!</span>
+                    </div>
+                    <div id="player1-scan-status" class="scan-status" style="display: none;"></div>
+                </div>
+
+                <!-- Mobile Primary: Login Word -->
+                <div id="player1MobilePrimaryLogin" class="primary-login-section">
                     <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
                     <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
-                        <label for="player1CodeInput" class="visually-hidden">
-                            Spiller 1 deltakerkode
-                        </label>
                         <input
                             type="text"
                             id="player1CodeInput"
-                            name="participant-code"
                             placeholder="F.eks: 4H"
                             style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
-                            autocomplete="username"
+                            autocomplete="off"
                             maxlength="10"
-                            aria-describedby="player1Hint"
                         >
-                        <button id="player1CodeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;" aria-label="Logg inn spiller 1">
-                            <span aria-hidden="true">➡️</span>
+                        <button id="player1CodeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
+                            ➡️
                         </button>
                     </div>
-                    <span id="player1Hint" class="visually-hidden">
-                        Skriv eller skann deltakerkoden til spiller 1
-                    </span>
                     <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
-                        💡 Finner du på deltakerkortet
+                        💡 Finner du på ditt deltakerkort
                     </p>
                     <div id="player1CodeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
                 </div>
 
-                <div class="divider">
-                    <span>eller skann QR-kode</span>
+                <!-- ALTERNATIVE LOGIN METHODS (Collapsible) -->
+                <div id="player1AlternativeLoginSection" style="margin-top: 25px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    <button id="player1ToggleAlternativeLogin" class="toggle-alternative-btn">
+                        <span class="toggle-icon-player1">▼</span> Andre måter å logge inn
+                    </button>
+
+                    <div id="player1AlternativeLoginContent" class="alternative-login-content collapsed">
+                        <!-- Desktop Alternative: Login Word -->
+                        <div id="player1DesktopAlternativeCode" class="alternative-method">
+                            <p style="color: var(--text-dark); margin-bottom: 10px; font-size: 16px; font-weight: 600;">📝 Login-ord</p>
+                            <p style="color: var(--text-light); margin-bottom: 15px; font-size: 14px;">Skriv inn ditt login-ord fra deltakerkortet</p>
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <input
+                                    type="text"
+                                    id="player1CodeInputAlt"
+                                    placeholder="F.eks: 4H"
+                                    style="flex: 1; padding: 15px; font-size: 18px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
+                                    maxlength="10"
+                                >
+                                <button id="player1CodeLoginBtnAlt" class="button primary" style="padding: 15px 25px; font-size: 18px;">
+                                    ➡️
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Alternative: Barcode Scanner -->
+                        <div id="player1MobileAlternativeScanner" class="alternative-method">
+                            <p style="color: var(--text-dark); margin-bottom: 10px; font-size: 16px; font-weight: 600;">📷 Strekkodeleser</p>
+                            <p style="color: var(--text-light); margin-bottom: 15px; font-size: 14px;">Bruk ekstern strekkodeleser hvis tilgjengelig</p>
+                            <div class="scanner-mode-indicator" style="font-size: 14px; padding: 12px;">
+                                <svg class="qr-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="2" y="2" width="8" height="8" rx="1"/>
+                                    <rect x="14" y="2" width="8" height="8" rx="1"/>
+                                    <rect x="2" y="14" width="8" height="8" rx="1"/>
+                                    <rect x="4" y="4" width="4" height="4" fill="white"/>
+                                    <rect x="16" y="4" width="4" height="4" fill="white"/>
+                                    <rect x="4" y="16" width="4" height="4" fill="white"/>
+                                </svg>
+                                <span>Skanner klar</span>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Only: Camera Scanning -->
+                        <div id="player1DesktopCameraScanning" class="alternative-method">
+                            <p style="color: var(--text-dark); margin-bottom: 10px; font-size: 16px; font-weight: 600;">📸 Kamera-skanning</p>
+                            <p style="color: var(--text-light); margin-bottom: 15px; font-size: 14px;">Bruk kameraet til å skanne QR-kode</p>
+                            <div id="player1QrReader" style="margin-bottom: 15px;"></div>
+                            <button id="startPlayer1ScanBtn" class="button primary" style="width: 100%; font-size: 16px; padding: 15px;">
+                                📷 Start Kamera-Skanning
+                            </button>
+                        </div>
+
+                        <!-- Upload QR Image (Both) -->
+                        <div id="player1UploadQRMethod" class="alternative-method">
+                            <p style="color: var(--text-dark); margin-bottom: 10px; font-size: 16px; font-weight: 600;">🖼️ Last opp bilde</p>
+                            <p style="color: var(--text-light); margin-bottom: 15px; font-size: 14px;">Last opp et bilde av QR-koden</p>
+                            <label for="player1QrFileInput" class="button secondary" style="width: 100%; font-size: 16px; padding: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                                🖼️ Velg bilde
+                            </label>
+                            <input type="file" id="player1QrFileInput" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
                 </div>
-
-                <div id="player1QrReader" style="margin-bottom: 15px;"></div>
-
-                <button id="startPlayer1ScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
-                    📷 Start Kamera-Skanning
-                </button>
-
-                <label for="player1QrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 15px;">
-                    🖼️ Last opp bilde av QR
-                </label>
-                <input type="file" id="player1QrFileInput" accept="image/*" style="display: none;">
 
                 <div id="player1ScanFeedback" class="scan-status hidden"></div>
             </div>
@@ -361,50 +426,114 @@
                     Skriv inn login-ord eller skann QR-koden din
                 </p>
 
-                <!-- Player 2 Login Word Input -->
-                <div id="player2CodeInputSection" class="code-input-section" style="margin-bottom: 25px;">
+                <!-- PRIMARY LOGIN SECTION (Desktop: Barcode | Mobile: Login word) -->
+
+                <!-- Desktop Primary: Barcode Scanner -->
+                <div id="player2DesktopPrimaryLogin" class="primary-login-section">
+                    <div class="scanner-mode-indicator">
+                        <svg class="qr-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="2" y="2" width="8" height="8" rx="1"/>
+                            <rect x="14" y="2" width="8" height="8" rx="1"/>
+                            <rect x="2" y="14" width="8" height="8" rx="1"/>
+                            <rect x="4" y="4" width="4" height="4" fill="white"/>
+                            <rect x="16" y="4" width="4" height="4" fill="white"/>
+                            <rect x="4" y="16" width="4" height="4" fill="white"/>
+                            <rect x="14" y="14" width="2" height="2"/>
+                            <rect x="18" y="14" width="2" height="2"/>
+                            <rect x="14" y="18" width="2" height="2"/>
+                            <rect x="20" y="18" width="2" height="2"/>
+                            <rect x="12" y="12" width="2" height="2"/>
+                        </svg>
+                        <span>Skanner klar - skann QR-koden din!</span>
+                    </div>
+                    <div id="player2-scan-status" class="scan-status" style="display: none;"></div>
+                </div>
+
+                <!-- Mobile Primary: Login Word -->
+                <div id="player2MobilePrimaryLogin" class="primary-login-section">
                     <p style="color: var(--text-light); margin-bottom: 15px; font-size: 16px;">Skriv inn ditt login-ord</p>
                     <div style="display: flex; gap: 10px; max-width: 400px; margin: 0 auto 20px;">
-                        <label for="player2CodeInput" class="visually-hidden">
-                            Spiller 2 deltakerkode
-                        </label>
                         <input
                             type="text"
                             id="player2CodeInput"
-                            name="participant-code"
                             placeholder="F.eks: 4H"
                             style="flex: 1; padding: 18px; font-size: 20px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
-                            autocomplete="username"
+                            autocomplete="off"
                             maxlength="10"
-                            aria-describedby="player2Hint"
                         >
-                        <button id="player2CodeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;" aria-label="Logg inn spiller 2">
-                            <span aria-hidden="true">➡️</span>
+                        <button id="player2CodeLoginBtn" class="button primary" style="padding: 18px 25px; font-size: 18px;">
+                            ➡️
                         </button>
                     </div>
-                    <span id="player2Hint" class="visually-hidden">
-                        Skriv eller skann deltakerkoden til spiller 2
-                    </span>
                     <p style="color: var(--text-light); font-size: 14px; margin: -10px auto 20px; max-width: 400px; text-align: center;">
-                        💡 Finner du på deltakerkortet
+                        💡 Finner du på ditt deltakerkort
                     </p>
                     <div id="player2CodeStatus" class="scan-status hidden" style="max-width: 400px; margin: 0 auto 20px;"></div>
                 </div>
 
-                <div class="divider">
-                    <span>eller skann QR-kode</span>
+                <!-- ALTERNATIVE LOGIN METHODS (Collapsible) -->
+                <div id="player2AlternativeLoginSection" style="margin-top: 25px; max-width: 500px; margin-left: auto; margin-right: auto;">
+                    <button id="player2ToggleAlternativeLogin" class="toggle-alternative-btn">
+                        <span class="toggle-icon-player2">▼</span> Andre måter å logge inn
+                    </button>
+
+                    <div id="player2AlternativeLoginContent" class="alternative-login-content collapsed">
+                        <!-- Desktop Alternative: Login Word -->
+                        <div id="player2DesktopAlternativeCode" class="alternative-method">
+                            <p style="color: var(--text-dark); margin-bottom: 10px; font-size: 16px; font-weight: 600;">📝 Login-ord</p>
+                            <p style="color: var(--text-light); margin-bottom: 15px; font-size: 14px;">Skriv inn ditt login-ord fra deltakerkortet</p>
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <input
+                                    type="text"
+                                    id="player2CodeInputAlt"
+                                    placeholder="F.eks: 4H"
+                                    style="flex: 1; padding: 15px; font-size: 18px; border: 2px solid var(--primary-green); border-radius: 12px; text-align: center; text-transform: uppercase; font-weight: bold; letter-spacing: 2px;"
+                                    maxlength="10"
+                                >
+                                <button id="player2CodeLoginBtnAlt" class="button primary" style="padding: 15px 25px; font-size: 18px;">
+                                    ➡️
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Alternative: Barcode Scanner -->
+                        <div id="player2MobileAlternativeScanner" class="alternative-method">
+                            <p style="color: var(--text-dark); margin-bottom: 10px; font-size: 16px; font-weight: 600;">📷 Strekkodeleser</p>
+                            <p style="color: var(--text-light); margin-bottom: 15px; font-size: 14px;">Bruk ekstern strekkodeleser hvis tilgjengelig</p>
+                            <div class="scanner-mode-indicator" style="font-size: 14px; padding: 12px;">
+                                <svg class="qr-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="2" y="2" width="8" height="8" rx="1"/>
+                                    <rect x="14" y="2" width="8" height="8" rx="1"/>
+                                    <rect x="2" y="14" width="8" height="8" rx="1"/>
+                                    <rect x="4" y="4" width="4" height="4" fill="white"/>
+                                    <rect x="16" y="4" width="4" height="4" fill="white"/>
+                                    <rect x="4" y="16" width="4" height="4" fill="white"/>
+                                </svg>
+                                <span>Skanner klar</span>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Only: Camera Scanning -->
+                        <div id="player2DesktopCameraScanning" class="alternative-method">
+                            <p style="color: var(--text-dark); margin-bottom: 10px; font-size: 16px; font-weight: 600;">📸 Kamera-skanning</p>
+                            <p style="color: var(--text-light); margin-bottom: 15px; font-size: 14px;">Bruk kameraet til å skanne QR-kode</p>
+                            <div id="player2QrReader" style="margin-bottom: 15px;"></div>
+                            <button id="startPlayer2ScanBtn" class="button primary" style="width: 100%; font-size: 16px; padding: 15px;">
+                                📷 Start Kamera-Skanning
+                            </button>
+                        </div>
+
+                        <!-- Upload QR Image (Both) -->
+                        <div id="player2UploadQRMethod" class="alternative-method">
+                            <p style="color: var(--text-dark); margin-bottom: 10px; font-size: 16px; font-weight: 600;">🖼️ Last opp bilde</p>
+                            <p style="color: var(--text-light); margin-bottom: 15px; font-size: 14px;">Last opp et bilde av QR-koden</p>
+                            <label for="player2QrFileInput" class="button secondary" style="width: 100%; font-size: 16px; padding: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;">
+                                🖼️ Velg bilde
+                            </label>
+                            <input type="file" id="player2QrFileInput" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
                 </div>
-
-                <div id="player2QrReader" style="margin-bottom: 15px;"></div>
-
-                <button id="startPlayer2ScanBtn" class="button primary" style="width: 100%; font-size: 18px; padding: 20px; margin-bottom: 15px;">
-                    📷 Start Kamera-Skanning
-                </button>
-
-                <label for="player2QrFileInput" class="button secondary" style="width: 100%; font-size: 18px; padding: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; margin-bottom: 15px;">
-                    🖼️ Last opp bilde av QR
-                </label>
-                <input type="file" id="player2QrFileInput" accept="image/*" style="display: none;">
 
                 <div id="player2ScanFeedback" class="scan-status hidden"></div>
             </div>
@@ -522,6 +651,7 @@
     <script src="/js/barcode-scanner-global.js"></script>
     <script src="/js/scanner.js"></script>
     <script src="/js/qr-upload-visibility.js"></script>
+    <script src="/js/login-component.js"></script>
     <script src="/js/tic-tac-toe.js"></script>
 </body>
 </html>

@@ -44,6 +44,17 @@ class SelfieChainApp {
             });
         }
 
+        // Initialize login component (alternative login methods + toggle)
+        if (typeof initLoginComponent !== 'undefined') {
+            initLoginComponent({
+                onLoginSuccess: (participant) => {
+                    this.handleParticipantScan(participant.participant_code, true);
+                },
+                altInputId: 'participantCodeInputAlt',
+                altButtonId: 'codeLoginBtnAlt'
+            });
+        }
+
         // Initialize the QR scanner with callbacks
         this.participantScanner.init(
             'participantQrReader',
@@ -819,6 +830,28 @@ class SelfieChainApp {
                     this.handleTargetLoginWithCode();
                 }
             };
+        }
+
+        // Initialize target login component (alternative login methods)
+        if (typeof initLoginComponent !== 'undefined') {
+            initLoginComponent({
+                onLoginSuccess: (participant) => {
+                    this.handleTargetScan(participant.participant_code, true);
+                },
+                altInputId: 'targetCodeInputAlt',
+                altButtonId: 'targetCodeLoginBtnAlt',
+                statusId: 'targetCodeStatus'
+            });
+        }
+
+        // Initialize toggle for target alternative login (custom IDs)
+        const targetToggleBtn = document.getElementById('targetToggleAlternativeLogin');
+        const targetContent = document.getElementById('targetAlternativeLoginContent');
+        if (targetToggleBtn && targetContent) {
+            targetToggleBtn.addEventListener('click', () => {
+                targetContent.classList.toggle('collapsed');
+                targetToggleBtn.classList.toggle('expanded');
+            });
         }
 
         // Initialize the QR scanner with callbacks

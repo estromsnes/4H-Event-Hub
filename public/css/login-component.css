@@ -78,27 +78,47 @@
 @media (max-width: 768px) {
     /* MOBILE: Show login word as primary */
     #desktopPrimaryLogin,
+    #targetDesktopPrimaryLogin,
+    #player1DesktopPrimaryLogin,
+    #player2DesktopPrimaryLogin,
+    #taskDesktopPrimaryLogin,
     .desktop-primary-login {
         display: none !important;
     }
 
     #mobilePrimaryLogin,
+    #targetMobilePrimaryLogin,
+    #player1MobilePrimaryLogin,
+    #player2MobilePrimaryLogin,
+    #taskMobilePrimaryLogin,
     .mobile-primary-login {
         display: block !important;
     }
 
     /* MOBILE: Alternative methods */
     #desktopAlternativeCode,
+    #targetDesktopAlternativeCode,
+    #player1DesktopAlternativeCode,
+    #player2DesktopAlternativeCode,
+    #taskDesktopAlternativeCode,
     .desktop-alternative-code {
         display: none !important;
     }
 
     #desktopCameraScanning,
+    #targetDesktopCameraScanning,
+    #player1DesktopCameraScanning,
+    #player2DesktopCameraScanning,
+    #taskDesktopCameraScanning,
     .desktop-camera-scanning {
         display: none !important;
     }
 
     #mobileAlternativeScanner,
+    #targetMobileAlternativeScanner,
+    #player1MobileAlternativeScanner,
+    #player2MobileAlternativeScanner,
+    #taskMobileAlternativeScanner,
     .mobile-alternative-scanner {
         display: block !important;
     }
@@ -107,27 +127,47 @@
 @media (min-width: 769px) {
     /* DESKTOP: Show barcode scanner as primary */
     #desktopPrimaryLogin,
+    #targetDesktopPrimaryLogin,
+    #player1DesktopPrimaryLogin,
+    #player2DesktopPrimaryLogin,
+    #taskDesktopPrimaryLogin,
     .desktop-primary-login {
         display: block !important;
     }
 
     #mobilePrimaryLogin,
+    #targetMobilePrimaryLogin,
+    #player1MobilePrimaryLogin,
+    #player2MobilePrimaryLogin,
+    #taskMobilePrimaryLogin,
     .mobile-primary-login {
         display: none !important;
     }
 
     /* DESKTOP: Alternative methods */
     #desktopAlternativeCode,
+    #targetDesktopAlternativeCode,
+    #player1DesktopAlternativeCode,
+    #player2DesktopAlternativeCode,
+    #taskDesktopAlternativeCode,
     .desktop-alternative-code {
         display: block !important;
     }
 
     #desktopCameraScanning,
+    #targetDesktopCameraScanning,
+    #player1DesktopCameraScanning,
+    #player2DesktopCameraScanning,
+    #taskDesktopCameraScanning,
     .desktop-camera-scanning {
         display: block !important;
     }
 
     #mobileAlternativeScanner,
+    #targetMobileAlternativeScanner,
+    #player1MobileAlternativeScanner,
+    #player2MobileAlternativeScanner,
+    #taskMobileAlternativeScanner,
     .mobile-alternative-scanner {
         display: none !important;
     }

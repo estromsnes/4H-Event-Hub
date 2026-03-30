@@ -32,8 +32,8 @@ class BingoGame {
             startParticipantScanBtn: document.getElementById('startParticipantScanBtn'),
             uploadParticipantQRBtn: document.getElementById('uploadParticipantQRBtn'),
             participantQRFileInput: document.getElementById('participantQRFileInput'),
-            loginWordInput: document.getElementById('loginWordInput'),
-            loginWordBtn: document.getElementById('loginWordBtn'),
+            participantCodeInput: document.getElementById('participantCodeInput'),
+            codeLoginBtn: document.getElementById('codeLoginBtn'),
 
             // Instructions
             pointsPerTask: document.getElementById('pointsPerTask'),
@@ -57,8 +57,8 @@ class BingoGame {
             // Scan task
             backToCardBtn: document.getElementById('backToCardBtn'),
             currentTaskInfo: document.getElementById('currentTaskInfo'),
-            taskLoginWordInput: document.getElementById('taskLoginWordInput'),
-            taskLoginWordBtn: document.getElementById('taskLoginWordBtn'),
+            taskCodeInput: document.getElementById('taskCodeInput'),
+            taskCodeLoginBtn: document.getElementById('taskCodeLoginBtn'),
             taskCodeStatus: document.getElementById('taskCodeStatus'),
             taskScanner: document.getElementById('taskScanner'),
             startTaskScanBtn: document.getElementById('startTaskScanBtn'),
@@ -98,8 +98,8 @@ class BingoGame {
         this.elements.startParticipantScanBtn.addEventListener('click', () => this.startParticipantScan());
         this.elements.uploadParticipantQRBtn.addEventListener('click', () => this.elements.participantQRFileInput.click());
         this.elements.participantQRFileInput.addEventListener('change', (e) => this.handleParticipantQRUpload(e));
-        this.elements.loginWordBtn.addEventListener('click', () => this.handleLoginWord());
-        this.elements.loginWordInput.addEventListener('keypress', (e) => {
+        this.elements.codeLoginBtn.addEventListener('click', () => this.handleLoginWord());
+        this.elements.participantCodeInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.handleLoginWord();
         });
 
@@ -114,17 +114,50 @@ class BingoGame {
 
         // Scan task
         this.elements.backToCardBtn.addEventListener('click', () => this.showView('cardView'));
-        if (this.elements.taskLoginWordBtn) {
-            this.elements.taskLoginWordBtn.addEventListener('click', () => this.handleTaskLoginWord());
+        if (this.elements.taskCodeLoginBtn) {
+            this.elements.taskCodeLoginBtn.addEventListener('click', () => this.handleTaskLoginWord());
         }
-        if (this.elements.taskLoginWordInput) {
-            this.elements.taskLoginWordInput.addEventListener('keypress', (e) => {
+        if (this.elements.taskCodeInput) {
+            this.elements.taskCodeInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') this.handleTaskLoginWord();
             });
         }
         this.elements.startTaskScanBtn.addEventListener('click', () => this.startTaskScan());
         // Note: Upload button is now a <label for="taskQRFileInput">, so no click handler needed
         this.elements.taskQRFileInput.addEventListener('change', (e) => this.handleTaskQRUpload(e));
+
+        // Initialize login components (alternative login methods)
+        if (typeof initLoginComponent !== 'undefined') {
+            // Participant login component
+            initLoginComponent({
+                onLoginSuccess: (participant) => {
+                    this.handleParticipantScan(participant.participant_code, true);
+                },
+                altInputId: 'participantCodeInputAlt',
+                altButtonId: 'codeLoginBtnAlt',
+                statusId: 'codeStatus'
+            });
+
+            // Task login component
+            initLoginComponent({
+                onLoginSuccess: (participant) => {
+                    this.handleTaskScan(participant.participant_code, true);
+                },
+                altInputId: 'taskCodeInputAlt',
+                altButtonId: 'taskCodeLoginBtnAlt',
+                statusId: 'taskCodeStatus'
+            });
+
+            // Task toggle functionality
+            const taskToggleBtn = document.getElementById('taskToggleAlternativeLogin');
+            const taskContent = document.getElementById('taskAlternativeLoginContent');
+            if (taskToggleBtn && taskContent) {
+                taskToggleBtn.addEventListener('click', () => {
+                    taskContent.classList.toggle('collapsed');
+                    taskToggleBtn.classList.toggle('expanded');
+                });
+            }
+        }
 
         // Achievement modal
         this.elements.closeAchievementBtn.addEventListener('click', () => this.closeAchievementModal());
@@ -222,7 +255,7 @@ class BingoGame {
     }
 
     async handleLoginWord() {
-        const loginWord = this.elements.loginWordInput.value.trim().toUpperCase();
+        const loginWord = this.elements.participantCodeInput.value.trim().toUpperCase();
         if (!loginWord) {
             this.showStatus('Skriv inn innloggingsord', 'warning');
             return;
@@ -467,8 +500,8 @@ class BingoGame {
         `;
 
         // Reset input and status
-        if (this.elements.taskLoginWordInput) {
-            this.elements.taskLoginWordInput.value = '';
+        if (this.elements.taskCodeInput) {
+            this.elements.taskCodeInput.value = '';
         }
         if (this.elements.taskCodeStatus) {
             this.elements.taskCodeStatus.classList.add('hidden');
@@ -519,15 +552,15 @@ class BingoGame {
     }
 
     async handleTaskLoginWord() {
-        const code = this.elements.taskLoginWordInput.value.trim().toUpperCase();
+        const code = this.elements.taskCodeInput.value.trim().toUpperCase();
 
         if (!code) {
             this.showTaskCodeStatus('Vennligst skriv inn login-ord', 'error');
             return;
         }
 
-        this.elements.taskLoginWordBtn.disabled = true;
-        this.elements.taskLoginWordBtn.textContent = '⏳';
+        this.elements.taskCodeLoginBtn.disabled = true;
+        this.elements.taskCodeLoginBtn.textContent = '⏳';
         this.showTaskCodeStatus('Verifiserer...', 'info');
 
         try {
@@ -544,7 +577,7 @@ class BingoGame {
             this.showTaskCodeStatus(`✅ Funnet: ${participant.first_name} ${participant.last_name}`, 'success');
 
             // Clear input
-            this.elements.taskLoginWordInput.value = '';
+            this.elements.taskCodeInput.value = '';
 
             // Wait a moment for user to see the success message
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -556,8 +589,8 @@ class BingoGame {
             console.error('[Bingo] Error verifying login word:', error);
             this.showTaskCodeStatus('❌ Ugyldig login-ord. Prøv igjen.', 'error');
         } finally {
-            this.elements.taskLoginWordBtn.disabled = false;
-            this.elements.taskLoginWordBtn.textContent = '➡️';
+            this.elements.taskCodeLoginBtn.disabled = false;
+            this.elements.taskCodeLoginBtn.textContent = '➡️';
         }
     }
 

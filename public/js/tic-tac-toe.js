@@ -116,6 +116,49 @@ class TicTacToeGame {
             });
         }
 
+        // Initialize login components (alternative login methods)
+        if (typeof initLoginComponent !== 'undefined') {
+            // Player 1 login component
+            initLoginComponent({
+                onLoginSuccess: (participant) => {
+                    this.handlePlayer1Scan(participant.participant_code, true);
+                },
+                altInputId: 'player1CodeInputAlt',
+                altButtonId: 'player1CodeLoginBtnAlt',
+                statusId: 'player1CodeStatus'
+            });
+
+            // Player 1 toggle functionality
+            const player1ToggleBtn = document.getElementById('player1ToggleAlternativeLogin');
+            const player1Content = document.getElementById('player1AlternativeLoginContent');
+            if (player1ToggleBtn && player1Content) {
+                player1ToggleBtn.addEventListener('click', () => {
+                    player1Content.classList.toggle('collapsed');
+                    player1ToggleBtn.classList.toggle('expanded');
+                });
+            }
+
+            // Player 2 login component
+            initLoginComponent({
+                onLoginSuccess: (participant) => {
+                    this.handlePlayer2Scan(participant.participant_code, true);
+                },
+                altInputId: 'player2CodeInputAlt',
+                altButtonId: 'player2CodeLoginBtnAlt',
+                statusId: 'player2CodeStatus'
+            });
+
+            // Player 2 toggle functionality
+            const player2ToggleBtn = document.getElementById('player2ToggleAlternativeLogin');
+            const player2Content = document.getElementById('player2AlternativeLoginContent');
+            if (player2ToggleBtn && player2Content) {
+                player2ToggleBtn.addEventListener('click', () => {
+                    player2Content.classList.toggle('collapsed');
+                    player2ToggleBtn.classList.toggle('expanded');
+                });
+            }
+        }
+
         // Scanner buttons
         this.startPlayer1ScanBtn.addEventListener('click', () => this.togglePlayer1Scanner());
         this.startPlayer2ScanBtn.addEventListener('click', () => this.togglePlayer2Scanner());
