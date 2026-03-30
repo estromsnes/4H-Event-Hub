@@ -814,4 +814,13 @@ class QuizManager {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.quizManager = new QuizManager();
+
+    // Initialize login component (alternative login methods)
+    initLoginComponent({
+        onLoginSuccess: (participant) => {
+            window.quizManager.handleParticipantScan(participant.participant_code, true);
+        },
+        altInputId: 'participantCodeInputAlt',
+        altButtonId: 'codeLoginBtnAlt'
+    });
 });

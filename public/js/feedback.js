@@ -813,5 +813,14 @@ class FeedbackForm {
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    new FeedbackForm();
+    const feedbackForm = new FeedbackForm();
+
+    // Initialize login component (alternative login methods)
+    initLoginComponent({
+        onLoginSuccess: (participant) => {
+            feedbackForm.handleScan(participant.participant_code);
+        },
+        altInputId: 'participantCodeInputAlt',
+        altButtonId: 'codeLoginBtnAlt'
+    });
 });

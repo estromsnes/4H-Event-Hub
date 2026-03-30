@@ -641,4 +641,13 @@ class ScavengerHunt {
 let scavengerHunt;
 document.addEventListener('DOMContentLoaded', () => {
     scavengerHunt = new ScavengerHunt();
+
+    // Initialize login component (alternative login methods)
+    initLoginComponent({
+        onLoginSuccess: (participant) => {
+            scavengerHunt.handleParticipantScan(participant.participant_code, true);
+        },
+        altInputId: 'participantCodeInputAlt',
+        altButtonId: 'codeLoginBtnAlt'
+    });
 });

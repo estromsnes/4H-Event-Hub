@@ -169,6 +169,14 @@ async function initApp() {
         switchUserBtn.addEventListener('click', handleSwitchUser);
     }
 
+    // Initialize login component (handles alternative login methods and toggle)
+    initLoginComponent({
+        onLoginSuccess: (participant) => {
+            currentParticipant = participant;
+            showProfileView();
+        }
+    });
+
     // Activate global barcode scanner
     globalBarcodeScanner.activate((qrData) => onScanSuccess(qrData));
 

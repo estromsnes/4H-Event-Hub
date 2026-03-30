@@ -616,3 +616,124 @@
         font-size: 16px;
     }
 }
+
+/* ============================================ */
+/* Alternative Login Methods */
+/* ============================================ */
+
+.primary-login-section {
+    margin-bottom: 20px;
+}
+
+.toggle-alternative-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #f5f7fa, #e8eaf6);
+    border: 2px solid #3F51B5;
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.toggle-alternative-btn:hover {
+    background: linear-gradient(135deg, #e8eaf6, #c5cae9);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(63, 81, 181, 0.2);
+}
+
+.toggle-alternative-btn:active {
+    transform: translateY(0);
+}
+
+#toggleIcon {
+    font-size: 14px;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.toggle-alternative-btn.expanded #toggleIcon {
+    transform: rotate(180deg);
+}
+
+.alternative-login-content {
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+    opacity: 1;
+    padding: 20px 0;
+}
+
+.alternative-login-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0;
+}
+
+.alternative-method {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--primary-color);
+}
+
+.alternative-method:last-child {
+    margin-bottom: 0;
+}
+
+/* Hide/show based on device */
+@media (max-width: 768px) {
+    /* Mobile: Show login word primary, hide barcode primary */
+    #desktopPrimaryLogin {
+        display: none !important;
+    }
+
+    #mobilePrimaryLogin {
+        display: block !important;
+    }
+
+    /* Mobile alternative methods */
+    #desktopAlternativeCode {
+        display: none !important;
+    }
+
+    #desktopCameraScanning {
+        display: none !important;
+    }
+
+    #mobileAlternativeScanner {
+        display: block !important;
+    }
+}
+
+@media (min-width: 769px) {
+    /* Desktop: Show barcode primary, hide login word primary */
+    #desktopPrimaryLogin {
+        display: block !important;
+    }
+
+    #mobilePrimaryLogin {
+        display: none !important;
+    }
+
+    /* Desktop alternative methods */
+    #desktopAlternativeCode {
+        display: block !important;
+    }
+
+    #desktopCameraScanning {
+        display: block !important;
+    }
+
+    #mobileAlternativeScanner {
+        display: none !important;
+    }
+}

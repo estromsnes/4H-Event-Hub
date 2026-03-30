@@ -49,6 +49,15 @@
 
         // Activate global barcode scanner
         globalBarcodeScanner.activate((qrData) => lookupParticipant(qrData));
+
+        // Initialize login component (alternative login methods)
+        initLoginComponent({
+            onLoginSuccess: (participant) => {
+                lookupParticipant(participant.participant_code, true);
+            },
+            altInputId: 'participantCodeInputAlt',
+            altButtonId: 'codeLoginBtnAlt'
+        });
     }
 
     // Event Listeners

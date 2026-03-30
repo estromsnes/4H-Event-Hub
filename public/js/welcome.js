@@ -13,6 +13,16 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeCameraButton();
     initializeLoginWordInput();
     focusBarcodeInput();
+
+    // Initialize login component (alternative login methods)
+    initLoginComponent({
+        onLoginSuccess: (participant) => {
+            // Same behavior as main login - redirect to profile
+            sessionStorage.setItem('welcomeParticipantCode', participant.participant_code);
+            sessionStorage.setItem('fromWelcome', 'true');
+            window.location.href = '/profile.html';
+        }
+    });
 });
 
 // Load event information

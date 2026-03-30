@@ -799,4 +799,13 @@ class TeamChallengeManager {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.teamChallenge = new TeamChallengeManager();
+
+    // Initialize login component (alternative login methods)
+    initLoginComponent({
+        onLoginSuccess: (participant) => {
+            window.teamChallenge.handleScan(participant.participant_code);
+        },
+        altInputId: 'participantCodeInputAlt',
+        altButtonId: 'codeLoginBtnAlt'
+    });
 });
