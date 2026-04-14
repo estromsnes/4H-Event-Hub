@@ -3441,7 +3441,7 @@ function renderProgram() {
                 <div style="display: flex; justify-content: space-between; align-items: start;">
                     <div style="flex: 1;">
                         <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 5px;">
-                            <span style="font-weight: 600; color: var(--primary);">${item.start_time} - ${item.end_time}</span>
+                            <span style="font-weight: 600; color: var(--primary);">${item.end_time ? `${item.start_time} - ${item.end_time}` : item.start_time}</span>
                             ${item.location ? `<span style="color: var(--text-light);">📍 ${item.location}</span>` : ''}
                         </div>
                         <h4 style="margin: 5px 0;">${item.title}</h4>
@@ -3475,7 +3475,7 @@ function openProgramModal(itemId = null) {
         programTitleInput.value = item.title;
         programDescriptionInput.value = item.description || '';
         programStartTimeInput.value = item.start_time;
-        programEndTimeInput.value = item.end_time;
+        programEndTimeInput.value = item.end_time || '';
         programLocationInput.value = item.location || '';
         programDayInput.value = item.day_number || 1;
         currentProgramItem = item;
@@ -3511,7 +3511,7 @@ async function handleSaveProgram(e) {
         title: programTitleInput.value.trim(),
         description: programDescriptionInput.value.trim(),
         start_time: programStartTimeInput.value,
-        end_time: programEndTimeInput.value,
+        end_time: programEndTimeInput.value || null,
         location: programLocationInput.value.trim(),
         day_number: parseInt(programDayInput.value) || 1
     };

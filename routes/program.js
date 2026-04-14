@@ -28,15 +28,15 @@ router.post('/', async (req, res) => {
     const db = req.app.locals.db;
     const { title, description, start_time, end_time, location, day_number, order_number } = req.body;
 
-    if (!title || !start_time || !end_time) {
-        return res.status(400).json({ error: 'Tittel, starttid og sluttid er påkrevd' });
+    if (!title || !start_time) {
+        return res.status(400).json({ error: 'Tittel og starttid er påkrevd' });
     }
 
     try {
         db.run(
             `INSERT INTO program (title, description, start_time, end_time, location, day_number, order_number)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [title, description || '', start_time, end_time, location || '', day_number || 1, order_number || 999],
+            [title, description || '', start_time, end_time || null, location || '', day_number || 1, order_number || 999],
             function(err) {
                 if (err) {
                     console.error('Error creating program item:', err);
@@ -57,8 +57,8 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { title, description, start_time, end_time, location, day_number, order_number } = req.body;
 
-    if (!title || !start_time || !end_time) {
-        return res.status(400).json({ error: 'Tittel, starttid og sluttid er påkrevd' });
+    if (!title || !start_time) {
+        return res.status(400).json({ error: 'Tittel og starttid er påkrevd' });
     }
 
     try {
@@ -72,7 +72,7 @@ router.put('/:id', async (req, res) => {
                 day_number = ?,
                 order_number = ?
              WHERE id = ?`,
-            [title, description || '', start_time, end_time, location || '', day_number || 1, order_number || 999, id],
+            [title, description || '', start_time, end_time || null, location || '', day_number || 1, order_number || 999, id],
             function(err) {
                 if (err) {
                     console.error('Error updating program item:', err);

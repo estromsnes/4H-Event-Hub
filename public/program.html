@@ -227,7 +227,7 @@
                     days[dayNum].forEach(item => {
                         html += `
                             <div class="program-item">
-                                <div class="time-badge">${item.start_time} - ${item.end_time}</div>
+                                <div class="time-badge">${item.end_time ? `${item.start_time} - ${item.end_time}` : item.start_time}</div>
                                 <div class="activity-title">${item.title}</div>
                                 ${item.location ? `<div class="activity-location">📍 ${item.location}</div>` : ''}
                                 ${item.description ? `<div class="activity-description">${item.description}</div>` : ''}
