@@ -409,10 +409,12 @@ class EventHub {
                 });
 
                 sortedItems.forEach(item => {
+                    const timeDisplay = item.end_time ? `${item.start_time} - ${item.end_time}` : item.start_time;
                     html += `
                         <div class="program-item">
-                            <div class="program-time">${item.start_time} - ${item.end_time}</div>
+                            <div class="program-time">${timeDisplay}</div>
                             <div class="program-title">${item.title}</div>
+                            ${item.location ? `<div class="program-location">📍 ${item.location}</div>` : ''}
                         </div>`;
                 });
 
