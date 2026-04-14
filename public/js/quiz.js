@@ -298,7 +298,10 @@ class QuizManager {
         }
 
         try {
-            this.showParticipantScanFeedback('Starter quiz...', 'info');
+            // Show fun loading animation
+            if (window.loadingAnimations) {
+                window.loadingAnimations.show('quiz');
+            }
 
             const response = await fetch('/api/quiz/start', {
                 method: 'POST',
@@ -308,7 +311,10 @@ class QuizManager {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Kunne ikke starte quiz');
+                if (window.loadingAnimations) {
+                    window.loadingAnimations.hide();
+                }
+                throw new Error(error.error || 'Kunne ikke starte quizen. Sjekk internett-tilkoblingen og prøv igjen. Kontakt en arrangør hvis problemet vedvarer.');
             }
 
             const data = await response.json();
@@ -322,7 +328,17 @@ class QuizManager {
                 this.isParticipantScannerActive = false;
             }
 
+            // Hide loading animation
+            if (window.loadingAnimations) {
+                window.loadingAnimations.hide();
+            }
+
             this.showParticipantScanFeedback(`Quiz startet for ${this.teamName}!`, 'success');
+
+            // Play success sound
+            if (window.soundEffects) {
+                window.soundEffects.playScanSuccess();
+            }
 
             setTimeout(() => {
                 this.startQuiz();
@@ -330,6 +346,9 @@ class QuizManager {
 
         } catch (err) {
             console.error('Error starting quiz:', err);
+            if (window.loadingAnimations) {
+                window.loadingAnimations.hide();
+            }
             this.showParticipantScanFeedback(err.message, 'error');
         }
     }
@@ -420,7 +439,7 @@ class QuizManager {
                     await this.showResults();
                     return;
                 }
-                throw new Error(error.error || 'Kunne ikke hente spørsmål');
+                throw new Error(error.error || 'Kunne ikke laste spørsmålet. Sjekk internett-tilkoblingen og prøv igjen.');
             }
 
             const question = await response.json();
@@ -432,7 +451,7 @@ class QuizManager {
 
         } catch (err) {
             console.error('Error loading question:', err);
-            alert('Kunne ikke laste spørsmål: ' + err.message);
+            this.showStatus('Kunne ikke laste spørsmålet. Sjekk internett-tilkoblingen og last inn siden på nytt. Kontakt en arrangør hvis problemet vedvarer.', 'error');
         }
     }
 
@@ -509,10 +528,20 @@ class QuizManager {
 
         // Start timer for this question (using timeLimit already declared above)
         this.startTimer(timeLimit);
+
+        // Play notification sound for new question
+        if (window.soundEffects) {
+            window.soundEffects.playNotification();
+        }
     }
 
     selectOption(button) {
         const isMultipleChoice = this.currentQuestion?.is_multiple_choice;
+
+        // Play click sound
+        if (window.soundEffects) {
+            window.soundEffects.playClick();
+        }
 
         if (isMultipleChoice) {
             // Toggle selection for multiple choice
@@ -542,7 +571,7 @@ class QuizManager {
 
             // If no options selected and timer didn't expire, warn user
             if (selectedButtons.length === 0 && this.timeRemaining > 0) {
-                alert('Du må velge minst ett alternativ');
+                this.showStatus('Du må velge minst ett alternativ før du kan gå videre', 'warning');
                 // Restart timer with remaining time
                 this.startTimer(this.timeRemaining);
                 return;
@@ -565,7 +594,7 @@ class QuizManager {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || 'Kunne ikke lagre svar');
+                throw new Error(error.error || 'Kunne ikke lagre svaret ditt. Sjekk internett-tilkoblingen og prøv igjen.');
             }
 
             const result = await response.json();
@@ -580,7 +609,7 @@ class QuizManager {
 
         } catch (err) {
             console.error('Error submitting answer:', err);
-            alert('Kunne ikke lagre svar: ' + err.message);
+            this.showStatus('Kunne ikke lagre svaret ditt. Sjekk internett-tilkoblingen og prøv igjen. Hvis problemet vedvarer, kontakt en arrangør.', 'error');
             // Re-enable buttons on error and restart timer
             this.optionButtons.forEach(btn => btn.disabled = false);
             if (this.timeRemaining > 0) {
@@ -614,6 +643,11 @@ class QuizManager {
 
     async showResults() {
         try {
+            // Show fun loading animation for results
+            if (window.loadingAnimations) {
+                window.loadingAnimations.show('results');
+            }
+
             // Stop background music
             if (this.currentMusic) {
                 this.currentMusic.pause();
@@ -624,7 +658,7 @@ class QuizManager {
             const response = await fetch(`/api/quiz/session/${this.sessionId}/results`);
 
             if (!response.ok) {
-                throw new Error('Kunne ikke hente resultater');
+                throw new Error('Kunne ikke laste resultatene dine. Sjekk internett-tilkoblingen og prøv igjen.');
             }
 
             const results = await response.json();
@@ -677,50 +711,147 @@ class QuizManager {
                 `;
             }).join('');
 
-            // Confetti based on score
+            // Confetti and sound based on score
             if (typeof confetti !== 'undefined') {
                 const scorePercentage = results.correct_answers / results.total_questions;
 
                 if (scorePercentage === 1.0) {
-                    // Perfect score - spectacular confetti!
-                    const duration = 3000;
+                    // Perfect score - SPECTACULAR confetti celebration! 🎉
+                    const duration = 5000;
                     const end = Date.now() + duration;
 
-                    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+                    const colors = ['#4CAF50', '#2196F3', '#FFC107', '#E91E63', '#9C27B0', '#00BCD4', '#FF5722', '#CDDC39'];
 
                     (function frame() {
+                        // Side cannons
                         confetti({
-                            particleCount: 7,
+                            particleCount: 15,
                             angle: 60,
-                            spread: 55,
-                            origin: { x: 0 },
-                            colors: colors
+                            spread: 70,
+                            origin: { x: 0, y: 0.8 },
+                            colors: colors,
+                            startVelocity: 60,
+                            gravity: 1.2,
+                            scalar: 1.4,
+                            ticks: 300
                         });
                         confetti({
-                            particleCount: 7,
+                            particleCount: 15,
                             angle: 120,
-                            spread: 55,
-                            origin: { x: 1 },
-                            colors: colors
+                            spread: 70,
+                            origin: { x: 1, y: 0.8 },
+                            colors: colors,
+                            startVelocity: 60,
+                            gravity: 1.2,
+                            scalar: 1.4,
+                            ticks: 300
                         });
+
+                        // Center explosion
+                        if (Math.random() < 0.3) {
+                            confetti({
+                                particleCount: 25,
+                                spread: 360,
+                                origin: { x: 0.5, y: 0.5 },
+                                colors: colors,
+                                startVelocity: 45,
+                                scalar: 1.6,
+                                ticks: 250
+                            });
+                        }
 
                         if (Date.now() < end) {
                             requestAnimationFrame(frame);
                         }
                     }());
+
+                    // Initial big burst
+                    confetti({
+                        particleCount: 150,
+                        spread: 100,
+                        origin: { y: 0.6 },
+                        colors: colors,
+                        scalar: 1.5,
+                        ticks: 300
+                    });
+
+                    // Play achievement sound for perfect score
+                    if (window.soundEffects) {
+                        window.soundEffects.playAchievement();
+                    }
+
+                } else if (scorePercentage >= 0.8) {
+                    // Great score - impressive confetti!
+                    const colors = ['#4CAF50', '#2196F3', '#FFC107', '#E91E63'];
+
+                    // Multiple bursts
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 80,
+                            spread: 80,
+                            origin: { y: 0.6, x: 0.3 },
+                            colors: colors,
+                            scalar: 1.3,
+                            ticks: 250
+                        });
+                    }, 0);
+
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 80,
+                            spread: 80,
+                            origin: { y: 0.6, x: 0.7 },
+                            colors: colors,
+                            scalar: 1.3,
+                            ticks: 250
+                        });
+                    }, 200);
+
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 100,
+                            spread: 90,
+                            origin: { y: 0.6, x: 0.5 },
+                            colors: colors,
+                            scalar: 1.3,
+                            ticks: 250
+                        });
+                    }, 400);
+
+                    // Play success sound for great score
+                    if (window.soundEffects) {
+                        window.soundEffects.playSuccess();
+                    }
+
                 } else if (scorePercentage >= 0.7) {
                     // Good score - standard confetti
                     confetti({
-                        particleCount: 100,
-                        spread: 70,
-                        origin: { y: 0.6 }
+                        particleCount: 150,
+                        spread: 85,
+                        origin: { y: 0.6 },
+                        colors: ['#4CAF50', '#2196F3', '#FFC107'],
+                        scalar: 1.2,
+                        ticks: 200
                     });
+
+                    // Play success sound for good score
+                    if (window.soundEffects) {
+                        window.soundEffects.playSuccess();
+                    }
                 }
+            }
+
+            // Hide loading animation after results are displayed
+            if (window.loadingAnimations) {
+                window.loadingAnimations.hide();
             }
 
         } catch (err) {
             console.error('Error loading results:', err);
-            alert('Kunne ikke laste resultater: ' + err.message);
+            if (window.loadingAnimations) {
+                window.loadingAnimations.hide();
+            }
+            this.showStatus('Kunne ikke laste resultatene dine. Sjekk internett-tilkoblingen og last inn siden på nytt. Kontakt en arrangør hvis problemet vedvarer.', 'error');
         }
     }
 
@@ -732,7 +863,7 @@ class QuizManager {
             const response = await fetch('/api/quiz/leaderboard');
 
             if (!response.ok) {
-                throw new Error('Kunne ikke laste resultattavle');
+                throw new Error('Kunne ikke laste resultattavlen. Sjekk internett-tilkoblingen og prøv igjen.');
             }
 
             const data = await response.json();

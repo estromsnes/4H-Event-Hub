@@ -92,7 +92,7 @@ class ParticipantAuth {
      */
     async loginWithCode(code) {
         if (!code || !code.trim()) {
-            throw new Error('Deltakerkode er påkrevd');
+            throw new Error('Vennligst skriv inn ditt login-ord fra deltakerkortet');
         }
 
         // Clean up the code (remove spaces, convert to uppercase)
@@ -102,7 +102,7 @@ class ParticipantAuth {
             const participant = await this.lookupParticipant(cleanCode);
 
             if (!participant) {
-                throw new Error('Deltaker ikke funnet');
+                throw new Error('Fant ikke deltaker med dette login-ordet. Sjekk at du har skrevet riktig.');
             }
 
             // Store session
@@ -133,7 +133,7 @@ class ParticipantAuth {
             if (parsed && parsed.type === 'participant' && parsed.code) {
                 participantCode = parsed.code;
             } else {
-                throw new Error('Invalid QR code format');
+                throw new Error('Ugyldig QR-kode. Sørg for at du skanner en deltaker-QR fra 4H Event Hub.');
             }
         } catch (e) {
             // Not JSON, use as plain participant code
@@ -149,16 +149,28 @@ class ParticipantAuth {
      * @returns {Promise<Object>} Participant object
      */
     async lookupParticipant(code) {
-        const response = await fetch(`/api/participants/${code}`);
+        try {
+            const response = await fetch(`/api/participants/${code}`);
 
-        if (!response.ok) {
-            if (response.status === 404) {
-                throw new Error(`Deltaker med kode "${code}" finnes ikke`);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Fant ikke deltaker med dette login-ordet. Dobbelsjekk at du har skrevet riktig, eller spør en arrangør om hjelp.');
+                }
+                if (response.status === 500) {
+                    throw new Error('Beklager, noe gikk galt på serveren. Prøv igjen om litt, eller kontakt en arrangør.');
+                }
+                throw new Error('Kunne ikke koble til serveren. Sjekk internett-tilkoblingen din og prøv igjen.');
             }
-            throw new Error('Kunne ikke hente deltakerinformasjon');
-        }
 
-        return await response.json();
+            return await response.json();
+        } catch (error) {
+            // If it's already a proper Error object, re-throw it
+            if (error instanceof Error && error.message.includes('deltaker')) {
+                throw error;
+            }
+            // Network error or other fetch error
+            throw new Error('Kunne ikke koble til serveren. Sjekk at du har internett-tilkobling og prøv igjen.');
+        }
     }
 
     /**

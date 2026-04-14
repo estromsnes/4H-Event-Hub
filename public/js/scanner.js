@@ -24,7 +24,7 @@ class QRScanner {
 
         // Check if Html5Qrcode is available
         if (typeof Html5Qrcode === 'undefined') {
-            const errorMsg = 'Html5Qrcode library not loaded. Please check your internet connection.';
+            const errorMsg = 'QR-skanneren kunne ikke lastes. Sjekk internett-tilkoblingen din og last inn siden på nytt.';
             console.error(errorMsg);
             if (onError) onError(errorMsg);
             return;
@@ -93,7 +93,7 @@ class QRScanner {
         } catch (err) {
             console.error('Failed to start scanner:', err);
             if (this.onScanError) {
-                this.onScanError('Kunne ikke starte kamera. Sjekk tillatelser.');
+                this.onScanError('Kunne ikke starte kameraet. Sørg for at du har gitt nettleseren tillatelse til å bruke kameraet. Du kan også prøve å laste opp et bilde i stedet.');
             }
         }
     }
@@ -196,12 +196,12 @@ class QRScanner {
 
             // Both methods failed
             URL.revokeObjectURL(imageUrl);
-            throw new Error('Could not detect QR code in image');
+            throw new Error('Fant ingen QR-kode i bildet. Sørg for at QR-koden er tydelig og godt opplyst, og prøv igjen.');
 
         } catch (err) {
             console.error('❌ QR scan failed:', err);
             if (this.onScanError) {
-                this.onScanError('Kunne ikke lese QR-kode fra bilde. Prøv igjen.');
+                this.onScanError('Kunne ikke lese QR-koden fra bildet. Tips: Ta et nytt bilde der QR-koden er godt opplyst og fyller mesteparten av bildet. Du kan også prøve kamera-skanning i stedet.');
             }
             throw err;
         }

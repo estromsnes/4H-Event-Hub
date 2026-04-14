@@ -663,6 +663,7 @@
             <button class="tab-button" data-tab="messages">✉️ Meldinger<span id="messagesBadge" class="badge hidden">0</span></button>
             <button class="tab-button" data-tab="adminqr">🔑 Admin QR</button>
             <button class="tab-button" data-tab="stats">📊 Statistikk</button>
+            <button class="tab-button" data-tab="settings">⚙️ Innstillinger</button>
             <button class="tab-button" data-tab="database">🗄️ Database</button>
             <button class="tab-button" data-tab="printer">🖨️ Skriver</button>
         </div>
@@ -1547,6 +1548,98 @@
             </div>
         </div>
         <!-- End Stats Tab -->
+
+        <!-- Settings Tab -->
+        <div id="settingsTab" class="tab-content">
+            <div class="section">
+                <h2>⚙️ Systeminnstillinger</h2>
+                <p style="color: var(--text-light); margin-bottom: 30px;">
+                    Tilpass opplevelsen for deltakerne
+                </p>
+
+                <!-- Sound Settings -->
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 12px; margin-bottom: 25px;">
+                    <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        🔊 Lydeffekter
+                    </h3>
+                    <p style="color: var(--text-light); margin-bottom: 20px; font-size: 14px;">
+                        Kontroller om deltakerne skal høre lydeffekter ved success, feil, og andre hendelser.
+                    </p>
+
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; margin-bottom: 20px;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="soundEffectsEnabled" style="width: 20px; height: 20px; cursor: pointer;">
+                                <span style="font-weight: 600;">Aktiver lydeffekter</span>
+                            </label>
+                            <p style="color: var(--text-light); font-size: 13px; margin-left: 30px; margin-top: 5px;">
+                                Slå av for et mer rolig arrangement
+                            </p>
+                        </div>
+
+                        <div style="flex: 1; min-width: 250px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">
+                                Lydnivå
+                            </label>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 20px;">🔇</span>
+                                <input
+                                    type="range"
+                                    id="soundVolume"
+                                    min="0"
+                                    max="100"
+                                    value="50"
+                                    style="flex: 1; cursor: pointer;"
+                                >
+                                <span style="font-size: 20px;">🔊</span>
+                                <span id="volumePercent" style="min-width: 40px; font-weight: 600; color: var(--primary-color);">50%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button id="testSuccessSound" class="button primary">
+                            ✅ Test Success
+                        </button>
+                        <button id="testAchievementSound" class="button primary">
+                            🏆 Test Achievement
+                        </button>
+                        <button id="testErrorSound" class="button secondary">
+                            ❌ Test Error
+                        </button>
+                        <button id="testScanSound" class="button secondary">
+                            📱 Test Scan
+                        </button>
+                    </div>
+
+                    <div id="soundStatus" style="margin-top: 15px; padding: 10px; background: white; border-radius: 8px; display: none;">
+                        <!-- Status messages will appear here -->
+                    </div>
+                </div>
+
+                <!-- Visual Effects Settings (for future expansion) -->
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 12px;">
+                    <h3 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        🎨 Visuelle effekter
+                    </h3>
+                    <p style="color: var(--text-light); margin-bottom: 20px; font-size: 14px;">
+                        Konfetti og animasjoner ved success og achievements.
+                    </p>
+
+                    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="confettiEnabled" checked style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="font-weight: 600;">Aktiver konfetti-effekter</span>
+                        </label>
+                    </div>
+
+                    <p style="color: var(--text-light); font-size: 13px; margin-top: 10px;">
+                        💡 Konfetti vises automatisk ved høy score i quiz, fullført utfordringer, og mer.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- End Settings Tab -->
 
         <!-- Database Tab -->
         <div id="databaseTab" class="tab-content">
@@ -3544,7 +3637,82 @@ Klokkeslett: {{TIME}}</textarea>
     </div>
 
     <script src="/js/session-tracker.js"></script>
+    <script src="/js/sound-effects.js"></script>
     <script src="/js/admin.js"></script>
     <script src="/js/stats.js"></script>
+
+    <!-- Settings Tab JavaScript -->
+    <script>
+        // Initialize sound settings when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const soundEnabledCheckbox = document.getElementById('soundEffectsEnabled');
+            const soundVolumeSlider = document.getElementById('soundVolume');
+            const volumePercent = document.getElementById('volumePercent');
+            const soundStatus = document.getElementById('soundStatus');
+
+            // Load current settings
+            if (window.soundEffects) {
+                soundEnabledCheckbox.checked = window.soundEffects.isEnabled();
+                soundVolumeSlider.value = window.soundEffects.volume * 100;
+                volumePercent.textContent = Math.round(window.soundEffects.volume * 100) + '%';
+            }
+
+            // Sound enabled/disabled toggle
+            soundEnabledCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    window.soundEffects.enable();
+                    showSoundStatus('✅ Lydeffekter aktivert', 'success');
+                    window.soundEffects.playSuccess();
+                } else {
+                    window.soundEffects.disable();
+                    showSoundStatus('🔇 Lydeffekter deaktivert', 'info');
+                }
+            });
+
+            // Volume slider
+            soundVolumeSlider.addEventListener('input', (e) => {
+                const volume = e.target.value / 100;
+                window.soundEffects.setVolume(volume);
+                volumePercent.textContent = e.target.value + '%';
+            });
+
+            soundVolumeSlider.addEventListener('change', () => {
+                showSoundStatus(`🔊 Lydnivå satt til ${soundVolumeSlider.value}%`, 'success');
+                window.soundEffects.playNotification();
+            });
+
+            // Test buttons
+            document.getElementById('testSuccessSound').addEventListener('click', () => {
+                window.soundEffects.playSuccess();
+                showSoundStatus('🎵 Spiller success-lyd...', 'success');
+            });
+
+            document.getElementById('testAchievementSound').addEventListener('click', () => {
+                window.soundEffects.playAchievement();
+                showSoundStatus('🎵 Spiller achievement-lyd...', 'success');
+            });
+
+            document.getElementById('testErrorSound').addEventListener('click', () => {
+                window.soundEffects.playError();
+                showSoundStatus('🎵 Spiller feil-lyd...', 'error');
+            });
+
+            document.getElementById('testScanSound').addEventListener('click', () => {
+                window.soundEffects.playScanSuccess();
+                showSoundStatus('🎵 Spiller scan-lyd...', 'success');
+            });
+
+            function showSoundStatus(message, type) {
+                soundStatus.textContent = message;
+                soundStatus.className = type === 'success' ? 'success' : type === 'error' ? 'error' : '';
+                soundStatus.style.display = 'block';
+                soundStatus.style.color = type === 'success' ? 'var(--success-color)' : type === 'error' ? 'var(--error-color)' : 'var(--text-dark)';
+
+                setTimeout(() => {
+                    soundStatus.style.display = 'none';
+                }, 3000);
+            }
+        });
+    </script>
 </body>
 </html>

@@ -269,22 +269,37 @@ async function handleQRScan(qrData) {
         startScanBtn.textContent = '📷 Start Kamera-Skanning';
     }
 
-    // Show loading status
-    showScanStatus('Laster profil...', 'info');
+    // Show fun loading animation
+    if (window.loadingAnimations) {
+        window.loadingAnimations.show('login');
+    }
 
     try {
         // Verify participant exists
         const response = await fetch(`/api/participants/${participantCode}`);
 
         if (!response.ok) {
+            if (window.loadingAnimations) {
+                window.loadingAnimations.hide();
+            }
             throw new Error('Deltaker ikke funnet');
         }
 
         const participant = await response.json();
 
+        // Hide loading animation
+        if (window.loadingAnimations) {
+            window.loadingAnimations.hide();
+        }
+
         // Show welcome message with confetti
         const fullName = `${participant.first_name} ${participant.last_name}`.trim();
         showScanStatus(`Velkommen ${fullName}! 🎉`, 'success');
+
+        // Play success sound
+        if (window.soundEffects) {
+            window.soundEffects.playScanSuccess();
+        }
 
         // Store participant code and redirect to profile page
         sessionStorage.setItem('welcomeParticipantCode', participantCode);
@@ -297,6 +312,9 @@ async function handleQRScan(qrData) {
 
     } catch (error) {
         console.error('Scan error:', error);
+        if (window.loadingAnimations) {
+            window.loadingAnimations.hide();
+        }
         showScanStatus(error.message, 'error');
 
         // Only restart camera if it was already scanning
@@ -362,10 +380,13 @@ async function handleLoginWithCode() {
         return;
     }
 
-    // Disable button and show loading
+    // Disable button and show loading animation
     codeLoginBtn.disabled = true;
     codeLoginBtn.textContent = '⏳';
-    showCodeStatus('Logger inn...', 'info');
+
+    if (window.loadingAnimations) {
+        window.loadingAnimations.show('login');
+    }
 
     try {
         const participant = await participantAuth.loginWithCode(code);
@@ -373,9 +394,19 @@ async function handleLoginWithCode() {
         if (participant) {
             console.log('Login successful:', participant.first_name);
 
+            // Hide loading animation
+            if (window.loadingAnimations) {
+                window.loadingAnimations.hide();
+            }
+
             // Show welcome message
             const fullName = `${participant.first_name} ${participant.last_name}`.trim();
             showCodeStatus(`Velkommen ${fullName}! 🎉`, 'success');
+
+            // Play success sound
+            if (window.soundEffects) {
+                window.soundEffects.playScanSuccess();
+            }
 
             // Store participant code and redirect to profile page
             sessionStorage.setItem('welcomeParticipantCode', participant.participant_code);
@@ -391,6 +422,9 @@ async function handleLoginWithCode() {
         }
     } catch (error) {
         console.error('Login error:', error);
+        if (window.loadingAnimations) {
+            window.loadingAnimations.hide();
+        }
         showCodeStatus(error.message || 'Feil ved innlogging', 'error');
         codeLoginBtn.disabled = false;
         codeLoginBtn.textContent = '➡️';

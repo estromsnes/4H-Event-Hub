@@ -174,7 +174,7 @@ async function handleAlternativeLogin(config) {
         }
     } catch (error) {
         console.error('Alternative login error:', error);
-        showLoginStatus(error.message || 'Feil ved innlogging', 'error', config.statusId);
+        showLoginStatus(error.message || 'Innlogging feilet. Sjekk at du har skrevet riktig login-ord og prøv igjen.', 'error', config.statusId);
         config.onLoginError(error);
 
         // Re-enable button
