@@ -137,7 +137,7 @@ function formatRoomSection(room) {
                         ${participants.map((p, index) => `
                             <tr>
                                 <td class="participant-number">${index + 1}</td>
-                                <td class="participant-name">${p.last_name}, ${p.first_name}</td>
+                                <td class="participant-name">${p.first_name} ${p.last_name}</td>
                                 <td class="participant-age">${p.age || '-'}</td>
                                 <td class="participant-club">${p.club || '-'}</td>
                                 <td class="participant-notes">${p.notes || ''}</td>
