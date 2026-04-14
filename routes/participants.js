@@ -267,12 +267,12 @@ router.put('/:code', (req, res) => {
         `UPDATE participants
          SET first_name = COALESCE(?, first_name),
              last_name = COALESCE(?, last_name),
-             age = COALESCE(?, age),
-             home_location = COALESCE(?, home_location),
-             club = COALESCE(?, club),
-             role = COALESCE(?, role),
+             age = ?,
+             home_location = ?,
+             club = ?,
+             role = ?,
              team = ?,
-             notes = COALESCE(?, notes)
+             notes = ?
          WHERE participant_code = ? AND active = 1`,
         [first_name, last_name, age, home_location, club, role, team, notes, code],
         function(err) {
