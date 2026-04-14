@@ -35,8 +35,6 @@ class FeedbackForm {
         this.identityText = document.getElementById('identityText');
         this.titleDisplay = document.getElementById('titleDisplay');
         this.messageDisplay = document.getElementById('messageDisplay');
-        this.titleKeyboard = document.getElementById('titleKeyboard');
-        this.messageKeyboard = document.getElementById('messageKeyboard');
         this.messageCount = document.getElementById('messageCount');
         this.backBtn = document.getElementById('backBtn');
         this.submitBtn = document.getElementById('submitBtn');
@@ -51,7 +49,6 @@ class FeedbackForm {
     init() {
         this.loadEventInfo();
         this.setupEventListeners();
-        this.buildKeyboards();
     }
 
     async loadEventInfo() {
@@ -110,10 +107,6 @@ class FeedbackForm {
             qrFileInput.addEventListener('change', (e) => this.handleFileUpload(e));
         }
 
-        // Step 2: Input displays
-        this.titleDisplay.addEventListener('click', () => this.activateInput('title'));
-        this.messageDisplay.addEventListener('click', () => this.activateInput('message'));
-
         // Step 2: Physical keyboard input
         this.titleDisplay.addEventListener('input', (e) => this.handlePhysicalInput('title', e.target.textContent));
         this.messageDisplay.addEventListener('input', (e) => this.handlePhysicalInput('message', e.target.textContent));
@@ -132,83 +125,6 @@ class FeedbackForm {
 
         // Success: New feedback
         this.newFeedbackBtn.addEventListener('click', () => this.reset());
-    }
-
-    buildKeyboards() {
-        // Norwegian alphabet including special characters
-        const norwegianAlphabet = [
-            ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-            ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', 'Å'],
-            ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ø', 'Æ'],
-            ['Z', 'X', 'C', 'V', 'B', 'N', 'M', ',', '.', '!', '?'],
-            ['SPACE', 'BACKSPACE']
-        ];
-
-        // Build keyboard for title
-        this.buildKeyboard(this.titleKeyboard, norwegianAlphabet, 'title');
-
-        // Build keyboard for message
-        this.buildKeyboard(this.messageKeyboard, norwegianAlphabet, 'message');
-    }
-
-    buildKeyboard(container, layout, inputType) {
-        container.innerHTML = '';
-
-        layout.forEach(row => {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'keyboard-row';
-
-            row.forEach(key => {
-                const button = document.createElement('button');
-                button.className = 'key-button';
-
-                if (key === 'SPACE') {
-                    button.textContent = 'Mellomrom';
-                    button.classList.add('key-space');
-                } else if (key === 'BACKSPACE') {
-                    button.textContent = '⌫ Slett';
-                    button.classList.add('key-backspace');
-                } else {
-                    button.textContent = key;
-                }
-
-                button.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.handleKeyPress(key, inputType);
-                });
-
-                rowDiv.appendChild(button);
-            });
-
-            container.appendChild(rowDiv);
-        });
-    }
-
-    handleKeyPress(key, inputType) {
-        const maxTitleLength = 200;
-        const maxMessageLength = 5000;
-
-        if (key === 'BACKSPACE') {
-            if (inputType === 'title') {
-                this.title = this.title.slice(0, -1);
-            } else {
-                this.message = this.message.slice(0, -1);
-            }
-        } else if (key === 'SPACE') {
-            if (inputType === 'title' && this.title.length < maxTitleLength) {
-                this.title += ' ';
-            } else if (inputType === 'message' && this.message.length < maxMessageLength) {
-                this.message += ' ';
-            }
-        } else {
-            if (inputType === 'title' && this.title.length < maxTitleLength) {
-                this.title += key;
-            } else if (inputType === 'message' && this.message.length < maxMessageLength) {
-                this.message += key;
-            }
-        }
-
-        this.updateDisplays();
     }
 
     handlePhysicalInput(inputType, value) {
@@ -311,29 +227,6 @@ class FeedbackForm {
             this.messageDisplay.classList.add('has-content');
         } else {
             this.messageDisplay.classList.remove('has-content');
-        }
-    }
-
-    activateInput(inputType) {
-        this.activeInput = inputType;
-
-        // Hide all keyboards first
-        this.titleKeyboard.classList.add('hidden');
-        this.messageKeyboard.classList.add('hidden');
-
-        // Remove active class from all displays
-        this.titleDisplay.classList.remove('active');
-        this.messageDisplay.classList.remove('active');
-
-        // Show appropriate keyboard and mark display as active
-        if (inputType === 'title') {
-            this.titleKeyboard.classList.remove('hidden');
-            this.titleDisplay.classList.add('active');
-            this.titleDisplay.focus();
-        } else if (inputType === 'message') {
-            this.messageKeyboard.classList.remove('hidden');
-            this.messageDisplay.classList.add('active');
-            this.messageDisplay.focus();
         }
     }
 
@@ -800,8 +693,6 @@ class FeedbackForm {
         // Reset UI
         this.participantInfo.classList.add('hidden');
         this.continueScanBtn.classList.add('hidden');
-        this.titleKeyboard.classList.add('hidden');
-        this.messageKeyboard.classList.add('hidden');
         this.submitBtn.disabled = false;
         this.submitBtn.textContent = 'Send inn';
 
