@@ -7,7 +7,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-const dbPath = path.join(__dirname, 'data.db');
+const dbPath = path.join(__dirname, '..', 'data', 'data.db');
 
 // Check if database exists
 if (!fs.existsSync(dbPath)) {
@@ -88,7 +88,7 @@ function markMigrationAsExecuted(name) {
  */
 async function runMigration(filename) {
     return new Promise((resolve, reject) => {
-        const migrationPath = path.join(__dirname, filename);
+        const migrationPath = path.join(__dirname, 'migrations', filename);
 
         // Create a child process to run the migration
         const { spawn } = require('child_process');
@@ -132,7 +132,8 @@ async function runMigrations() {
         const executedMigrations = await getExecutedMigrations();
 
         // Get all migration files
-        const migrationFiles = fs.readdirSync(__dirname)
+        const migrationsDir = path.join(__dirname, 'migrations');
+        const migrationFiles = fs.readdirSync(migrationsDir)
             .filter(file => file.startsWith('migrate-') && file.endsWith('.js'))
             .sort(); // Run in alphabetical order
 
