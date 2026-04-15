@@ -76,7 +76,12 @@ router.put('/:id', async (req, res) => {
             function(err) {
                 if (err) {
                     console.error('Error updating program item:', err);
-                    return res.status(500).json({ error: 'Kunne ikke oppdatere programpost' });
+                    console.error('SQL Error details:', err.message);
+                    console.error('Data being updated:', { title, description, start_time, end_time, location, day_number, order_number, id });
+                    return res.status(500).json({
+                        error: 'Kunne ikke oppdatere programpost',
+                        details: err.message
+                    });
                 }
                 if (this.changes === 0) {
                     return res.status(404).json({ error: 'Programpost ikke funnet' });

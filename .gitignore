@@ -1,12 +1,9 @@
 # Dependencies
 node_modules/
 
-# Database
-database/data.db
-database/*.db
-database/*.db-journal
-database/*.db-wal
-database/*.db-shm
+# Database files (actual data - NOT migrations)
+data/
+!data/.gitkeep
 
 # Uploads (user-generated content)
 uploads/event-logos/*

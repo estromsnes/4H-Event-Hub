@@ -12,7 +12,7 @@ const ADMIN_ACCESS_KEY = crypto.randomBytes(16).toString('hex');
 const ADMIN_PIN = process.env.ADMIN_PIN || '1234';
 
 // Database connection
-const dbPath = path.join(__dirname, 'database', 'data.db');
+const dbPath = path.join(__dirname, 'data', 'data.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('❌ Error opening database:', err.message);
