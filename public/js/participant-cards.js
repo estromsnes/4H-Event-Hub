@@ -2,6 +2,14 @@
 let participants = [];
 let eventInfo = null;
 
+/**
+ * Get URL parameter by name
+ */
+function getURLParameter(name) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(name);
+}
+
 // Load data on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
@@ -28,16 +36,36 @@ async function loadData() {
 
         participants = await participantsResponse.json();
 
-        // Filter participants with QR codes
-        const withQR = participants.filter(p => p.qr_code_path);
+        // Check if specific participant codes are requested via URL parameter
+        const requestedCodes = getURLParameter('codes');
+        let filteredParticipants = participants;
 
-        if (withQR.length === 0) {
-            cardsContainer.innerHTML = '<p class="error">Ingen deltakere med QR-koder funnet.</p>';
+        if (requestedCodes) {
+            // Split comma-separated codes and filter
+            const codesArray = requestedCodes.split(',').map(c => c.trim());
+            filteredParticipants = participants.filter(p =>
+                codesArray.includes(p.participant_code) && p.qr_code_path
+            );
+        } else {
+            // No specific codes requested - show all with QR codes
+            filteredParticipants = participants.filter(p => p.qr_code_path);
+        }
+
+        if (filteredParticipants.length === 0) {
+            const message = requestedCodes
+                ? 'Ingen deltakere funnet med de angitte kodene.'
+                : 'Ingen deltakere med QR-koder funnet.';
+            cardsContainer.innerHTML = `<p class="error">${message}</p>`;
             return;
         }
 
         // Render cards
-        renderCards(withQR);
+        renderCards(filteredParticipants);
+
+        // Auto-print if specific participant(s) requested
+        if (requestedCodes) {
+            setTimeout(() => window.print(), 500);
+        }
 
     } catch (error) {
         console.error('Error loading data:', error);

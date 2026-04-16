@@ -1854,6 +1854,10 @@ function renderParticipants() {
                     ? `<button class="button secondary btn-small" onclick="viewQR('${p.participant_code}')">👁️ QR</button>`
                     : `<button class="button primary btn-small" onclick="generateQR('${p.participant_code}')">📱 QR</button>`
                 }
+                ${p.qr_code_path
+                    ? `<button class="button secondary btn-small" onclick="printSingleParticipantCard('${p.participant_code}')" title="Skriv ut deltakerkort">🃏</button>`
+                    : ''
+                }
                 ${p.profile_photo_path
                     ? `<button class="button secondary btn-small" onclick="viewPhoto('${p.participant_code}', '${p.profile_photo_path}')">📷 Bilde</button>`
                     : ''
@@ -2288,6 +2292,36 @@ async function showQRForPrint() {
 
     // Open participant cards in new window
     window.open('/participant-cards.html', '_blank', 'width=1400,height=900');
+}
+
+/**
+ * Print participant card for single participant
+ */
+async function printSingleParticipantCard(participantCode) {
+    const participant = participants.find(p => p.participant_code === participantCode);
+
+    if (!participant) {
+        alert('Deltaker ikke funnet.');
+        return;
+    }
+
+    if (!participant.qr_code_path) {
+        const shouldGenerate = confirm(
+            `${participant.first_name} ${participant.last_name} har ikke QR-kode ennå.\n\n` +
+            'Vil du generere QR-kode først?'
+        );
+        if (shouldGenerate) {
+            await generateQR(participantCode);
+            // Wait for QR generation to complete
+            setTimeout(() => {
+                window.open(`/participant-cards.html?codes=${participantCode}`, '_blank', 'width=1400,height=900');
+            }, 1000);
+        }
+        return;
+    }
+
+    // Open participant card in new window with code parameter
+    window.open(`/participant-cards.html?codes=${participantCode}`, '_blank', 'width=1400,height=900');
 }
 
 /**

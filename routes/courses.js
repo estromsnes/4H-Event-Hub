@@ -47,6 +47,72 @@ router.post('/', (req, res) => {
     );
 });
 
+// POST enroll participant in a course
+router.post('/enroll', (req, res) => {
+    const db = req.app.locals.db;
+    const { participantCode, courseId } = req.body;
+
+    if (!participantCode || !courseId) {
+        return res.status(400).json({ error: 'Participant code and course ID are required' });
+    }
+
+    // Check if already enrolled
+    db.get(
+        'SELECT * FROM participant_courses WHERE participant_code = ? AND course_id = ?',
+        [participantCode, courseId],
+        (err, row) => {
+            if (err) {
+                console.error('Error checking enrollment:', err);
+                return res.status(500).json({ error: 'Failed to check enrollment' });
+            }
+
+            if (row) {
+                return res.status(400).json({ error: 'Already enrolled in this course' });
+            }
+
+            // Enroll participant
+            db.run(
+                'INSERT INTO participant_courses (participant_code, course_id) VALUES (?, ?)',
+                [participantCode, courseId],
+                (err) => {
+                    if (err) {
+                        console.error('Error enrolling participant:', err);
+                        return res.status(500).json({ error: 'Failed to enroll participant' });
+                    }
+                    res.json({ message: 'Successfully enrolled in course' });
+                }
+            );
+        }
+    );
+});
+
+// DELETE unenroll participant from a course
+router.delete('/unenroll', (req, res) => {
+    const db = req.app.locals.db;
+    const { participantCode, courseId } = req.body;
+
+    if (!participantCode || !courseId) {
+        return res.status(400).json({ error: 'Participant code and course ID are required' });
+    }
+
+    db.run(
+        'DELETE FROM participant_courses WHERE participant_code = ? AND course_id = ?',
+        [participantCode, courseId],
+        function(err) {
+            if (err) {
+                console.error('Error unenrolling participant:', err);
+                return res.status(500).json({ error: 'Failed to unenroll participant' });
+            }
+
+            if (this.changes === 0) {
+                return res.status(404).json({ error: 'Enrollment not found' });
+            }
+
+            res.json({ message: 'Successfully unenrolled from course' });
+        }
+    );
+});
+
 // PUT update an existing course
 router.put('/:id', (req, res) => {
     const db = req.app.locals.db;
@@ -181,72 +247,6 @@ router.get('/participant/:participantCode', (req, res) => {
                 return res.status(500).json({ error: 'Failed to fetch participant courses' });
             }
             res.json(rows);
-        }
-    );
-});
-
-// POST enroll participant in a course
-router.post('/enroll', (req, res) => {
-    const db = req.app.locals.db;
-    const { participantCode, courseId } = req.body;
-
-    if (!participantCode || !courseId) {
-        return res.status(400).json({ error: 'Participant code and course ID are required' });
-    }
-
-    // Check if already enrolled
-    db.get(
-        'SELECT * FROM participant_courses WHERE participant_code = ? AND course_id = ?',
-        [participantCode, courseId],
-        (err, row) => {
-            if (err) {
-                console.error('Error checking enrollment:', err);
-                return res.status(500).json({ error: 'Failed to check enrollment' });
-            }
-
-            if (row) {
-                return res.status(400).json({ error: 'Already enrolled in this course' });
-            }
-
-            // Enroll participant
-            db.run(
-                'INSERT INTO participant_courses (participant_code, course_id) VALUES (?, ?)',
-                [participantCode, courseId],
-                (err) => {
-                    if (err) {
-                        console.error('Error enrolling participant:', err);
-                        return res.status(500).json({ error: 'Failed to enroll participant' });
-                    }
-                    res.json({ message: 'Successfully enrolled in course' });
-                }
-            );
-        }
-    );
-});
-
-// DELETE unenroll participant from a course
-router.delete('/unenroll', (req, res) => {
-    const db = req.app.locals.db;
-    const { participantCode, courseId } = req.body;
-
-    if (!participantCode || !courseId) {
-        return res.status(400).json({ error: 'Participant code and course ID are required' });
-    }
-
-    db.run(
-        'DELETE FROM participant_courses WHERE participant_code = ? AND course_id = ?',
-        [participantCode, courseId],
-        function(err) {
-            if (err) {
-                console.error('Error unenrolling participant:', err);
-                return res.status(500).json({ error: 'Failed to unenroll participant' });
-            }
-
-            if (this.changes === 0) {
-                return res.status(404).json({ error: 'Enrollment not found' });
-            }
-
-            res.json({ message: 'Successfully unenrolled from course' });
         }
     );
 });
