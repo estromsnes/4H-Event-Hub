@@ -48,6 +48,7 @@ const organizerClubInput = document.getElementById('organizerClub');
 const organizerContactInput = document.getElementById('organizerContact');
 const allowQrUploadInput = document.getElementById('allowQrUpload');
 const enableQuizMusicInput = document.getElementById('enableQuizMusic');
+const participantCodePrefixInput = document.getElementById('participantCodePrefix');
 const eventStatus = document.getElementById('eventStatus');
 
 // DOM Elements - Add Form
@@ -397,9 +398,16 @@ async function initAdmin() {
     document.getElementById('resetDatabaseBtn').addEventListener('click', resetDatabase);
     document.getElementById('clearOnboardingBtn').addEventListener('click', clearOnboardingData);
 
-    // Auto-generate new code when name changes
+    // Auto-generate new code when name changes or prefix changes
     firstNameInput.addEventListener('input', generateNextCode);
     lastNameInput.addEventListener('input', generateNextCode);
+    participantCodePrefixInput.addEventListener('input', async () => {
+        // Update currentEvent prefix immediately when changed
+        if (currentEvent) {
+            currentEvent.participant_code_prefix = participantCodePrefixInput.value.trim().toUpperCase() || 'SK';
+        }
+        await generateNextCode();
+    });
 }
 
 /**
@@ -429,6 +437,7 @@ async function loadEventInfo() {
         organizerContactInput.value = currentEvent.organizer_contact || '';
         allowQrUploadInput.checked = currentEvent.allow_qr_upload === 1;
         enableQuizMusicInput.checked = currentEvent.enable_quiz_music !== 0; // Default to true if undefined
+        participantCodePrefixInput.value = currentEvent.participant_code_prefix || 'SK';
 
         // Load WiFi settings
         wifiSSID.value = currentEvent.wifi_ssid || '';
@@ -491,7 +500,8 @@ async function handleSaveEventInfo(e) {
         organizer_club: organizerClubInput.value.trim() || null,
         organizer_contact: organizerContactInput.value.trim() || null,
         allow_qr_upload: allowQrUploadInput.checked ? 1 : 0,
-        enable_quiz_music: enableQuizMusicInput.checked ? 1 : 0
+        enable_quiz_music: enableQuizMusicInput.checked ? 1 : 0,
+        participant_code_prefix: participantCodePrefixInput.value.trim().toUpperCase() || 'SK'
     };
 
     // Validate
@@ -1512,16 +1522,17 @@ window.viewTeamPhoto = viewTeamPhoto;
 // ============================================================================
 
 /**
- * Generate next participant code (SK-YYYY-NNN)
+ * Generate next participant code (PREFIX-YYYY-NNN)
  */
 async function generateNextCode() {
     const year = new Date().getFullYear();
+    const prefix = (currentEvent && currentEvent.participant_code_prefix) || 'SK';
 
     // If we have participants, get the highest number
     if (participants.length > 0) {
         const codes = participants
             .map(p => p.participant_code)
-            .filter(code => code && code.startsWith(`SK-${year}-`));
+            .filter(code => code && code.startsWith(`${prefix}-${year}-`));
 
         if (codes.length > 0) {
             const numbers = codes.map(code => {
@@ -1538,7 +1549,7 @@ async function generateNextCode() {
         nextParticipantNumber = 1;
     }
 
-    const code = `SK-${year}-${String(nextParticipantNumber).padStart(3, '0')}`;
+    const code = `${prefix}-${year}-${String(nextParticipantNumber).padStart(3, '0')}`;
     participantCodeInput.value = code;
 }
 

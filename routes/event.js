@@ -80,7 +80,8 @@ router.post('/', (req, res) => {
         organizer_club,
         organizer_contact,
         allow_qr_upload,
-        enable_quiz_music
+        enable_quiz_music,
+        participant_code_prefix
     } = req.body;
 
     // Validate required fields
@@ -101,8 +102,8 @@ router.post('/', (req, res) => {
         db.run(
             `INSERT INTO event_info (
                 event_name, event_description, location, start_date, end_date, start_datetime, end_datetime,
-                organizer_name, organizer_club, organizer_contact, allow_qr_upload, enable_quiz_music, active
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+                organizer_name, organizer_club, organizer_contact, allow_qr_upload, enable_quiz_music, participant_code_prefix, active
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
             [
                 event_name,
                 event_description,
@@ -115,7 +116,8 @@ router.post('/', (req, res) => {
                 organizer_club,
                 organizer_contact,
                 allow_qr_upload || 0,
-                enable_quiz_music !== undefined ? enable_quiz_music : 1
+                enable_quiz_music !== undefined ? enable_quiz_music : 1,
+                participant_code_prefix || 'SK'
             ],
             function(err) {
                 if (err) {
@@ -157,6 +159,7 @@ router.put('/:id', (req, res) => {
         organizer_contact,
         allow_qr_upload,
         enable_quiz_music,
+        participant_code_prefix,
         wifi_ssid,
         wifi_password
     } = req.body;
@@ -175,6 +178,7 @@ router.put('/:id', (req, res) => {
              organizer_contact = COALESCE(?, organizer_contact),
              allow_qr_upload = COALESCE(?, allow_qr_upload),
              enable_quiz_music = COALESCE(?, enable_quiz_music),
+             participant_code_prefix = COALESCE(?, participant_code_prefix),
              wifi_ssid = COALESCE(?, wifi_ssid),
              wifi_password = COALESCE(?, wifi_password),
              updated_date = datetime('now')
@@ -192,6 +196,7 @@ router.put('/:id', (req, res) => {
             organizer_contact,
             allow_qr_upload,
             enable_quiz_music,
+            participant_code_prefix,
             wifi_ssid,
             wifi_password,
             id
