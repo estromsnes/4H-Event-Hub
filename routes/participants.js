@@ -267,12 +267,12 @@ router.put('/:code', (req, res) => {
         `UPDATE participants
          SET first_name = COALESCE(?, first_name),
              last_name = COALESCE(?, last_name),
-             age = ?,
-             home_location = ?,
-             club = ?,
-             role = ?,
-             team = ?,
-             notes = ?
+             age = COALESCE(?, age),
+             home_location = COALESCE(?, home_location),
+             club = COALESCE(?, club),
+             role = COALESCE(?, role),
+             team = COALESCE(?, team),
+             notes = COALESCE(?, notes)
          WHERE participant_code = ? AND active = 1`,
         [first_name, last_name, age, home_location, club, role, team, notes, code],
         function(err) {
@@ -867,6 +867,113 @@ router.put('/:code/sleeping-room', (req, res) => {
             );
         }
     );
+});
+
+// GET /api/participants/export/csv - Export participants to CSV for printing cards
+router.get('/export/csv', (req, res) => {
+    const db = req.app.locals.db;
+    const { filter } = req.query;
+
+    // Build query based on filter
+    let query = `
+        SELECT participant_code, first_name, last_name, club, role, team, login_word
+        FROM participants
+        WHERE active = 1
+    `;
+
+    const params = [];
+
+    if (filter === 'confirmed') {
+        query += ' AND confirmed = 1';
+    } else if (filter === 'not_confirmed') {
+        query += ' AND (confirmed = 0 OR confirmed IS NULL)';
+    }
+
+    query += ' ORDER BY last_name, first_name';
+
+    db.all(query, params, (err, rows) => {
+        if (err) {
+            console.error('Error fetching participants for CSV export:', err);
+            return res.status(500).json({ error: 'Failed to export participants' });
+        }
+
+        // Fetch courses for all participants
+        const coursesQuery = `
+            SELECT pc.participant_code, c.name as course_name
+            FROM participant_courses pc
+            JOIN courses c ON pc.course_id = c.id
+            WHERE c.active = 1
+            ORDER BY c.name
+        `;
+
+        db.all(coursesQuery, [], (err, coursesData) => {
+            if (err) {
+                console.error('Error fetching courses for CSV export:', err);
+                // Continue without courses rather than failing
+                coursesData = [];
+            }
+
+            // Group courses by participant code
+            const coursesByParticipant = {};
+            coursesData.forEach(row => {
+                if (!coursesByParticipant[row.participant_code]) {
+                    coursesByParticipant[row.participant_code] = [];
+                }
+                coursesByParticipant[row.participant_code].push(row.course_name);
+            });
+
+            // Generate CSV content
+            const csvHeaders = ['Deltaker-ID', 'Fornavn', 'Etternavn', 'Klubb', 'Kategori', 'Lag', 'Login-ord', 'Kurs', 'QR-tekst'];
+            const csvRows = rows.map(p => {
+                // QR code contains JSON structure matching the system's QR generation
+                const qrData = JSON.stringify({
+                    type: 'participant',
+                    code: p.participant_code
+                });
+
+                // Get courses for this participant
+                const courses = coursesByParticipant[p.participant_code] || [];
+                const coursesString = courses.join(', ');
+
+                return [
+                    p.participant_code || '',
+                    p.first_name || '',
+                    p.last_name || '',
+                    p.club || '',
+                    p.role || '',
+                    p.team || '',
+                    p.login_word || '',
+                    coursesString,
+                    qrData
+                ];
+            });
+
+            // Escape CSV fields (handle commas, quotes, newlines)
+            const escapeCsvField = (field) => {
+                const str = String(field);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            };
+
+            // Build CSV content
+            const csvContent = [
+                csvHeaders.map(escapeCsvField).join(','),
+                ...csvRows.map(row => row.map(escapeCsvField).join(','))
+            ].join('\n');
+
+            // Set headers for CSV download
+            const timestamp = new Date().toISOString().split('T')[0];
+            const filename = `deltakerkort-${timestamp}.csv`;
+
+            res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+            // Add BOM for proper UTF-8 encoding in Excel
+            res.send('\uFEFF' + csvContent);
+        });
+    });
 });
 
 module.exports = router;
