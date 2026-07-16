@@ -159,6 +159,7 @@ const participantCount = document.getElementById('participantCount');
 const confirmationFilter = document.getElementById('confirmationFilter');
 const filterStats = document.getElementById('filterStats');
 const printParticipantsBtn = document.getElementById('printParticipantsBtn');
+const exportCsvBtn = document.getElementById('exportCsvBtn');
 const teamStats = document.getElementById('teamStats');
 const autoAssignTeamsBtn = document.getElementById('autoAssignTeamsBtn');
 const autoAssignStatus = document.getElementById('autoAssignStatus');
@@ -372,6 +373,7 @@ async function initAdmin() {
     generateAllQRBtn.addEventListener('click', generateAllQRCodes);
     printQRBtn.addEventListener('click', showQRForPrint);
     printParticipantsBtn.addEventListener('click', printParticipantsList);
+    exportCsvBtn.addEventListener('click', exportParticipantsCsv);
 
     // Scavenger hunt event listeners
     addCheckpointBtn.addEventListener('click', () => openCheckpointModal());
@@ -2341,6 +2343,24 @@ async function printSingleParticipantCard(participantCode) {
 function printParticipantsList() {
     const filterValue = confirmationFilter ? confirmationFilter.value : 'all';
     window.open(`/participant-report.html?filter=${filterValue}`, '_blank', 'width=1200,height=800');
+}
+
+/**
+ * Export participants to CSV for printing cards
+ */
+function exportParticipantsCsv() {
+    const filterValue = confirmationFilter ? confirmationFilter.value : 'all';
+
+    // Map filter values to match backend expectations
+    let apiFilter = 'all';
+    if (filterValue === 'confirmed') {
+        apiFilter = 'confirmed';
+    } else if (filterValue === 'unconfirmed') {
+        apiFilter = 'not_confirmed';
+    }
+
+    // Trigger download by navigating to the CSV endpoint
+    window.location.href = `/api/participants/export/csv?filter=${apiFilter}`;
 }
 
 /**
