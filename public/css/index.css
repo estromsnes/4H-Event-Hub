@@ -289,8 +289,8 @@ body {
 
 .program-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
     max-width: 100%;
 }
 
@@ -1018,9 +1018,11 @@ body {
     }
 
     /* Program and other sections */
+    /* Keep 4 columns layout even on mobile for portrait display
     .program-container {
         grid-template-columns: 1fr;
     }
+    */
 
     .action-buttons {
         grid-template-columns: 1fr;
@@ -1106,21 +1108,34 @@ body {
         max-width: 100vw;
     }
 
+    .program-container {
+        gap: 8px;
+    }
+
     .program-day-header {
-        font-size: 20px;
-        padding: 12px 8px;
+        font-size: 18px;
+        padding: 10px 6px;
     }
 
     .program-item {
-        font-size: 14px;
+        font-size: 13px;
+        padding: 8px;
     }
 
     .program-time {
+        font-size: 13px;
+    }
+
+    .program-title {
         font-size: 14px;
     }
 
     .program-location {
-        font-size: 13px;
+        font-size: 12px;
+    }
+
+    .program-items {
+        padding: 10px 6px;
     }
 }
 
